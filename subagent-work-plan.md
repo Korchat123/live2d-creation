@@ -21,6 +21,8 @@ task graph.
 - Tasks with unmet dependencies remain blocked.
 - Commits are optional unless the root agent explicitly requests them. Agents
   must never push, publish, deploy, or create releases independently.
+- Every task that adds behavior must add or update its CI coverage. CD changes
+  require root review and immutable artifacts labeled with the tested commit.
 
 ## Shared definition of done
 
@@ -31,6 +33,7 @@ A task is complete only when:
 3. relevant tests, type checks, linting, or document checks pass;
 4. no secrets, generated build output, or unrelated files were added;
 5. the handoff identifies assumptions and unresolved risks.
+6. the behavior runs in CI and any phase artifact traces to the tested commit.
 
 ## Recommended execution waves
 
@@ -93,11 +96,13 @@ Deliverables:
 - lint, format, unit-test, type-check, and build commands;
 - package boundaries matching the target repository structure;
 - CI workflow and contributor instructions.
+- phase-aware CI and a manual dry-run artifact workflow.
 
 Acceptance:
 
 - clean install is reproducible;
 - lint, type-check, test, and build succeed from the repository root;
+- workflows use minimum permissions and ordinary CI receives no protected secret;
 - workspace packages use explicit `workspace:` dependencies;
 - empty packages do not expose speculative APIs.
 
@@ -120,6 +125,7 @@ Deliverables:
 - an entry for every current asset/reference, including an explicit empty-state
   declaration when no assets exist;
 - review procedure for future additions.
+- CI rights validation and a review-report artifact.
 
 Acceptance:
 
@@ -161,6 +167,7 @@ Deliverables:
   interruption, reset, and reduced motion;
 - RMS-only versus viseme decision proposal;
 - human and AI control acceptance scenarios.
+- CI requirements-traceability checks.
 
 Acceptance:
 
@@ -203,6 +210,7 @@ Deliverables:
 - generated or source TypeScript types;
 - capability query, acknowledgement, cancellation, and error contracts;
 - valid and malformed fixtures.
+- schema and malformed-fixture CI jobs.
 
 Acceptance:
 
@@ -223,6 +231,7 @@ Deliverables:
 - scheduler, interruption, cross-fade, parameter layers, and clamps;
 - gaze, blink, mouth-open, expression, motion, and reset evaluation;
 - unit tests using a fake clock.
+- core contract and coverage CI jobs.
 
 Acceptance:
 
@@ -245,6 +254,7 @@ Deliverables:
 - at least one deformable mesh;
 - load, resize, render, context-recovery, and dispose lifecycle;
 - original or clearly licensed placeholder assets.
+- browser lifecycle and golden-render CI jobs.
 
 Acceptance:
 
@@ -267,6 +277,7 @@ Deliverables:
 - capability inspector, gaze, blink, mouth-open, expression, motion, and reset
   demonstrations;
 - frame-time, memory, bundle-size, resize, context-loss, and remount results.
+- an approval-gated preview tied to the tested commit.
 
 Acceptance:
 
@@ -299,4 +310,3 @@ Avoid pre-assigning implementation details that the spike may invalidate.
 - Review licenses and dependency changes.
 - Update ADR status and the canonical product plan.
 - Ask for human approval at creative, security-policy, and release gates.
-

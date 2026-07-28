@@ -11,6 +11,10 @@ agents_may_change_public_api_without_review = false
 agents_may_push_publish_or_deploy = false
 require_handoff = true
 require_verification = true
+require_ci_for_each_feature = true
+require_ci_gate_for_each_phase = true
+cd_artifacts_must_reference_tested_commit = true
+agents_may_publish_or_deploy = false
 
 [handoff]
 required_fields = [
@@ -126,6 +130,7 @@ acceptance = [
   "All root verification commands pass",
   "Internal packages use workspace dependencies",
   "No speculative public APIs",
+  "CI has minimal permissions and a commit-labeled dry-run artifact",
 ]
 verification = [
   "pnpm install --frozen-lockfile",
@@ -149,12 +154,14 @@ deliverables = [
   "Machine-readable rights manifest",
   "Inventory of all current assets and references",
   "Review procedure for future assets",
+  "Rights validation CI and review report artifact",
 ]
 acceptance = [
   "No ownership claim lacks evidence",
   "Unresolved rights block export validation",
 ]
 verification = ["Schema validation", "Manual rights review"]
+ci_required = ["rights manifest validation", "secret scan"]
 
 [[tasks]]
 id = "A2"
@@ -192,12 +199,14 @@ deliverables = [
   "Gaze, blink, mouth, pose, interruption, reset, and reduced-motion criteria",
   "RMS versus viseme proposal",
   "Human and AI control scenarios",
+  "Requirements traceability CI",
 ]
 acceptance = [
   "Every requirement has observable pass or fail behavior",
   "Semantic protocol has no model-specific names",
 ]
 verification = ["Requirements traceability review"]
+ci_required = ["specification completeness"]
 
 [[tasks]]
 id = "A4"
@@ -236,6 +245,7 @@ deliverables = [
   "TypeScript contract types",
   "Capabilities, acknowledgement, cancellation, and error contracts",
   "Valid and malformed fixtures",
+  "Schema and malformed-fixture CI",
 ]
 acceptance = [
   "Rejects traversal, absolute paths, non-finite values, and invalid ranges",
@@ -244,6 +254,7 @@ acceptance = [
   "No provider-specific or UI-specific fields",
 ]
 verification = ["pnpm --filter @open-avatar/schema test", "pnpm typecheck"]
+ci_required = ["schema fixtures", "malformed bundles", "package pack"]
 
 [[tasks]]
 id = "B2"
@@ -257,6 +268,7 @@ deliverables = [
   "Scheduler, interruption, cross-fade, mixer, and clamps",
   "Gaze, blink, mouth, expression, motion, and reset evaluation",
   "Fake-clock unit tests",
+  "Core contract and coverage CI",
 ]
 acceptance = [
   "Same clock, seed, and input produce identical poses",
@@ -264,6 +276,7 @@ acceptance = [
   "Reset returns to stable neutral",
 ]
 verification = ["pnpm --filter @open-avatar/core test", "pnpm typecheck"]
+ci_required = ["unit tests", "contract tests", "coverage"]
 
 [[tasks]]
 id = "B3"
@@ -280,6 +293,7 @@ deliverables = [
   "One deformable mesh",
   "Load, resize, context recovery, render, and dispose lifecycle",
   "Original or licensed placeholder assets",
+  "Browser lifecycle and golden-render CI",
 ]
 acceptance = [
   "No renderer resource remains after dispose",
@@ -290,6 +304,7 @@ verification = [
   "pnpm --filter @open-avatar/renderer-pixi test",
   "pnpm typecheck",
 ]
+ci_required = ["browser lifecycle", "golden render", "resource disposal"]
 
 [[tasks]]
 id = "B4"
@@ -305,6 +320,7 @@ deliverables = [
   "Human panel and scripted controller using one API",
   "Capability and control demonstrations",
   "Performance and lifecycle report",
+  "Approval-gated preview tied to the tested commit",
 ]
 acceptance = [
   "Human override is observable",
@@ -316,3 +332,4 @@ verification = [
   "pnpm --filter @open-avatar/studio build",
   "Manual performance protocol",
 ]
+ci_required = ["studio e2e", "performance report", "preview smoke test"]

@@ -89,6 +89,9 @@ events, or application state.
    semantic versioning independently.
 10. **No premature editor.** Prove the runtime and file format before building a
     full visual rig editor.
+11. **CI/CD grows with every phase.** A phase is incomplete until its new
+    requirements run automatically. Deployment publishes only the safe preview,
+    report, package, or release artifact appropriate to that phase.
 
 ## 5. System design
 
@@ -291,8 +294,11 @@ declared by each bundle.
 - [ ] Decide browser baseline, package manager version, license, and release
       policy.
 - [ ] Scaffold the workspace, linting, formatting, tests, and CI.
+- [ ] Add CI for document policy, secret scanning, install, lint, type-check,
+      unit tests, and build; add a manual dry-run artifact packaging job.
 
-Gate: ADR records the chosen format/runtime; the empty workspace passes CI.
+Gate: ADR records the chosen format/runtime; the empty workspace passes CI and
+the dry-run artifact contains no secret or ignored file.
 
 ### Phase A - Rights, requirements, and visual specification
 
@@ -303,9 +309,11 @@ Gate: ADR records the chosen format/runtime; the empty workspace passes CI.
 - [ ] Set target canvas, texture, bundle-size, and memory budgets.
 - [ ] Decide RMS-only or the languages/viseme set required for v1.
 - [ ] Approve expression, motion, and accessibility acceptance checklists.
+- [ ] Extend CI with rights-manifest and specification completeness checks;
+      publish the review report as a non-release artifact.
 
 Gate: rights records are complete, all art is original or redistributable, and
-the character/layer specification is approved.
+the character/layer specification is approved. Phase A CI passes.
 
 ### Phase B - Vertical runtime spike
 
@@ -314,9 +322,12 @@ the character/layer specification is approved.
 - [ ] Demonstrate human UI and scripted/AI commands through the same API.
 - [ ] Demonstrate gaze, blink, mouth-open, interruption, reset, and disposal.
 - [ ] Record frame time, memory, bundle size, context loss, and remount results.
+- [ ] Extend CI with schema fixtures, browser smoke tests, lifecycle checks, and
+      performance reporting; deploy an approval-gated preview.
 
 Gate: stable 60 FPS on the named reference device; no lifecycle leaks; control
 contract and format can represent all required capabilities.
+The preview must be reproducible from the tested commit.
 
 ### Phase C - Runtime MVP
 
@@ -326,8 +337,11 @@ contract and format can represent all required capabilities.
       discovery, limits, and diagnostics.
 - [ ] Implement context loss, resize, device-pixel ratio, reduced motion, and
       cleanup.
+- [ ] Extend CI with contract, malformed-input, browser-matrix, coverage, and
+      package-pack checks.
 
 Gate: public API contract tests and malformed-input security tests pass.
+Packed packages must install in a clean consumer fixture.
 
 ### Phase D - First-party avatar and animation
 
@@ -335,9 +349,12 @@ Gate: public API contract tests and malformed-input security tests pass.
 - [ ] Rig head/body pose, eyes, blink, brows, mouth, and optional physics.
 - [ ] Author all required expressions and motions.
 - [ ] Add interruption, cross-fade, RMS lip sync, and optional visemes.
+- [ ] Extend CI with golden renders, parameter sweeps, interruption, asset
+      budgets, and rights checks; publish a validated avatar artifact.
 
 Gate: parameter sweeps do not tear; repeated interruptions return to a stable
 idle pose; live channels never overwrite unrelated parameters.
+The bundle must be generated from validated source inputs.
 
 ### Phase E - Human Studio and authoring tools
 
@@ -346,9 +363,12 @@ idle pose; live channels never overwrite unrelated parameters.
 - [ ] Add deterministic exporter, rights editor, validation report, and bundle
       preview.
 - [ ] Support recording/replaying the provider-neutral command stream.
+- [ ] Extend CI with Studio unit, end-to-end, accessibility, exporter
+      reproducibility, and preview smoke tests.
 
 Gate: a human can load, inspect, control, validate, and export the avatar
 without editing source code.
+The tested Studio preview must match the deployed commit.
 
 ### Phase F - AI and host integration
 
@@ -356,9 +376,12 @@ without editing source code.
 - [ ] Publish framework-neutral runtime and web component examples.
 - [ ] Add adapter guidance for agent, TTS, viseme, and streaming-audio hosts.
 - [ ] Verify that removing or rejecting a bundle falls back safely.
+- [ ] Extend CI with example-consumer, web-component, concurrent-controller,
+      fallback, and integration tests.
 
 Gate: both example controllers drive the same runtime concurrently, human
 override works, and no provider-specific type enters a core package.
+Every published example records its source commit and package versions.
 
 ### Phase G - Hardening and release
 
@@ -367,9 +390,27 @@ override works, and no provider-specific type enters a core package.
 - [ ] Publish migration rules, API docs, bundle authoring guide, checksums,
       license metadata, SBOM, and signed artifacts.
 - [ ] Version packages, protocol, format, and avatar bundle independently.
+- [ ] Require approval-gated release jobs with provenance, SBOM, checksums,
+      signatures, clean-install verification, and post-publish smoke tests.
 
 Gate: all release budgets pass on supported browsers and a clean consumer
 project can install, load, control, dispose, and reload the avatar.
+
+## 10.1 CI/CD policy
+
+- Pull requests run all checks accumulated through the current phase.
+- Branch protection requires relevant checks; unreviewed commits cannot publish.
+- Workflows use minimum permissions; ordinary CI has read-only repository access
+  and no deployment secrets.
+- Installation uses the committed lockfile and avoids unapproved lifecycle
+  scripts where practical.
+- Caches never contain environment files, tokens, recordings, or signing keys.
+- Preview artifacts are immutable and labeled with the full Git commit.
+- Forked or untrusted changes never receive protected environment secrets.
+- CD uses approval-protected GitHub environments and scoped credentials.
+- Production releases are tag-triggered, reproducible, checksummed, signed, and
+  followed by clean-consumer smoke tests.
+- Rollback selects a previous immutable artifact; versions are never overwritten.
 
 ## 11. Quality budgets
 
