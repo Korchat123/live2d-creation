@@ -1,0 +1,318 @@
+schema_version = "1.0"
+project = "open-2d-avatar"
+canonical_plan = "live2d-model-plan.md"
+human_plan = "subagent-work-plan.md"
+
+[policy]
+root_agent_owns_integration = true
+parallel_writes_to_same_scope = false
+agents_may_add_dependencies = false
+agents_may_change_public_api_without_review = false
+agents_may_push_publish_or_deploy = false
+require_handoff = true
+require_verification = true
+
+[handoff]
+required_fields = [
+  "summary",
+  "changed_files",
+  "verification",
+  "assumptions",
+  "remaining_risks",
+]
+
+[[waves]]
+id = "wave-0-research"
+parallel = ["W0-A", "W0-B"]
+
+[[waves]]
+id = "wave-0-scaffold"
+after = ["W0-A", "W0-B", "root-approval-0"]
+parallel = ["W0-C"]
+
+[[waves]]
+id = "wave-a-specification"
+after = ["W0-C"]
+parallel = ["A1", "A2", "A3"]
+
+[[waves]]
+id = "wave-a-review"
+after = ["A1", "A2", "A3"]
+parallel = ["A4"]
+
+[[waves]]
+id = "wave-b-contract"
+after = ["A4", "runtime-adr-approved"]
+parallel = ["B1"]
+
+[[waves]]
+id = "wave-b-runtime"
+after = ["B1"]
+parallel = ["B2", "B3"]
+
+[[waves]]
+id = "wave-b-integration"
+after = ["B2", "B3"]
+parallel = ["B4"]
+
+[[tasks]]
+id = "W0-A"
+title = "Runtime and format research"
+owner_role = "architecture-research"
+phase = "0"
+depends_on = []
+write_scope = ["docs/adr/0001-runtime-and-format.md"]
+deliverables = [
+  "Compare custom PixiJS with eligible non-Cubism alternatives",
+  "Record licensing, browser, TypeScript, control, export, and maintenance evidence",
+  "Recommend renderer and fallback policy",
+  "List vertical-spike risks",
+]
+acceptance = [
+  "Current claims cite primary sources",
+  "Recommendation preserves the provider-neutral control contract",
+  "No implementation files are modified",
+]
+verification = ["Document link and decision-table review"]
+
+[[tasks]]
+id = "W0-B"
+title = "Product policy and threat model"
+owner_role = "product-security"
+phase = "0"
+depends_on = []
+write_scope = [
+  "docs/adr/0002-supported-platforms.md",
+  "docs/security/threat-model.md",
+]
+deliverables = [
+  "Supported-browser and reference-device proposal",
+  "Bundle and command trust boundaries",
+  "Resource-limit and privacy policy",
+  "Accessibility and reduced-motion baseline",
+]
+acceptance = [
+  "Separates v1 requirements from future work",
+  "Covers hostile bundles and commands",
+  "Covers camera, microphone, and remote-control authorization",
+]
+verification = ["Security and product review"]
+
+[[tasks]]
+id = "W0-C"
+title = "Workspace scaffold"
+owner_role = "build-tooling"
+phase = "0"
+depends_on = ["W0-A", "W0-B", "root-approval-0"]
+write_scope = [
+  "package.json",
+  "pnpm-workspace.yaml",
+  "pnpm-lock.yaml",
+  "tsconfig.base.json",
+  "vitest.workspace.ts",
+  ".github/workflows/",
+  "apps/",
+  "packages/",
+  "AGENTS.md",
+]
+deliverables = [
+  "pnpm TypeScript workspace",
+  "Lint, format, test, type-check, and build commands",
+  "CI workflow",
+  "Empty app and package boundaries",
+]
+acceptance = [
+  "Clean install is reproducible",
+  "All root verification commands pass",
+  "Internal packages use workspace dependencies",
+  "No speculative public APIs",
+]
+verification = [
+  "pnpm install --frozen-lockfile",
+  "pnpm lint",
+  "pnpm typecheck",
+  "pnpm test",
+  "pnpm build",
+]
+
+[[tasks]]
+id = "A1"
+title = "Rights inventory"
+owner_role = "asset-rights"
+phase = "A"
+depends_on = ["W0-C"]
+write_scope = [
+  "assets/reference-avatar/LICENSES/rights.json",
+  "docs/authoring/rights-checklist.md",
+]
+deliverables = [
+  "Machine-readable rights manifest",
+  "Inventory of all current assets and references",
+  "Review procedure for future assets",
+]
+acceptance = [
+  "No ownership claim lacks evidence",
+  "Unresolved rights block export validation",
+]
+verification = ["Schema validation", "Manual rights review"]
+
+[[tasks]]
+id = "A2"
+title = "Character and layer specification"
+owner_role = "art-direction"
+phase = "A"
+depends_on = ["W0-C"]
+write_scope = [
+  "docs/authoring/visual-spec.md",
+  "docs/authoring/layer-spec.md",
+]
+deliverables = [
+  "Character visual specification",
+  "Canvas, texture, silhouette, palette, and safe-area proposal",
+  "Layer hierarchy, naming, pivots, masks, draw order, and deformation intent",
+]
+acceptance = [
+  "Uses only original placeholders or recorded references",
+  "Human creative approvals are explicit",
+]
+verification = ["Art and rigging specification review"]
+
+[[tasks]]
+id = "A3"
+title = "Capability acceptance specification"
+owner_role = "qa-product"
+phase = "A"
+depends_on = ["W0-C"]
+write_scope = [
+  "docs/protocol/capabilities.md",
+  "docs/authoring/acceptance-checklist.md",
+]
+deliverables = [
+  "Testable expression and motion definitions",
+  "Gaze, blink, mouth, pose, interruption, reset, and reduced-motion criteria",
+  "RMS versus viseme proposal",
+  "Human and AI control scenarios",
+]
+acceptance = [
+  "Every requirement has observable pass or fail behavior",
+  "Semantic protocol has no model-specific names",
+]
+verification = ["Requirements traceability review"]
+
+[[tasks]]
+id = "A4"
+title = "Phase A review"
+owner_role = "root-agent"
+phase = "A"
+depends_on = ["A1", "A2", "A3"]
+write_scope = [
+  "docs/phase-status/phase-a.md",
+  "live2d-model-plan.md",
+]
+deliverables = [
+  "Cross-document consistency review",
+  "Human approval record",
+  "Phase A gate status",
+]
+acceptance = [
+  "No unresolved rights item is approved",
+  "Canvas, texture, performance, language, and capability targets are explicit",
+]
+verification = ["Root review", "Human approval"]
+
+[[tasks]]
+id = "B1"
+title = "Schema and control contracts"
+owner_role = "protocol"
+phase = "B"
+depends_on = ["W0-C", "A4", "runtime-adr-approved"]
+write_scope = [
+  "packages/schema/",
+  "docs/protocol/control-api.md",
+  "assets/fixtures/schema/",
+]
+deliverables = [
+  "Draft 2020-12 schemas",
+  "TypeScript contract types",
+  "Capabilities, acknowledgement, cancellation, and error contracts",
+  "Valid and malformed fixtures",
+]
+acceptance = [
+  "Rejects traversal, absolute paths, non-finite values, and invalid ranges",
+  "Rejects unknown major versions",
+  "Continuous input channels can be coalesced",
+  "No provider-specific or UI-specific fields",
+]
+verification = ["pnpm --filter @open-avatar/schema test", "pnpm typecheck"]
+
+[[tasks]]
+id = "B2"
+title = "Core animation spike"
+owner_role = "runtime"
+phase = "B"
+depends_on = ["B1"]
+write_scope = ["packages/core/"]
+deliverables = [
+  "Deterministic clock",
+  "Scheduler, interruption, cross-fade, mixer, and clamps",
+  "Gaze, blink, mouth, expression, motion, and reset evaluation",
+  "Fake-clock unit tests",
+]
+acceptance = [
+  "Same clock, seed, and input produce identical poses",
+  "Live inputs write only declared channels",
+  "Reset returns to stable neutral",
+]
+verification = ["pnpm --filter @open-avatar/core test", "pnpm typecheck"]
+
+[[tasks]]
+id = "B3"
+title = "Renderer and bundle spike"
+owner_role = "graphics"
+phase = "B"
+depends_on = ["B1"]
+write_scope = [
+  "packages/renderer-pixi/",
+  "assets/fixtures/minimal-avatar/",
+]
+deliverables = [
+  "Layered head and torso",
+  "One deformable mesh",
+  "Load, resize, context recovery, render, and dispose lifecycle",
+  "Original or licensed placeholder assets",
+]
+acceptance = [
+  "No renderer resource remains after dispose",
+  "Renderer consumes poses rather than commands",
+  "Renderer does not import from apps",
+]
+verification = [
+  "pnpm --filter @open-avatar/renderer-pixi test",
+  "pnpm typecheck",
+]
+
+[[tasks]]
+id = "B4"
+title = "Studio spike and performance report"
+owner_role = "integration"
+phase = "B"
+depends_on = ["B2", "B3"]
+write_scope = [
+  "apps/studio/",
+  "tests/performance/spike-report.md",
+]
+deliverables = [
+  "Human panel and scripted controller using one API",
+  "Capability and control demonstrations",
+  "Performance and lifecycle report",
+]
+acceptance = [
+  "Human override is observable",
+  "Approved performance budget passes on the reference device",
+  "Repeated mount and dispose show no resource growth",
+]
+verification = [
+  "pnpm --filter @open-avatar/studio test",
+  "pnpm --filter @open-avatar/studio build",
+  "Manual performance protocol",
+]
