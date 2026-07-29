@@ -17,6 +17,8 @@ test("renders, accepts human input, resizes, and disposes safely", async ({
   await expect(page.locator("#semantic-actions button")).toHaveCount(11);
   await page.getByRole("button", { name: "sad" }).click();
   await expect(page.locator("#last")).toHaveText("human: play expression");
+  await page.keyboard.press("KeyW");
+  await expect(page.locator("#last")).toHaveText("human: play motion");
   await page.locator("#x").fill("0.5");
   await expect(page.locator("#xv")).toHaveText("0.50");
   await expect(page.locator("#last")).toHaveText("human: set gaze");

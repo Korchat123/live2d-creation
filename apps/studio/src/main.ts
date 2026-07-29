@@ -48,6 +48,7 @@ root.innerHTML = `
           <div id="semantic-actions" class="buttons"></div>
           <button id="reset" class="quiet">Reset</button>
         </div>
+        <p class="note">Keyboard: 1–6 expressions, I/N/W/E/S motions, B blink, R reset.</p>
       </section>
       <section class="panel ai">
         <div class="heading"><div><p class="eyebrow">Trusted source · AI</p><h2>Scripted controller</h2></div><span id="override" class="pill">Available</span></div>
@@ -255,3 +256,63 @@ const dispose = () => {
 };
 query("#dispose").addEventListener("click", dispose);
 addEventListener("pagehide", dispose);
+
+const shortcuts: Record<string, () => void> = {
+  Digit1: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "neutral"),
+      "human",
+    ),
+  Digit2: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "happy"),
+      "human",
+    ),
+  Digit3: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "sad"),
+      "human",
+    ),
+  Digit4: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "angry"),
+      "human",
+    ),
+  Digit5: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "surprised"),
+      "human",
+    ),
+  Digit6: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "expression", "thinking"),
+      "human",
+    ),
+  KeyI: () =>
+    submit(actionCommand(adapter.createId("human"), "motion", "idle"), "human"),
+  KeyN: () =>
+    submit(actionCommand(adapter.createId("human"), "motion", "nod"), "human"),
+  KeyW: () =>
+    submit(actionCommand(adapter.createId("human"), "motion", "wave"), "human"),
+  KeyE: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "motion", "explain"),
+      "human",
+    ),
+  KeyS: () =>
+    submit(
+      actionCommand(adapter.createId("human"), "motion", "shrug"),
+      "human",
+    ),
+  KeyB: () =>
+    submit(actionCommand(adapter.createId("human"), "blink"), "human"),
+  KeyR: () => submit(resetCommand(adapter.createId("human")), "human"),
+};
+addEventListener("keydown", (event) => {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (event.target instanceof HTMLInputElement) return;
+  const shortcut = shortcuts[event.code];
+  if (!shortcut) return;
+  event.preventDefault();
+  shortcut();
+});
