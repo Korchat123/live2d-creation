@@ -350,7 +350,8 @@ Packed packages must install in a clean consumer fixture.
 ### Phase D - First-party avatar and animation
 
 - [ ] Produce separated artwork and approved meshes.
-- [ ] Rig head/body pose, eyes, blink, brows, mouth, and optional physics.
+- [x] Rig head/body pose, eyes, blink, brows, and mouth; optional physics is
+      intentionally deferred for the lightweight first-party fixture.
 - [x] Author all required semantic expressions and motions as deterministic
       first-party clips.
 - [x] Add interruption, cross-fade, and private RMS/optional viseme processing;
@@ -358,16 +359,19 @@ Packed packages must install in a clean consumer fixture.
 - [x] Extend CI with rights checks, interruption coverage, and deterministic
       parameter sweeps for the authored clips.
 - [ ] Add golden renders and first-party asset budgets; publish a validated
-      avatar artifact from approved source inputs.
+      avatar artifact from approved source inputs. Automated source validation
+      and enforced fixture-size budgets are in place, as is a reviewed Chromium
+      fixture-render baseline; per-clip visual baselines and the approved
+      release artifact remain pending.
 
 Gate: parameter sweeps do not tear; repeated interruptions return to a stable
 idle pose; live channels never overwrite unrelated parameters.
 The bundle must be generated from validated source inputs.
 
-Current status: runtime animation, clip authoring, Studio integration, and
-parameter-sweep CI are implemented. The Phase D gate remains pending separated
-approved artwork, the full visual rig, golden-render evidence, asset budgets,
-and a validated first-party bundle.
+Current status: runtime animation, clip authoring, Studio integration,
+parameter-sweep CI, and the first-party fixture rig are implemented. The Phase
+D gate remains pending separated approved artwork, golden-render evidence,
+asset budgets, and a validated first-party bundle.
 
 ### Phase E - Human Studio and authoring tools
 

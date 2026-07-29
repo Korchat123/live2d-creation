@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "corepack pnpm -r --if-present build",
-    "ci": "npm run safety:check && npm run rights:check && npm run rights:test && npm run requirements:check && npm run format:check && npm run lint && npm run typecheck && npm run typecheck:tools && npm run test && npm run build",
+    "avatar:budget": "node tools/check-first-party-avatar-budget.mjs",
+    "ci": "npm run safety:check && npm run rights:check && npm run rights:test && npm run requirements:check && npm run avatar:budget && npm run format:check && npm run lint && npm run typecheck && npm run typecheck:tools && npm run test && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

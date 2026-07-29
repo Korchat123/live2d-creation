@@ -46,6 +46,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm rights:check
+      - run: pnpm avatar:budget
       - run: pnpm --filter @open-avatar/core test
       - run: pnpm --filter @open-avatar/audio test
       - run: pnpm --filter @open-avatar/runtime test

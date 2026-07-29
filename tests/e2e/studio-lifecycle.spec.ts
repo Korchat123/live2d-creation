@@ -27,3 +27,23 @@ test("renders, accepts human input, resizes, and disposes safely", async ({
   await expect(page.locator("#status")).toHaveText("Renderer disposed");
   await expect.poll(() => pixiWarnings).toEqual([]);
 });
+
+test("matches the approved first-party fixture render", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(
+    browserName !== "chromium",
+    "The committed pixel baseline is reviewed on Chromium.",
+  );
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.goto("/");
+  await expect(page.locator("#status")).toHaveText("Renderer ready");
+
+  await page.locator("#x").fill("0.5");
+  await page.locator("#mouth").fill("0.65");
+  await expect(page.locator("#stage")).toHaveScreenshot(
+    "minimal-avatar-controls.png",
+    { animations: "disabled" },
+  );
+});

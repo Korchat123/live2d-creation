@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   BUNDLE_LIMITS,
@@ -34,6 +36,32 @@ const codes = async (value: BundleSource) => {
 };
 
 describe("validateBundle", () => {
+  it("validates the first-party fixture source inputs", async () => {
+    const fixture = (path: string) =>
+      fileURLToPath(
+        new URL(
+          `../../../assets/fixtures/minimal-avatar/${path}`,
+          import.meta.url,
+        ),
+      );
+    const manifestBytes = new Uint8Array(
+      await readFile(fixture("avatar.json")),
+    );
+    const manifest = JSON.parse(new TextDecoder().decode(manifestBytes)) as {
+      assets: Array<{ path: string }>;
+    };
+    const files = await Promise.all(
+      manifest.assets.map(async ({ path }) => ({
+        path,
+        bytes: new Uint8Array(await readFile(fixture(path))),
+      })),
+    );
+
+    const result = await validateBundle({ manifestBytes, files });
+    expect(result.ok).toBe(true);
+    if (result.ok) result.bundle.dispose();
+  });
+
   it("returns a transactional copy that can be disposed", async () => {
     const bytes = image.slice();
     const result = await validateBundle(
