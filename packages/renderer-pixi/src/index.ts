@@ -17,6 +17,16 @@ export interface AvatarLayer {
     readonly yParameter: string;
     readonly amount: number;
   };
+  readonly offset?: {
+    readonly xParameter?: string;
+    readonly xAmount?: number;
+    readonly yParameter?: string;
+    readonly yAmount?: number;
+  };
+  readonly rotation?: {
+    readonly parameter: string;
+    readonly degrees: number;
+  };
 }
 
 export interface RenderBundle {
@@ -223,14 +233,32 @@ export class PixiWebGLBackend implements RendererBackend {
     return {
       render(pose) {
         for (const { layer, display, basePositions } of parts) {
+          let x = layer.x;
+          let y = layer.y;
           if (layer.translate) {
-            const x = pose.parameters[layer.translate.xParameter] ?? 0;
-            const y = pose.parameters[layer.translate.yParameter] ?? 0;
-            display.position.set(
-              layer.x + x * layer.translate.amount,
-              layer.y + y * layer.translate.amount,
-            );
+            x +=
+              (pose.parameters[layer.translate.xParameter] ?? 0) *
+              layer.translate.amount;
+            y +=
+              (pose.parameters[layer.translate.yParameter] ?? 0) *
+              layer.translate.amount;
           }
+          if (layer.offset) {
+            if (layer.offset.xParameter)
+              x +=
+                (pose.parameters[layer.offset.xParameter] ?? 0) *
+                (layer.offset.xAmount ?? 0);
+            if (layer.offset.yParameter)
+              y +=
+                (pose.parameters[layer.offset.yParameter] ?? 0) *
+                (layer.offset.yAmount ?? 0);
+          }
+          display.position.set(x, y);
+          display.rotation =
+            ((pose.parameters[layer.rotation?.parameter ?? ""] ?? 0) *
+              (layer.rotation?.degrees ?? 0) *
+              Math.PI) /
+            180;
           if (
             !layer.deform ||
             !(display instanceof MeshPlane) ||

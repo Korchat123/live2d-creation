@@ -2,6 +2,7 @@ import manifest from "../../../assets/fixtures/minimal-avatar/avatar.json" with 
 import clips from "../../../assets/reference-avatar/animation-clips.json" with { type: "json" };
 import type { NamedAnimationClips } from "@open-avatar/core";
 import eyeUrl from "../../../assets/fixtures/minimal-avatar/layers/eye_c_pair.svg?url";
+import browUrl from "../../../assets/fixtures/minimal-avatar/layers/brow_c_pair.svg?url";
 import faceUrl from "../../../assets/fixtures/minimal-avatar/layers/face_c_base.svg?url";
 import mouthUrl from "../../../assets/fixtures/minimal-avatar/layers/mouth_c_lower_mesh.svg?url";
 import torsoUrl from "../../../assets/fixtures/minimal-avatar/layers/torso_c_base.svg?url";
@@ -74,6 +75,7 @@ const adapter = new TrustedStudioAdapter(manifest, {
 const renderer = new AvatarRenderer();
 const canvas = query<HTMLCanvasElement>("#avatar");
 const assetUrls: Record<string, string> = {
+  "layers/brow_c_pair.svg": browUrl,
   "layers/eye_c_pair.svg": eyeUrl,
   "layers/face_c_base.svg": faceUrl,
   "layers/mouth_c_lower_mesh.svg": mouthUrl,

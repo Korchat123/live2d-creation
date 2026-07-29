@@ -11,6 +11,7 @@
     },
     { "id": "face_c_base", "type": "image", "path": "layers/face_c_base.svg" },
     { "id": "eye_c_pair", "type": "image", "path": "layers/eye_c_pair.svg" },
+    { "id": "brow_c_pair", "type": "image", "path": "layers/brow_c_pair.svg" },
     {
       "id": "mouth_c_lower_mesh",
       "type": "image",

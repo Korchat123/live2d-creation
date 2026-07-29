@@ -7,14 +7,18 @@
       "assetUrl": "layers/torso_c_base.svg",
       "x": 48,
       "y": 150,
-      "zIndex": 0
+      "zIndex": 0,
+      "offset": { "xParameter": "bodyLean", "xAmount": 6 },
+      "rotation": { "parameter": "bodyLean", "degrees": 4 }
     },
     {
       "id": "face_c_base",
       "assetUrl": "layers/face_c_base.svg",
       "x": 64,
       "y": 38,
-      "zIndex": 1
+      "zIndex": 1,
+      "offset": { "xParameter": "headTilt", "xAmount": 7 },
+      "rotation": { "parameter": "headTilt", "degrees": 5 }
     },
     {
       "id": "eye_c_pair",
@@ -26,6 +30,20 @@
         "xParameter": "gazeX",
         "yParameter": "gazeY",
         "amount": 6
+      },
+      "offset": { "xParameter": "headTilt", "xAmount": 7 }
+    },
+    {
+      "id": "brow_c_pair",
+      "assetUrl": "layers/brow_c_pair.svg",
+      "x": 84,
+      "y": 70,
+      "zIndex": 3,
+      "offset": {
+        "xParameter": "headTilt",
+        "xAmount": 7,
+        "yParameter": "browLift",
+        "yAmount": -10
       }
     },
     {
@@ -33,8 +51,9 @@
       "assetUrl": "layers/mouth_c_lower_mesh.svg",
       "x": 104,
       "y": 127,
-      "zIndex": 3,
-      "deform": { "parameter": "mouthOpen", "amount": 14 }
+      "zIndex": 4,
+      "deform": { "parameter": "mouthOpen", "amount": 14 },
+      "offset": { "xParameter": "headTilt", "xAmount": 7 }
     }
   ]
 }
