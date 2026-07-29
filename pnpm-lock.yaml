@@ -41,7 +41,11 @@ importers:
 
   packages/controls: {}
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@open-avatar/schema':
+        specifier: workspace:*
+        version: link:../schema
 
   packages/exporter: {}
 
