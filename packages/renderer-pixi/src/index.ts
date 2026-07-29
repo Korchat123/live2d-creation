@@ -256,9 +256,13 @@ export class PixiWebGLBackend implements RendererBackend {
         return Promise.resolve();
       },
       dispose() {
+        for (const assetUrl of new Set(
+          bundle.layers.map((layer) => layer.assetUrl),
+        ))
+          void Assets.unload(assetUrl).catch(() => undefined);
         app.destroy(
           { removeView: false },
-          { children: true, texture: true, textureSource: true },
+          { children: true, texture: false, textureSource: false },
         );
       },
     };

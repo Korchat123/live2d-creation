@@ -3,6 +3,14 @@ import { expect, test } from "@playwright/test";
 test("renders, accepts human input, resizes, and disposes safely", async ({
   page,
 }) => {
+  const pixiWarnings: string[] = [];
+  page.on("console", (message) => {
+    if (
+      message.type() === "warning" &&
+      message.text().includes("TextureSource managed by Assets")
+    )
+      pixiWarnings.push(message.text());
+  });
   await page.goto("/");
 
   await expect(page.locator("#status")).toHaveText("Renderer ready");
@@ -17,4 +25,5 @@ test("renders, accepts human input, resizes, and disposes safely", async ({
   await expect(page.locator("#status")).toHaveText("Renderer disposed");
   await page.locator("#dispose").click();
   await expect(page.locator("#status")).toHaveText("Renderer disposed");
+  await expect.poll(() => pixiWarnings).toEqual([]);
 });
