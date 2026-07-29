@@ -18,6 +18,7 @@ import {
   type OpenAvatarManifest,
   type ProtocolError,
 } from "@open-avatar/schema";
+import type { ValidatedBundle } from "@open-avatar/validator";
 
 export interface RuntimeViewport {
   readonly width: number;
@@ -27,10 +28,18 @@ export interface RuntimeViewport {
 
 /** Renderer adapter; browser and headless renderers can implement this boundary. */
 export interface RuntimeRenderer {
-  load(manifest: OpenAvatarManifest, viewport?: RuntimeViewport): Promise<void>;
+  load(
+    manifest: OpenAvatarManifest,
+    viewport?: RuntimeViewport,
+    assets?: RuntimeAssets,
+  ): Promise<void>;
   render(pose: EvaluatedPose): void;
   resize(viewport: RuntimeViewport): void;
   dispose(): void;
+}
+
+export interface RuntimeAssets {
+  getFile(path: string): Uint8Array | undefined;
 }
 
 export type RuntimeState =
@@ -84,8 +93,31 @@ export class AvatarRuntime {
       this.#fallback(error);
       throw error;
     }
+    await this.#loadManifest(result.value, viewport);
+  }
+
+  async loadBundle(
+    bundle: ValidatedBundle,
+    viewport?: RuntimeViewport,
+  ): Promise<void> {
+    this.#assertState("load", ["idle", "fallback"]);
+    if (bundle.disposed) {
+      const error = new Error("Validated avatar bundle has been disposed");
+      this.#fallback(error);
+      throw error;
+    }
+    this.#setState("loading");
+    await this.#loadManifest(bundle.manifest, viewport, {
+      getFile: (path) => bundle.getFile(path),
+    });
+  }
+
+  async #loadManifest(
+    manifest: OpenAvatarManifest,
+    viewport?: RuntimeViewport,
+    assets?: RuntimeAssets,
+  ): Promise<void> {
     try {
-      const manifest = result.value;
       const definitions = Object.fromEntries(
         manifest.parameters.map((parameter) => [
           parameter.id,
@@ -104,7 +136,7 @@ export class AvatarRuntime {
         clock: this.#clock,
         parameters: definitions,
       });
-      await this.#renderer.load(manifest, viewport);
+      await this.#renderer.load(manifest, viewport, assets);
       this.#router = router;
       this.#core = core;
       this.#unsubscribeRouter = router.onDiagnostic((control) =>

@@ -20,6 +20,7 @@
   "dependencies": {
     "@open-avatar/controls": "workspace:*",
     "@open-avatar/core": "workspace:*",
-    "@open-avatar/schema": "workspace:*"
+    "@open-avatar/schema": "workspace:*",
+    "@open-avatar/validator": "workspace:*"
   }
 }

@@ -83,7 +83,14 @@ async function sha256(bytes: Uint8Array): Promise<string> {
  * An immutable, validated view of a bundle. Source buffers are copied so a
  * caller cannot mutate data after validation.
  */
-export class ValidatedBundle {
+export interface ValidatedBundle {
+  readonly manifest: Readonly<OpenAvatarManifest>;
+  readonly disposed: boolean;
+  getFile(path: string): Uint8Array | undefined;
+  dispose(): void;
+}
+
+class ValidatedBundleImpl implements ValidatedBundle {
   readonly manifest: Readonly<OpenAvatarManifest>;
   readonly #files: Map<string, Uint8Array>;
   #disposed = false;
@@ -297,7 +304,7 @@ export async function validateBundle(
   if (diagnostics.length) return { ok: false, diagnostics };
   return {
     ok: true,
-    bundle: new ValidatedBundle(manifestResult.value, files),
+    bundle: new ValidatedBundleImpl(manifestResult.value, files),
     diagnostics: [],
   };
 }

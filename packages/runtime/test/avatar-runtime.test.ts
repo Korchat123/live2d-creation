@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FakeClock } from "@open-avatar/core";
 import { AvatarRuntime, type RuntimeRenderer } from "../src/index.js";
 import type { OpenAvatarManifest } from "@open-avatar/schema";
+import { validateBundle } from "@open-avatar/validator";
 
 const manifest: OpenAvatarManifest = {
   manifestVersion: "1.0",
@@ -56,6 +57,26 @@ describe("AvatarRuntime", () => {
     runtime.dispose();
     expect(adapter.dispose).toHaveBeenCalledOnce();
     expect(runtime.state).toBe("disposed");
+  });
+
+  it("loads only live validated bundles through the asset boundary", async () => {
+    const adapter = renderer();
+    const runtime = new AvatarRuntime({ renderer: adapter });
+    const result = await validateBundle({
+      manifestBytes: new TextEncoder().encode(JSON.stringify(manifest)),
+      files: [],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    await runtime.loadBundle(result.bundle);
+    const assets = vi.mocked(adapter.load).mock.calls[0]?.[2];
+    expect(assets?.getFile("missing")).toBeUndefined();
+    runtime.dispose();
+
+    result.bundle.dispose();
+    const second = new AvatarRuntime({ renderer: renderer() });
+    await expect(second.loadBundle(result.bundle)).rejects.toThrow("disposed");
+    expect(second.state).toBe("fallback");
   });
 
   it("enforces human override when AI and human commands share a tick", async () => {
