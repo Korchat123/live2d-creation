@@ -118,4 +118,3 @@ GPU makes the performance claim relevant to typical users, but may constrain
 texture and deformation budgets. Safari testing requires macOS hardware in CI
 or the release process. The rolling browser window also requires recording
 exact tested versions for each release.
-

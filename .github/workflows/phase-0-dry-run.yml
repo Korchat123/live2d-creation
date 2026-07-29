@@ -1,0 +1,33 @@
+name: Phase 0 dry-run artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: phase-0-preview
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm run ci
+      - run: pnpm package:dry-run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase-0-${{ github.sha }}
+          path: artifacts/phase-0-${{ github.sha }}/
+          if-no-files-found: error
+          retention-days: 14

@@ -75,20 +75,20 @@ authoring, export, or filesystem rights.
 
 ## Threats and required controls
 
-| Threat | v1 required control |
-| --- | --- |
-| Archive bomb or oversized expansion | Stream/count entries where possible; reject before full expansion; enforce compressed and expanded byte limits and compression-ratio limits. |
-| Path traversal or overwrite | Normalize and validate every path; reject absolute, parent, reserved-device, duplicate/case-collision, link, and outside-root targets; extraction uses a private temporary directory. |
-| Malformed image or GPU exhaustion | Decode through maintained browser APIs; verify dimensions and aggregate decoded/GPU estimates before texture creation; cap texture count and dimensions. |
-| Invalid mesh/index data | Require finite values, bounded vertex/index counts, legal indices, declared attributes, and bounded coordinates before buffer allocation. |
-| Animation complexity attack | Cap parameters, motions, keyframes, duration, nesting, masks, and work evaluated per frame; reject non-finite time/value data. |
-| Command flood or starvation | Per-source and global rate/burst/queue limits; coalesce continuous channels; expiry, cancellation, fair scheduling, and human/emergency priority. |
-| Capability or priority escalation | Host-attached identity and policy; semantic capability allowlists; ignore payload identity/priority claims; never expose unrestricted parameter writes to AI. |
-| Persistent nuisance motion | Maximum durations, reset/stop action, human override, reduced-motion clamp, and safe neutral state after disconnect. |
-| Media surveillance | Explicit browser permission plus in-product active indicator and stop action; local processing by default; no automatic capture on bundle load. |
-| Data leakage through logs/telemetry | Structured error codes, payload redaction, no raw media or transcripts, telemetry off by default, bounded retention controlled by the host. |
-| Malicious external asset fetch | No external URLs in bundles; host supplies bytes through an explicit loader and its own fetch/CSP policy. |
-| Resource leak after failure | Transactional load; dispose all temporary CPU/GPU/audio/listener resources on success, rejection, cancellation, context loss, and remount. |
+| Threat                              | v1 required control                                                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Archive bomb or oversized expansion | Stream/count entries where possible; reject before full expansion; enforce compressed and expanded byte limits and compression-ratio limits.                                          |
+| Path traversal or overwrite         | Normalize and validate every path; reject absolute, parent, reserved-device, duplicate/case-collision, link, and outside-root targets; extraction uses a private temporary directory. |
+| Malformed image or GPU exhaustion   | Decode through maintained browser APIs; verify dimensions and aggregate decoded/GPU estimates before texture creation; cap texture count and dimensions.                              |
+| Invalid mesh/index data             | Require finite values, bounded vertex/index counts, legal indices, declared attributes, and bounded coordinates before buffer allocation.                                             |
+| Animation complexity attack         | Cap parameters, motions, keyframes, duration, nesting, masks, and work evaluated per frame; reject non-finite time/value data.                                                        |
+| Command flood or starvation         | Per-source and global rate/burst/queue limits; coalesce continuous channels; expiry, cancellation, fair scheduling, and human/emergency priority.                                     |
+| Capability or priority escalation   | Host-attached identity and policy; semantic capability allowlists; ignore payload identity/priority claims; never expose unrestricted parameter writes to AI.                         |
+| Persistent nuisance motion          | Maximum durations, reset/stop action, human override, reduced-motion clamp, and safe neutral state after disconnect.                                                                  |
+| Media surveillance                  | Explicit browser permission plus in-product active indicator and stop action; local processing by default; no automatic capture on bundle load.                                       |
+| Data leakage through logs/telemetry | Structured error codes, payload redaction, no raw media or transcripts, telemetry off by default, bounded retention controlled by the host.                                           |
+| Malicious external asset fetch      | No external URLs in bundles; host supplies bytes through an explicit loader and its own fetch/CSP policy.                                                                             |
+| Resource leak after failure         | Transactional load; dispose all temporary CPU/GPU/audio/listener resources on success, rejection, cancellation, context loss, and remount.                                            |
 
 ## Resource-limit categories
 

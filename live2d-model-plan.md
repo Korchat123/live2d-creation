@@ -145,7 +145,11 @@ type AvatarCommand =
   | { type: "motion.play"; id: string; priority?: number; fadeMs?: number }
   | { type: "motion.stop"; id?: string; fadeMs?: number }
   | { type: "gaze.set"; x: number; y: number; durationMs?: number }
-  | { type: "pose.set"; parameters: Record<string, number>; durationMs?: number }
+  | {
+      type: "pose.set";
+      parameters: Record<string, number>;
+      durationMs?: number;
+    }
   | { type: "lipSync.set"; mouthOpen: number }
   | { type: "viseme.set"; id: string; weight: number; durationMs?: number }
   | { type: "state.reset"; fadeMs?: number };
