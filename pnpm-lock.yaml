@@ -53,7 +53,11 @@ importers:
 
   packages/audio: {}
 
-  packages/controls: {}
+  packages/controls:
+    dependencies:
+      '@open-avatar/schema':
+        specifier: workspace:*
+        version: link:../schema
 
   packages/core:
     dependencies:
@@ -69,7 +73,17 @@ importers:
         specifier: 8.19.0
         version: 8.19.0
 
-  packages/runtime: {}
+  packages/runtime:
+    dependencies:
+      '@open-avatar/controls':
+        specifier: workspace:*
+        version: link:../controls
+      '@open-avatar/core':
+        specifier: workspace:*
+        version: link:../core
+      '@open-avatar/schema':
+        specifier: workspace:*
+        version: link:../schema
 
   packages/schema:
     dependencies:
