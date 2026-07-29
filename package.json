@@ -9,11 +9,14 @@
   },
   "scripts": {
     "build": "corepack pnpm -r --if-present build",
-    "ci": "npm run safety:check && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "ci": "npm run safety:check && npm run rights:check && npm run rights:test && npm run requirements:check && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "package:dry-run": "node tools/package-dry-run.mjs",
+    "requirements:check": "node tools/check-requirements-traceability.mjs",
+    "rights:check": "node tools/validate-rights.mjs",
+    "rights:test": "node --test tests/rights/*.test.mjs",
     "safety:check": "node tools/check-repository-safety.mjs",
     "test": "vitest run",
     "typecheck": "corepack pnpm -r --if-present typecheck"
