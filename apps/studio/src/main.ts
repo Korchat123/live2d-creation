@@ -1,4 +1,6 @@
 import manifest from "../../../assets/fixtures/minimal-avatar/avatar.json" with { type: "json" };
+import clips from "../../../assets/reference-avatar/animation-clips.json" with { type: "json" };
+import type { NamedAnimationClips } from "@open-avatar/core";
 import eyeUrl from "../../../assets/fixtures/minimal-avatar/layers/eye_c_pair.svg?url";
 import faceUrl from "../../../assets/fixtures/minimal-avatar/layers/face_c_base.svg?url";
 import mouthUrl from "../../../assets/fixtures/minimal-avatar/layers/mouth_c_lower_mesh.svg?url";
@@ -66,7 +68,9 @@ const query = <T extends Element = HTMLElement>(selector: string): T => {
   return element;
 };
 
-const adapter = new TrustedStudioAdapter(manifest);
+const adapter = new TrustedStudioAdapter(manifest, {
+  clips: clips as NamedAnimationClips,
+});
 const renderer = new AvatarRenderer();
 const canvas = query<HTMLCanvasElement>("#avatar");
 const assetUrls: Record<string, string> = {

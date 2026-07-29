@@ -39,7 +39,7 @@ describe("TrustedStudioAdapter", () => {
     const adapter = new TrustedStudioAdapter(manifest);
     const before = adapter.snapshot().pose;
     const result = adapter.submit(
-      actionCommand(adapter.createId("ai"), "motion", "wave"),
+      actionCommand(adapter.createId("ai"), "motion", "unknown-motion"),
       "ai",
     );
     expect(result.accepted).toBe(false);
@@ -62,5 +62,21 @@ describe("TrustedStudioAdapter", () => {
       motion: null,
       pose: null,
     });
+  });
+
+  it("accepts declared semantic expression and motion identifiers", () => {
+    const adapter = new TrustedStudioAdapter(manifest);
+    expect(
+      adapter.submit(
+        actionCommand(adapter.createId("human"), "expression", "happy"),
+        "human",
+      ).accepted,
+    ).toBe(true);
+    expect(
+      adapter.submit(
+        actionCommand(adapter.createId("ai"), "motion", "wave"),
+        "ai",
+      ).accepted,
+    ).toBe(true);
   });
 });

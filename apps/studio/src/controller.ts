@@ -11,6 +11,7 @@ import {
   CoreAnimation,
   SystemClock,
   type EvaluatedPose,
+  type NamedAnimationClips,
 } from "@open-avatar/core";
 
 export interface StudioSnapshot {
@@ -28,15 +29,20 @@ export class TrustedStudioAdapter {
   #humanOverrideUntil = 0;
   constructor(
     input: unknown,
-    readonly humanOverrideMs = 1500,
+    options: {
+      humanOverrideMs?: number;
+      clips?: NamedAnimationClips;
+    } = {},
   ) {
     const checked = validateManifest(input);
     if (!checked.valid || !checked.value)
       throw new Error("The avatar manifest is invalid.");
     this.manifest = checked.value;
+    this.humanOverrideMs = options.humanOverrideMs ?? 1500;
     this.engine = new CoreAnimation({
       clock: new SystemClock(),
-      humanOverrideMs,
+      humanOverrideMs: this.humanOverrideMs,
+      ...(options.clips ? { clips: options.clips } : {}),
       parameters: Object.fromEntries(
         this.manifest.parameters.map(({ id, min, max, default: initial }) => [
           id,
@@ -45,6 +51,7 @@ export class TrustedStudioAdapter {
       ),
     });
   }
+  readonly humanOverrideMs: number;
   createId(source: ControlSource) {
     return `${source}-${++this.#sequence}`;
   }
@@ -117,7 +124,7 @@ export function setCommand(
 export function actionCommand(
   id: string,
   action: "blink" | "expression" | "motion" | "pose",
-  contentId = "demo",
+  contentId = action === "expression" ? "happy" : "wave",
 ): CommandEnvelope {
   return {
     protocolVersion: PROTOCOL_VERSION,
