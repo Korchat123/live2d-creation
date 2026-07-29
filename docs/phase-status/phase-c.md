@@ -15,6 +15,10 @@ Reviewed: 2026-07-29
   package archives from the tested commit, installs them in a clean consumer
   fixture, imports the public entry points, and uploads a commit-labeled
   non-release artifact.
+- The runtime matrix workflow runs lifecycle coverage in Chromium, Firefox,
+  and WebKit, and uploads browser reports for each commit.
+- V8 coverage is enforced for the Phase C schema, core, controls, runtime, and
+  validator source packages.
 
 ## Gate evidence
 
@@ -28,9 +32,6 @@ Reviewed: 2026-07-29
 
 ## Remaining gate work
 
-- Add an automated supported-browser matrix for runtime lifecycle behavior.
-- Add and approve a coverage threshold for the Phase C public contract and
-  hostile-input suites.
 - Confirm the clean-consumer package check on GitHub Actions for the integrated
   commit.
 

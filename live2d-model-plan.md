@@ -341,7 +341,7 @@ The preview must be reproducible from the tested commit.
       discovery, limits, and diagnostics.
 - [x] Implement context loss, resize, device-pixel ratio, reduced motion, and
       cleanup.
-- [ ] Extend CI with contract, malformed-input, browser-matrix, coverage, and
+- [x] Extend CI with contract, malformed-input, browser-matrix, coverage, and
       package-pack checks.
 
 Gate: public API contract tests and malformed-input security tests pass.

@@ -1,0 +1,91 @@
+name: Phase C runtime matrix
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/phase-c-runtime-matrix.yml"
+      - "apps/studio/**"
+      - "packages/controls/**"
+      - "packages/core/**"
+      - "packages/renderer-pixi/**"
+      - "packages/runtime/**"
+      - "packages/schema/**"
+      - "packages/validator/**"
+      - "tests/e2e/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "playwright.config.ts"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/phase-c-runtime-matrix.yml"
+      - "apps/studio/**"
+      - "packages/controls/**"
+      - "packages/core/**"
+      - "packages/renderer-pixi/**"
+      - "packages/runtime/**"
+      - "packages/schema/**"
+      - "packages/validator/**"
+      - "tests/e2e/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "playwright.config.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase-c-coverage-${{ github.sha }}
+          path: coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  browser-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm run test:browser --project=${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-c-${{ matrix.browser }}-report-${{ github.sha }}
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14

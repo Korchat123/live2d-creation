@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "corepack pnpm -r --if-present build",
-    "ci": "npm run safety:check && npm run rights:check && npm run rights:test && npm run requirements:check && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
+    "ci": "npm run safety:check && npm run rights:check && npm run rights:test && npm run requirements:check && npm run format:check && npm run lint && npm run typecheck && npm run typecheck:tools && npm run test && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -19,11 +19,16 @@
     "rights:test": "node --test tests/rights/*.test.mjs",
     "safety:check": "node tools/check-repository-safety.mjs",
     "test": "vitest run",
-    "typecheck": "corepack pnpm -r --if-present typecheck"
+    "test:browser": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "corepack pnpm -r --if-present typecheck",
+    "typecheck:tools": "tsc -p tsconfig.tools.json --noEmit"
   },
   "devDependencies": {
     "@eslint/js": "9.32.0",
+    "@playwright/test": "1.55.0",
     "@types/node": "24.1.0",
+    "@vitest/coverage-v8": "3.2.4",
     "eslint": "9.32.0",
     "globals": "16.3.0",
     "prettier": "3.6.2",

@@ -30,6 +30,7 @@ export default tseslint.config(
     files: [
       "**/*.config.ts",
       "**/test/**/*.ts",
+      "tests/e2e/**/*.ts",
       "tools/**/*.ts",
       "vitest.config.ts",
     ],

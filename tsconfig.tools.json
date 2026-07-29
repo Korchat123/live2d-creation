@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "verbatimModuleSyntax": false
+  },
+  "include": ["playwright.config.ts", "tests/e2e/**/*.ts"]
+}
