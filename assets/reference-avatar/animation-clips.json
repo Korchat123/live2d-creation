@@ -1,0 +1,170 @@
+{
+  "formatVersion": "1.0",
+  "parameters": {
+    "browLift": { "min": -1, "max": 1, "default": 0 },
+    "headTilt": { "min": -1, "max": 1, "default": 0 },
+    "bodyLean": { "min": -1, "max": 1, "default": 0 },
+    "mouthOpen": { "min": 0, "max": 1, "default": 0 }
+  },
+  "expressions": {
+    "neutral": { "durationMs": 160, "tracks": [] },
+    "happy": {
+      "durationMs": 280,
+      "tracks": [
+        {
+          "parameterId": "browLift",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 140, "value": 0.45 },
+            { "timeMs": 280, "value": 0.25 }
+          ]
+        }
+      ]
+    },
+    "sad": {
+      "durationMs": 280,
+      "tracks": [
+        {
+          "parameterId": "browLift",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 140, "value": -0.5 },
+            { "timeMs": 280, "value": -0.3 }
+          ]
+        }
+      ]
+    },
+    "angry": {
+      "durationMs": 220,
+      "tracks": [
+        {
+          "parameterId": "browLift",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 110, "value": -0.8 },
+            { "timeMs": 220, "value": -0.65 }
+          ]
+        }
+      ]
+    },
+    "surprised": {
+      "durationMs": 220,
+      "tracks": [
+        {
+          "parameterId": "browLift",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 110, "value": 0.9 },
+            { "timeMs": 220, "value": 0.7 }
+          ]
+        },
+        {
+          "parameterId": "mouthOpen",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 110, "value": 0.45 },
+            { "timeMs": 220, "value": 0.2 }
+          ]
+        }
+      ]
+    },
+    "thinking": {
+      "durationMs": 300,
+      "tracks": [
+        {
+          "parameterId": "browLift",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 150, "value": 0.25 },
+            { "timeMs": 300, "value": 0.15 }
+          ]
+        },
+        {
+          "parameterId": "headTilt",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 300, "value": 0.2 }
+          ]
+        }
+      ]
+    }
+  },
+  "motions": {
+    "idle": {
+      "durationMs": 1600,
+      "loop": true,
+      "tracks": [
+        {
+          "parameterId": "bodyLean",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 800, "value": 0.08 },
+            { "timeMs": 1600, "value": 0 }
+          ]
+        }
+      ]
+    },
+    "nod": {
+      "durationMs": 520,
+      "tracks": [
+        {
+          "parameterId": "headTilt",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 130, "value": 0.35 },
+            { "timeMs": 330, "value": -0.25 },
+            { "timeMs": 520, "value": 0 }
+          ]
+        }
+      ]
+    },
+    "wave": {
+      "durationMs": 720,
+      "tracks": [
+        {
+          "parameterId": "bodyLean",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 180, "value": -0.3 },
+            { "timeMs": 540, "value": 0.25 },
+            { "timeMs": 720, "value": 0 }
+          ]
+        }
+      ]
+    },
+    "explain": {
+      "durationMs": 680,
+      "tracks": [
+        {
+          "parameterId": "bodyLean",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 340, "value": 0.2 },
+            { "timeMs": 680, "value": 0 }
+          ]
+        },
+        {
+          "parameterId": "headTilt",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 340, "value": -0.15 },
+            { "timeMs": 680, "value": 0 }
+          ]
+        }
+      ]
+    },
+    "shrug": {
+      "durationMs": 480,
+      "tracks": [
+        {
+          "parameterId": "bodyLean",
+          "keyframes": [
+            { "timeMs": 0, "value": 0 },
+            { "timeMs": 240, "value": -0.18 },
+            { "timeMs": 480, "value": 0 }
+          ]
+        }
+      ]
+    }
+  }
+}
