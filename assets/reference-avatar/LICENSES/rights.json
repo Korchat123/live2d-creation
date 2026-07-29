@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "collection": "reference-avatar",
+  "review": {
+    "status": "incomplete",
+    "reviewedAt": null,
+    "reviewedBy": null,
+    "notes": "No artwork, font, image, or external reference has been added. This record does not assert ownership or redistribution rights."
+  },
+  "emptyState": {
+    "declared": true,
+    "reason": "The reference-avatar asset directory contains no licensable source assets yet."
+  },
+  "assets": []
+}
