@@ -27,7 +27,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.config.ts", "tools/**/*.ts", "vitest.workspace.ts"],
+    files: [
+      "**/*.config.ts",
+      "**/test/**/*.ts",
+      "tools/**/*.ts",
+      "vitest.config.ts",
+    ],
     extends: [tseslint.configs.disableTypeChecked],
   },
   {

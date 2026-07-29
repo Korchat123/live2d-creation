@@ -1,0 +1,9 @@
+{
+  "manifestVersion": "1.0",
+  "id": "reference-avatar",
+  "name": "Reference Avatar",
+  "canvas": { "width": 1024, "height": 1024 },
+  "assets": [{ "id": "face", "type": "image", "path": "textures/face.png" }],
+  "parameters": [{ "id": "mouthOpen", "min": 0, "max": 1, "default": 0 }],
+  "capabilities": { "gaze": true, "blink": true, "mouthOpen": true }
+}

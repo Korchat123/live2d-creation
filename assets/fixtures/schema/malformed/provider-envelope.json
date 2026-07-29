@@ -1,0 +1,6 @@
+{
+  "protocolVersion": "1.0",
+  "id": "bad-001",
+  "type": "capability.query",
+  "provider": "example-ai"
+}
