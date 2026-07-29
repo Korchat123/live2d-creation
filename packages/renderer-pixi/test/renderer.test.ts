@@ -19,6 +19,18 @@ const bundle: RenderBundle = {
       zIndex: 2,
       deform: { parameter: "mouthOpen", amount: 18 },
     },
+    {
+      id: "eyes",
+      assetUrl: "eyes.svg",
+      x: 90,
+      y: 80,
+      zIndex: 3,
+      translate: {
+        xParameter: "gazeX",
+        yParameter: "gazeY",
+        amount: 6,
+      },
+    },
   ],
 };
 

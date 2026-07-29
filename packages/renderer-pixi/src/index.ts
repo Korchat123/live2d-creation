@@ -12,6 +12,11 @@ export interface AvatarLayer {
     readonly parameter: string;
     readonly amount: number;
   };
+  readonly translate?: {
+    readonly xParameter: string;
+    readonly yParameter: string;
+    readonly amount: number;
+  };
 }
 
 export interface RenderBundle {
@@ -218,6 +223,14 @@ export class PixiWebGLBackend implements RendererBackend {
     return {
       render(pose) {
         for (const { layer, display, basePositions } of parts) {
+          if (layer.translate) {
+            const x = pose.parameters[layer.translate.xParameter] ?? 0;
+            const y = pose.parameters[layer.translate.yParameter] ?? 0;
+            display.position.set(
+              layer.x + x * layer.translate.amount,
+              layer.y + y * layer.translate.amount,
+            );
+          }
           if (
             !layer.deform ||
             !(display instanceof MeshPlane) ||

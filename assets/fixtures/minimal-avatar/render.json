@@ -21,7 +21,12 @@
       "assetUrl": "layers/eye_c_pair.svg",
       "x": 84,
       "y": 88,
-      "zIndex": 2
+      "zIndex": 2,
+      "translate": {
+        "xParameter": "gazeX",
+        "yParameter": "gazeY",
+        "amount": 6
+      }
     },
     {
       "id": "mouth_c_lower_mesh",

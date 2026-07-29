@@ -18,10 +18,13 @@
     }
   ],
   "parameters": [
+    { "id": "gazeX", "min": -1, "max": 1, "default": 0 },
+    { "id": "gazeY", "min": -1, "max": 1, "default": 0 },
     { "id": "mouthOpen", "min": 0, "max": 1, "default": 0 },
     { "id": "blink", "min": 0, "max": 1, "default": 0 }
   ],
   "capabilities": {
+    "gaze": true,
     "blink": true,
     "mouthOpen": true,
     "reset": true
