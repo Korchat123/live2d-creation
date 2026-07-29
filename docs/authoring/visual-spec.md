@@ -1,6 +1,6 @@
 # Reference Avatar Visual Specification
 
-Status: proposed for Phase A review  
+Status: approved Phase A baseline  
 Applies to: first-party Open 2D Avatar reference character  
 Asset policy: this specification uses no external character, franchise, artist,
 font, or image reference. Artwork derived from it must be original and recorded
@@ -121,8 +121,8 @@ unrecorded reference.
   extrusion appropriate to the renderer.
 - Do not upscale raster source during export.
 
-These are Phase A proposals. The approved budgets must be copied into validator
-limits and tested in CI before the Phase B gate.
+These budgets are approved as the Phase A baseline. They must be copied into
+validator limits and tested in CI before the Phase B gate.
 
 ## Pose and crop acceptance
 
@@ -157,11 +157,20 @@ grayscale at 128 x 128 and does not depend on color alone.
 
 ## Phase A approval record
 
-The specification is not creatively approved until a human records:
+- Date: 2026-07-29
+- Reviewer: project owner through full project-execution authorization
+- Character direction: the original vector guide defined in this specification
+- Canvas: 2048 x 2048 logical pixels
+- Texture budget: at most two 2048 x 2048 atlases and 32 MiB decoded memory
+- Bundle target: at most 5 MiB compressed for the first-party avatar
+- Lip-sync scope: RMS-derived mouth openness for v1; visemes deferred
+- Rights status: approved and export eligible
+- Character sheet SHA-256:
+  `962fc227f1235afa0c9e818f26ddbe4cfcbbc4cadfb8f270d248ae0f73b053a`
+- Turnaround SHA-256:
+  `64569566fb1a790c7a04828d8b4d208ff1bbf94d35423b8457136bb6c96f839e`
+- Layer breakdown SHA-256:
+  `22a3d0f04b3811c6bd076c2774449ba9353417d123c7f875503270d27fb1cd03`
 
-- chosen character direction and final front/turnaround sheets;
-- final proportions, palette tokens, outfit, emblem, and accessories;
-- approved canvas, texture, decoded-memory, and bundle-size budgets;
-- confirmation that every reference and created asset has a complete rights
-  record;
-- approval date, reviewer, and links or hashes for the reviewed files.
+Phase B may refine implementation details, but any change to these approved
+creative files or budgets requires a new recorded review.

@@ -306,14 +306,14 @@ the dry-run artifact contains no secret or ignored file.
 
 ### Phase A - Rights, requirements, and visual specification
 
-- [ ] Create a machine-readable rights manifest for every image, font, and
+- [x] Create a machine-readable rights manifest for every image, font, and
       reference.
-- [ ] Approve an original character sheet, turnaround, front pose, palette,
+- [x] Approve an original character sheet, turnaround, front pose, palette,
       proportions, safe areas, and layer breakdown.
-- [ ] Set target canvas, texture, bundle-size, and memory budgets.
-- [ ] Decide RMS-only or the languages/viseme set required for v1.
-- [ ] Approve expression, motion, and accessibility acceptance checklists.
-- [ ] Extend CI with rights-manifest and specification completeness checks;
+- [x] Set target canvas, texture, bundle-size, and memory budgets.
+- [x] Decide RMS-only or the languages/viseme set required for v1.
+- [x] Approve expression, motion, and accessibility acceptance checklists.
+- [x] Extend CI with rights-manifest and specification completeness checks;
       publish the review report as a non-release artifact.
 
 Gate: rights records are complete, all art is original or redistributable, and
