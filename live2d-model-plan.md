@@ -335,11 +335,11 @@ The preview must be reproducible from the tested commit.
 
 ### Phase C - Runtime MVP
 
-- [ ] Implement schema, validator, loader, scheduler, mixer, pose evaluator,
+- [x] Implement schema, validator, loader, scheduler, mixer, pose evaluator,
       renderer, and runtime SDK.
-- [ ] Implement command acknowledgements, cancellation, arbitration, capability
+- [x] Implement command acknowledgements, cancellation, arbitration, capability
       discovery, limits, and diagnostics.
-- [ ] Implement context loss, resize, device-pixel ratio, reduced motion, and
+- [x] Implement context loss, resize, device-pixel ratio, reduced motion, and
       cleanup.
 - [ ] Extend CI with contract, malformed-input, browser-matrix, coverage, and
       package-pack checks.
