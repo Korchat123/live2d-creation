@@ -369,9 +369,10 @@ idle pose; live channels never overwrite unrelated parameters.
 The bundle must be generated from validated source inputs.
 
 Current status: runtime animation, clip authoring, Studio integration,
-parameter-sweep CI, and the first-party fixture rig are implemented. The Phase
-D gate remains pending separated approved artwork, golden-render evidence,
-asset budgets, and a validated first-party bundle.
+parameter-sweep CI, the first-party fixture rig, a Chromium visual baseline,
+and enforced fixture budgets are implemented. The Phase D gate remains pending
+separated approved artwork, per-clip visual evidence, production texture-memory
+budgets, and a validated first-party release bundle.
 
 ### Phase E - Human Studio and authoring tools
 
@@ -379,7 +380,7 @@ asset budgets, and a validated first-party bundle.
       meter, command timeline, capability inspector, and diagnostics.
 - [ ] Add deterministic exporter, rights editor, validation report, and bundle
       preview.
-- [ ] Support recording/replaying the provider-neutral command stream.
+- [x] Support recording/replaying the provider-neutral command stream.
 - [ ] Extend CI with Studio unit, end-to-end, accessibility, exporter
       reproducibility, and preview smoke tests.
 
@@ -389,21 +390,26 @@ The tested Studio preview must match the deployed commit.
 
 Current status: the Studio exposes all declared semantic expressions and
 motions as accessible buttons and keyboard shortcuts through the shared
-validated control path. The authoring/export, recording, replay, diagnostics,
-and Phase E CI gate work remain pending.
+validated control path. It records/replays trusted provider-neutral command
+streams and shows a bounded diagnostics timeline. The authoring/export,
+persisted recording import/export, and Phase E CI gate work remain pending.
 
 ### Phase F - AI and host integration
 
-- [ ] Publish a minimal AI-controller example with allowlisted semantic cues.
-- [ ] Publish framework-neutral runtime and web component examples.
+- [x] Publish a minimal AI-controller example with allowlisted semantic cues.
+- [x] Publish framework-neutral runtime and web component examples.
 - [ ] Add adapter guidance for agent, TTS, viseme, and streaming-audio hosts.
-- [ ] Verify that removing or rejecting a bundle falls back safely.
+- [x] Verify that removing or rejecting a bundle falls back safely.
 - [ ] Extend CI with example-consumer, web-component, concurrent-controller,
       fallback, and integration tests.
 
 Gate: both example controllers drive the same runtime concurrently, human
 override works, and no provider-specific type enters a core package.
 Every published example records its source commit and package versions.
+
+Current status: allowlisted semantic host controls, web-component guidance, and
+rejected-bundle fallback coverage are implemented. Concurrent-controller and
+dedicated integration-CI coverage remain pending.
 
 ### Phase G - Hardening and release
 
@@ -417,6 +423,11 @@ Every published example records its source commit and package versions.
 
 Gate: all release budgets pass on supported browsers and a clean consumer
 project can install, load, control, dispose, and reload the avatar.
+
+Current status: a manual, approval-gated preflight creates a commit-linked
+source archive, checksums, and CycloneDX SBOM without publishing. Physical
+performance/soak evidence, a selected license, signing credentials, versioning,
+and publish/post-publish authority remain pending.
 
 ## 10.1 CI/CD policy
 
