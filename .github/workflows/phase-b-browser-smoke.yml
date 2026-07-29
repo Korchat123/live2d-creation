@@ -1,0 +1,36 @@
+name: Phase B browser smoke
+on:
+  pull_request:
+    paths:
+      - "apps/studio/**"
+      - "packages/core/**"
+      - "packages/schema/**"
+      - "packages/renderer-pixi/**"
+      - "assets/fixtures/minimal-avatar/**"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm --filter @open-avatar/studio test
+      - run: pnpm --filter @open-avatar/studio build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-preview-${{ github.sha }}
+          path: |
+            apps/studio/dist
+            tests/performance/spike-report.md
+          if-no-files-found: error

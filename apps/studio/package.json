@@ -4,8 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@open-avatar/core": "workspace:*",
+    "@open-avatar/renderer-pixi": "workspace:*",
+    "@open-avatar/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "8.1.5"
   }
 }
