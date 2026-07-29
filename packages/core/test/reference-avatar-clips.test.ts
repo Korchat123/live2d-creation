@@ -24,16 +24,18 @@ describe("reference avatar clips", () => {
       ["motion", authored.motions],
     ] as const) {
       for (const [id, clip] of Object.entries(content)) {
-        const first = evaluateNamedAnimation(authored, channel, id, 0);
-        const second = evaluateNamedAnimation(authored, channel, id, 0);
-        expect(first).toEqual(second);
-        for (const [parameterId, value] of Object.entries(first ?? {})) {
-          const limit = limits[parameterId as keyof typeof limits];
-          expect(limit).toBeDefined();
-          expect(value).toBeGreaterThanOrEqual(limit!.min);
-          expect(value).toBeLessThanOrEqual(limit!.max);
-        }
         expect(clip.durationMs).toBeGreaterThan(0);
+        for (let timeMs = 0; timeMs <= clip.durationMs; timeMs += 20) {
+          const first = evaluateNamedAnimation(authored, channel, id, timeMs);
+          const second = evaluateNamedAnimation(authored, channel, id, timeMs);
+          expect(first).toEqual(second);
+          for (const [parameterId, value] of Object.entries(first ?? {})) {
+            const limit = limits[parameterId as keyof typeof limits];
+            expect(limit).toBeDefined();
+            expect(value).toBeGreaterThanOrEqual(limit!.min);
+            expect(value).toBeLessThanOrEqual(limit!.max);
+          }
+        }
       }
     }
   });
