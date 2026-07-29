@@ -171,9 +171,15 @@ describe("AvatarRuntime", () => {
   });
 
   it("enters fallback for invalid manifests and renderer failures", async () => {
-    const invalidRuntime = new AvatarRuntime({ renderer: renderer() });
+    const rejectedRenderer = renderer();
+    const invalidRuntime = new AvatarRuntime({ renderer: rejectedRenderer });
+    const diagnostics: string[] = [];
+    invalidRuntime.onDiagnostic((event) => diagnostics.push(event.kind));
     await expect(invalidRuntime.load({})).rejects.toThrow("manifest");
     expect(invalidRuntime.state).toBe("fallback");
+    expect(rejectedRenderer.load).not.toHaveBeenCalled();
+    expect(invalidRuntime.tick()).toBeUndefined();
+    expect(diagnostics).toEqual(["state", "state", "error"]);
 
     const broken = renderer();
     vi.mocked(broken.render).mockImplementation(() => {

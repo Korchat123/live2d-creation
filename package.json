@@ -18,6 +18,7 @@
     "requirements:check": "node tools/check-requirements-traceability.mjs",
     "rights:check": "node tools/validate-rights.mjs",
     "rights:test": "node --test tests/rights/*.test.mjs",
+    "release:metadata": "node tools/create-release-metadata.mjs",
     "safety:check": "node tools/check-repository-safety.mjs",
     "test": "vitest run",
     "test:browser": "playwright test",
