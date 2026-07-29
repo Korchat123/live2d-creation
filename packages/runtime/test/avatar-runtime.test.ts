@@ -34,6 +34,17 @@ const gaze = (id: string, x: number) => ({
   delivery: { mode: "coalesce", key: "gaze", supersedesPending: true },
 });
 
+const play = (
+  id: string,
+  action: "expression" | "motion",
+  contentId: string,
+) => ({
+  protocolVersion: "1.0",
+  id,
+  type: "action.play",
+  payload: { action, contentId },
+});
+
 describe("AvatarRuntime", () => {
   it("loads, routes commands, renders, resizes, and disposes", async () => {
     const adapter = renderer();
@@ -88,6 +99,75 @@ describe("AvatarRuntime", () => {
     runtime.submit(gaze("ai", -1), { source: "ai" });
     runtime.submit(gaze("human", 1), { source: "human" });
     expect(runtime.tick()?.gaze.x).toBe(1);
+  });
+
+  it("evaluates authored clips while preserving live mouth control", async () => {
+    const clock = new FakeClock();
+    const runtime = new AvatarRuntime({
+      renderer: renderer(),
+      clock,
+      clips: {
+        expressions: {
+          happy: {
+            durationMs: 200,
+            tracks: [
+              {
+                parameterId: "browLift",
+                keyframes: [
+                  { timeMs: 0, value: 0 },
+                  { timeMs: 100, value: 1 },
+                  { timeMs: 200, value: 0 },
+                ],
+              },
+            ],
+          },
+        },
+        motions: {
+          talk: {
+            durationMs: 200,
+            tracks: [
+              {
+                parameterId: "mouthOpen",
+                keyframes: [{ timeMs: 0, value: 1 }],
+              },
+            ],
+          },
+        },
+      },
+    });
+    await runtime.load({
+      ...manifest,
+      parameters: [
+        ...manifest.parameters,
+        { id: "browLift", min: 0, max: 1, default: 0 },
+      ],
+      capabilities: {
+        ...manifest.capabilities,
+        expression: { content: ["happy"] },
+        motion: { content: ["talk"] },
+      },
+    });
+
+    runtime.submit(play("happy", "expression", "happy"), { source: "ai" });
+    runtime.submit(play("talk", "motion", "talk"), { source: "ai" });
+    runtime.submit(
+      {
+        ...gaze("mouth", 0),
+        payload: { channel: "mouthOpen", value: 0.2 },
+        delivery: {
+          mode: "coalesce",
+          key: "mouthOpen",
+          supersedesPending: true,
+        },
+      },
+      { source: "human" },
+    );
+    runtime.tick();
+    clock.advance(100);
+    expect(runtime.tick()?.parameters).toMatchObject({
+      browLift: 1,
+      mouthOpen: 0.2,
+    });
   });
 
   it("enters fallback for invalid manifests and renderer failures", async () => {

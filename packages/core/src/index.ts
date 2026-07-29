@@ -205,6 +205,7 @@ export interface EvaluatedPose {
 }
 export interface CoreAnimationOptions {
   clock: Clock;
+  clips?: NamedAnimationClips;
   seed?: number;
   humanOverrideMs?: number;
   actionDurationMs?: number;
@@ -241,6 +242,7 @@ export class CoreAnimation {
   private readonly crossFadeMs: number;
   private readonly blinkRange: readonly [number, number];
   private readonly definitions: Readonly<Record<string, ParameterDefinition>>;
+  private readonly clips: NamedAnimationClips;
   private readonly listeners = new Map<
     keyof CoreEventMap,
     Set<(event: never) => void>
@@ -261,6 +263,7 @@ export class CoreAnimation {
     this.crossFadeMs = options.crossFadeMs ?? 100;
     this.blinkRange = options.blinkIntervalMs ?? [2_500, 5_000];
     this.definitions = options.parameters ?? {};
+    this.clips = options.clips ?? { expressions: {}, motions: {} };
     this.nextBlinkAt = this.clock.now() + this.randomBlinkDelay();
   }
 
@@ -320,6 +323,36 @@ export class CoreAnimation {
     this.outgoing = this.outgoing.filter(
       (action) => now < action.startedAt + action.fadeMs,
     );
+    const animationLayers: ParameterLayer[] = [
+      ...this.outgoing.map((action) =>
+        action.channel === "pose"
+          ? {}
+          : this.clipLayer(
+              action.channel,
+              action.contentId,
+              now - action.startedAt,
+              clamp01(1 - (now - action.startedAt) / action.fadeMs),
+            ),
+      ),
+    ];
+    if (motion?.contentId)
+      animationLayers.push(
+        this.clipLayer(
+          "motion",
+          motion.contentId,
+          now - motion.startedAt,
+          this.actionWeight(motion, now),
+        ),
+      );
+    if (expression?.contentId)
+      animationLayers.push(
+        this.clipLayer(
+          "expression",
+          expression.contentId,
+          now - expression.startedAt,
+          this.actionWeight(expression, now),
+        ),
+      );
     const semantic: ParameterLayer = {
       gazeX: this.gaze.x,
       gazeY: this.gaze.y,
@@ -341,7 +374,10 @@ export class CoreAnimation {
         contentId: action.contentId,
         weight: clamp01(1 - (now - action.startedAt) / action.fadeMs),
       })),
-      parameters: mixParameters(this.definitions, [semantic]),
+      parameters: mixParameters(this.definitions, [
+        ...animationLayers,
+        semantic,
+      ]),
     };
   }
 
@@ -390,13 +426,24 @@ export class CoreAnimation {
           fadeMs: this.crossFadeMs,
         });
     }
+    const contentId =
+      "contentId" in command.payload ? command.payload.contentId : null;
+    const clip =
+      contentId && (channel === "expression" || channel === "motion")
+        ? this.clipFor(channel, contentId)
+        : undefined;
+    const duration = clip?.durationMs ?? this.actionDurationMs;
     const action: ActiveAction = {
       id: command.id,
       channel,
-      contentId:
-        "contentId" in command.payload ? command.payload.contentId : null,
+      contentId,
       startedAt: now,
-      endsAt: now + (channel === "blink" ? 160 : this.actionDurationMs),
+      endsAt:
+        channel === "blink"
+          ? now + 160
+          : clip?.loop
+            ? Infinity
+            : now + duration,
       fadeMs: channel === "blink" ? 80 : this.crossFadeMs,
       terminal: false,
     };
@@ -435,6 +482,32 @@ export class CoreAnimation {
     return action.fadeMs === 0
       ? 1
       : clamp01((now - action.startedAt) / action.fadeMs);
+  }
+
+  private clipFor(
+    channel: "expression" | "motion",
+    contentId: string,
+  ): AnimationClip | undefined {
+    return channel === "expression"
+      ? this.clips.expressions[contentId]
+      : this.clips.motions[contentId];
+  }
+
+  private clipLayer(
+    channel: "expression" | "motion",
+    contentId: string,
+    elapsedMs: number,
+    weight: number,
+  ): ParameterLayer {
+    const clip = this.clipFor(channel, contentId);
+    if (!clip) return {};
+    const values = evaluateAnimationClip(clip, elapsedMs);
+    const layer: Record<string, number> = {};
+    for (const [parameterId, value] of Object.entries(values)) {
+      const fallback = this.definitions[parameterId]?.default ?? 0;
+      layer[parameterId] = fallback + (value - fallback) * weight;
+    }
+    return layer;
   }
 
   private terminal(

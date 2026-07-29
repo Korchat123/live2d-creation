@@ -10,6 +10,7 @@ import {
   SystemClock,
   type Clock,
   type EvaluatedPose,
+  type NamedAnimationClips,
 } from "@open-avatar/core";
 import {
   PROTOCOL_VERSION,
@@ -59,6 +60,7 @@ export class AvatarRuntime {
   readonly #renderer: RuntimeRenderer;
   readonly #clock: Clock;
   readonly #policy: Partial<ControlPolicy> | undefined;
+  readonly #clips: NamedAnimationClips | undefined;
   readonly #listeners = new Set<(event: RuntimeDiagnostic) => void>();
   #state: RuntimeState = "idle";
   #router: ControlRouter | undefined;
@@ -69,10 +71,12 @@ export class AvatarRuntime {
     renderer: RuntimeRenderer;
     clock?: Clock;
     controlPolicy?: Partial<ControlPolicy>;
+    clips?: NamedAnimationClips;
   }) {
     this.#renderer = options.renderer;
     this.#clock = options.clock ?? new SystemClock();
     this.#policy = options.controlPolicy;
+    this.#clips = options.clips;
   }
 
   get state(): RuntimeState {
@@ -135,6 +139,7 @@ export class AvatarRuntime {
       const core = new CoreAnimation({
         clock: this.#clock,
         parameters: definitions,
+        ...(this.#clips ? { clips: this.#clips } : {}),
       });
       await this.#renderer.load(manifest, viewport, assets);
       this.#router = router;
