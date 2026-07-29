@@ -1,6 +1,7 @@
 import manifest from "../../../assets/fixtures/minimal-avatar/avatar.json" with { type: "json" };
 import clips from "../../../assets/reference-avatar/animation-clips.json" with { type: "json" };
 import type { NamedAnimationClips } from "@open-avatar/core";
+import type { ControlSource } from "@open-avatar/schema";
 import eyeUrl from "../../../assets/fixtures/minimal-avatar/layers/eye_c_pair.svg?url";
 import browUrl from "../../../assets/fixtures/minimal-avatar/layers/brow_c_pair.svg?url";
 import faceUrl from "../../../assets/fixtures/minimal-avatar/layers/face_c_base.svg?url";
@@ -56,6 +57,12 @@ root.innerHTML = `
         <button id="script">Run AI sequence</button>
       </section>
       <section class="panel">
+        <div class="heading"><div><p class="eyebrow">Command session</p><h2>Record and replay</h2></div><span id="recording-status" class="pill">Idle</span></div>
+        <div class="buttons"><button id="record">Start recording</button><button id="replay" class="quiet" disabled>Replay session</button><button id="clear-recording" class="quiet" disabled>Clear</button></div>
+        <p id="recording-summary" class="note">No provider-neutral commands recorded.</p>
+        <ol id="timeline" class="timeline" aria-label="Recent command diagnostics"></ol>
+      </section>
+      <section class="panel">
         <p class="eyebrow">Bundle truth</p><h2>Capabilities</h2>
         <ul id="caps"></ul><p class="note">Unsupported actions are safely rejected.</p>
       </section>
@@ -90,6 +97,8 @@ const bundle: RenderBundle = {
 };
 let disposed = false;
 let timer: number | undefined;
+let replayTimers: number[] = [];
+let latestRecording = adapter.recording();
 let lastFrame = performance.now();
 
 const viewport = () => {
@@ -101,10 +110,33 @@ const viewport = () => {
   };
 };
 
-const submit = (command: unknown, source: "human" | "ai") => {
+const submit = (command: unknown, source: ControlSource) => {
   const result = adapter.submit(command, source);
   query("#last").textContent = result.message;
   query("#announce").textContent = result.message;
+};
+
+const updateRecordingUi = () => {
+  const recording = adapter.isRecording();
+  query("#recording-status").textContent = recording ? "Recording" : "Idle";
+  query<HTMLButtonElement>("#record").textContent = recording
+    ? "Stop recording"
+    : "Start recording";
+  query<HTMLButtonElement>("#replay").disabled =
+    recording || latestRecording.commands.length === 0;
+  query<HTMLButtonElement>("#clear-recording").disabled =
+    recording || latestRecording.commands.length === 0;
+  query("#recording-summary").textContent = latestRecording.commands.length
+    ? `${latestRecording.commands.length} command${latestRecording.commands.length === 1 ? "" : "s"} ready for deterministic replay.`
+    : "No provider-neutral commands recorded.";
+  const timeline = query<HTMLOListElement>("#timeline");
+  timeline.replaceChildren();
+  for (const event of adapter.diagnostics().slice(-8).reverse()) {
+    const item = document.createElement("li");
+    item.className = event.accepted ? "accepted" : "rejected";
+    item.textContent = `${event.source}: ${event.command} — ${event.accepted ? "accepted" : "rejected"}`;
+    timeline.append(item);
+  }
 };
 
 const frame = (now: number) => {
@@ -116,6 +148,7 @@ const frame = (now: number) => {
   const remaining = snapshot.humanOverrideUntil - performance.now();
   query("#override").textContent =
     remaining > 0 ? `Human override ${Math.ceil(remaining)} ms` : "Available";
+  updateRecordingUi();
   requestAnimationFrame(frame);
 };
 
@@ -166,6 +199,26 @@ document
 query("#reset").addEventListener("click", () =>
   submit(resetCommand(adapter.createId("human")), "human"),
 );
+query("#record").addEventListener("click", () => {
+  if (adapter.isRecording()) latestRecording = adapter.stopRecording();
+  else adapter.startRecording();
+  updateRecordingUi();
+});
+query("#clear-recording").addEventListener("click", () => {
+  for (const id of replayTimers) clearTimeout(id);
+  replayTimers = [];
+  adapter.clearRecording();
+  latestRecording = adapter.recording();
+  updateRecordingUi();
+});
+query("#replay").addEventListener("click", () => {
+  for (const id of replayTimers) clearTimeout(id);
+  replayTimers = latestRecording.commands.map((item) =>
+    window.setTimeout(() => submit(item.command, item.source), item.atMs),
+  );
+  query("#announce").textContent =
+    `Replaying ${latestRecording.commands.length} recorded commands`;
+});
 
 const semanticActions = query("#semantic-actions");
 for (const [action, label] of [
@@ -250,6 +303,8 @@ const dispose = () => {
   if (disposed) return;
   disposed = true;
   if (timer) clearTimeout(timer);
+  for (const id of replayTimers) clearTimeout(id);
+  replayTimers = [];
   resizeObserver.disconnect();
   renderer.dispose();
   query("#status").textContent = "Renderer disposed";

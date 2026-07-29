@@ -20,6 +20,27 @@ export interface StudioSnapshot {
   lastCommand: string;
   humanOverrideUntil: number;
 }
+
+export interface RecordedStudioCommand {
+  atMs: number;
+  source: ControlSource;
+  command: CommandEnvelope;
+}
+
+export interface StudioRecording {
+  format: "open-avatar-studio-recording";
+  version: 1;
+  commands: readonly RecordedStudioCommand[];
+}
+
+export interface StudioDiagnostic {
+  atMs: number;
+  source: ControlSource;
+  command: string;
+  accepted: boolean;
+  message: string;
+}
+
 export class TrustedStudioAdapter {
   readonly engine: CoreAnimation;
   readonly manifest: OpenAvatarManifest;
@@ -27,11 +48,16 @@ export class TrustedStudioAdapter {
   #lastSource: ControlSource | null = null;
   #lastCommand = "Waiting for input";
   #humanOverrideUntil = 0;
+  #diagnostics: StudioDiagnostic[] = [];
+  #recordingStartedAt: number | null = null;
+  #recordedCommands: RecordedStudioCommand[] = [];
+  readonly #now: () => number;
   constructor(
     input: unknown,
     options: {
       humanOverrideMs?: number;
       clips?: NamedAnimationClips;
+      now?: () => number;
     } = {},
   ) {
     const checked = validateManifest(input);
@@ -39,6 +65,7 @@ export class TrustedStudioAdapter {
       throw new Error("The avatar manifest is invalid.");
     this.manifest = checked.value;
     this.humanOverrideMs = options.humanOverrideMs ?? 1500;
+    this.#now = options.now ?? (() => performance.now());
     this.engine = new CoreAnimation({
       clock: new SystemClock(),
       humanOverrideMs: this.humanOverrideMs,
@@ -57,18 +84,44 @@ export class TrustedStudioAdapter {
   }
   submit(input: unknown, source: ControlSource) {
     const checked = validateCommandEnvelope(input);
-    if (!checked.valid || !checked.value)
+    if (!checked.valid || !checked.value) {
+      this.#recordDiagnostic(
+        source,
+        "invalid command",
+        false,
+        "Rejected invalid command envelope",
+      );
       return { accepted: false, message: "Rejected invalid command envelope" };
-    if (!this.#supports(checked.value))
+    }
+    if (!this.#supports(checked.value)) {
+      this.#recordDiagnostic(
+        source,
+        describe(checked.value),
+        false,
+        "Accepted by protocol, unavailable in this avatar bundle",
+      );
       return {
         accepted: false,
         message: "Accepted by protocol, unavailable in this avatar bundle",
       };
+    }
     this.engine.submit(checked.value, { source });
     this.#lastSource = source;
     this.#lastCommand = `${source}: ${describe(checked.value)}`;
     if (source === "human" && checked.value.type === "control.set")
-      this.#humanOverrideUntil = performance.now() + this.humanOverrideMs;
+      this.#humanOverrideUntil = this.#now() + this.humanOverrideMs;
+    this.#recordDiagnostic(
+      source,
+      describe(checked.value),
+      true,
+      this.#lastCommand,
+    );
+    if (this.#recordingStartedAt !== null)
+      this.#recordedCommands.push({
+        atMs: Math.max(0, this.#now() - this.#recordingStartedAt),
+        source,
+        command: structuredClone(checked.value),
+      });
     return { accepted: true, message: this.#lastCommand };
   }
   snapshot(): StudioSnapshot {
@@ -83,6 +136,46 @@ export class TrustedStudioAdapter {
     return Object.entries(this.manifest.capabilities)
       .filter(([, v]) => v !== false)
       .map(([k]) => k as SemanticCapability);
+  }
+  startRecording(): void {
+    this.#recordingStartedAt = this.#now();
+    this.#recordedCommands = [];
+  }
+  stopRecording(): StudioRecording {
+    this.#recordingStartedAt = null;
+    return this.recording();
+  }
+  recording(): StudioRecording {
+    return {
+      format: "open-avatar-studio-recording",
+      version: 1,
+      commands: this.#recordedCommands.map((item) => structuredClone(item)),
+    };
+  }
+  isRecording(): boolean {
+    return this.#recordingStartedAt !== null;
+  }
+  clearRecording(): void {
+    this.#recordingStartedAt = null;
+    this.#recordedCommands = [];
+  }
+  diagnostics(): readonly StudioDiagnostic[] {
+    return this.#diagnostics.map((item) => ({ ...item }));
+  }
+  #recordDiagnostic(
+    source: ControlSource,
+    command: string,
+    accepted: boolean,
+    message: string,
+  ) {
+    this.#diagnostics.push({
+      atMs: this.#now(),
+      source,
+      command,
+      accepted,
+      message,
+    });
+    if (this.#diagnostics.length > 24) this.#diagnostics.shift();
   }
   #supports(command: CommandEnvelope) {
     if (

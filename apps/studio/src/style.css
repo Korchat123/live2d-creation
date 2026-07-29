@@ -185,6 +185,25 @@ li {
 li strong {
   font-size: 0.75rem;
 }
+.timeline {
+  margin-top: 1rem;
+  max-height: 10rem;
+  overflow: auto;
+  color: #9db2c5;
+  font-size: 0.75rem;
+}
+.timeline li {
+  display: block;
+  padding-right: 0.25rem;
+}
+.timeline .accepted {
+  border-left: 3px solid #72e6c1;
+  padding-left: 0.5rem;
+}
+.timeline .rejected {
+  border-left: 3px solid #f08a8a;
+  padding-left: 0.5rem;
+}
 .yes {
   color: #72e6c1;
 }

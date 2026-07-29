@@ -79,4 +79,41 @@ describe("TrustedStudioAdapter", () => {
       ).accepted,
     ).toBe(true);
   });
+
+  it("records only accepted provider-neutral commands with deterministic offsets", () => {
+    let now = 100;
+    const adapter = new TrustedStudioAdapter(manifest, { now: () => now });
+    adapter.startRecording();
+    now = 125;
+    adapter.submit(
+      setCommand(adapter.createId("human"), {
+        channel: "mouthOpen",
+        value: 0.4,
+      }),
+      "human",
+    );
+    now = 180;
+    adapter.submit(
+      actionCommand(adapter.createId("ai"), "motion", "unknown-motion"),
+      "ai",
+    );
+    const recording = adapter.stopRecording();
+
+    expect(recording).toEqual({
+      format: "open-avatar-studio-recording",
+      version: 1,
+      commands: [
+        expect.objectContaining({
+          atMs: 25,
+          source: "human",
+          command: expect.objectContaining({ type: "control.set" }),
+        }),
+      ],
+    });
+    expect(adapter.diagnostics()).toHaveLength(2);
+    expect(adapter.diagnostics()[1]).toMatchObject({
+      accepted: false,
+      source: "ai",
+    });
+  });
 });
