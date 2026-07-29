@@ -1,0 +1,35 @@
+{
+  "width": 256,
+  "height": 256,
+  "layers": [
+    {
+      "id": "torso_c_base",
+      "assetUrl": "layers/torso_c_base.svg",
+      "x": 48,
+      "y": 150,
+      "zIndex": 0
+    },
+    {
+      "id": "face_c_base",
+      "assetUrl": "layers/face_c_base.svg",
+      "x": 64,
+      "y": 38,
+      "zIndex": 1
+    },
+    {
+      "id": "eye_c_pair",
+      "assetUrl": "layers/eye_c_pair.svg",
+      "x": 84,
+      "y": 88,
+      "zIndex": 2
+    },
+    {
+      "id": "mouth_c_lower_mesh",
+      "assetUrl": "layers/mouth_c_lower_mesh.svg",
+      "x": 104,
+      "y": 127,
+      "zIndex": 3,
+      "deform": { "parameter": "mouthOpen", "amount": 14 }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "manifestVersion": "1.0",
+  "id": "minimal_avatar",
+  "name": "Minimal original avatar",
+  "canvas": { "width": 256, "height": 256 },
+  "assets": [
+    {
+      "id": "torso_c_base",
+      "type": "image",
+      "path": "layers/torso_c_base.svg"
+    },
+    { "id": "face_c_base", "type": "image", "path": "layers/face_c_base.svg" },
+    { "id": "eye_c_pair", "type": "image", "path": "layers/eye_c_pair.svg" },
+    {
+      "id": "mouth_c_lower_mesh",
+      "type": "image",
+      "path": "layers/mouth_c_lower_mesh.svg"
+    }
+  ],
+  "parameters": [
+    { "id": "mouthOpen", "min": 0, "max": 1, "default": 0 },
+    { "id": "blink", "min": 0, "max": 1, "default": 0 }
+  ],
+  "capabilities": {
+    "blink": true,
+    "mouthOpen": true,
+    "reset": true
+  }
+}

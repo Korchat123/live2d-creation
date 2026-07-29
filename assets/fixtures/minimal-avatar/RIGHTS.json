@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "collection": "minimal-avatar",
+  "status": "approved",
+  "author": "Open 2D Avatar project contributors",
+  "copyrightOwner": "Open 2D Avatar project contributors",
+  "license": "Project source license; no third-party material",
+  "source": "Geometric SVG files authored directly for the Phase B renderer fixture",
+  "permissions": {
+    "sourceUse": true,
+    "modification": true,
+    "redistribution": true,
+    "commercialUse": true
+  },
+  "assets": [
+    "layers/torso_c_base.svg",
+    "layers/face_c_base.svg",
+    "layers/eye_c_pair.svg",
+    "layers/mouth_c_lower_mesh.svg"
+  ],
+  "reviewedAt": "2026-07-29",
+  "notes": "No external images, fonts, logos, characters, or reference material were used."
+}
