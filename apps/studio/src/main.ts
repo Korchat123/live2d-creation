@@ -43,10 +43,9 @@ root.innerHTML = `
         <label>Gaze X <output id="xv">0.00</output><input id="x" type="range" min="-1" max="1" value="0" step=".05"></label>
         <label>Gaze Y <output id="yv">0.00</output><input id="y" type="range" min="-1" max="1" value="0" step=".05"></label>
         <label>Mouth open <output id="mv">0.00</output><input id="mouth" type="range" min="0" max="1" value="0" step=".05"></label>
-        <div class="buttons">
+        <div class="buttons" aria-label="Direct actions">
           <button data-action="blink">Blink</button>
-          <button data-action="expression">Expression</button>
-          <button data-action="motion">Motion</button>
+          <div id="semantic-actions" class="buttons"></div>
           <button id="reset" class="quiet">Reset</button>
         </div>
       </section>
@@ -157,6 +156,7 @@ document
         actionCommand(
           adapter.createId("human"),
           button.dataset.action as "blink" | "expression" | "motion",
+          button.dataset.contentId,
         ),
         "human",
       ),
@@ -165,6 +165,33 @@ document
 query("#reset").addEventListener("click", () =>
   submit(resetCommand(adapter.createId("human")), "human"),
 );
+
+const semanticActions = query("#semantic-actions");
+for (const [action, label] of [
+  ["expression", "Expressions"],
+  ["motion", "Motions"],
+] as const) {
+  const capability = manifest.capabilities[action];
+  if (!capability) continue;
+  const group = document.createElement("fieldset");
+  group.className = "semantic-actions";
+  group.innerHTML = `<legend>${label}</legend>`;
+  for (const contentId of capability.content) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.action = action;
+    button.dataset.contentId = contentId;
+    button.textContent = contentId;
+    button.addEventListener("click", () =>
+      submit(
+        actionCommand(adapter.createId("human"), action, contentId),
+        "human",
+      ),
+    );
+    group.append(button);
+  }
+  semanticActions.append(group);
+}
 query("#script").addEventListener("click", () => {
   const steps = [
     () =>
