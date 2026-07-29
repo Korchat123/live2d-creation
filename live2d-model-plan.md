@@ -387,6 +387,11 @@ Gate: a human can load, inspect, control, validate, and export the avatar
 without editing source code.
 The tested Studio preview must match the deployed commit.
 
+Current status: the Studio exposes all declared semantic expressions and
+motions as accessible buttons and keyboard shortcuts through the shared
+validated control path. The authoring/export, recording, replay, diagnostics,
+and Phase E CI gate work remain pending.
+
 ### Phase F - AI and host integration
 
 - [ ] Publish a minimal AI-controller example with allowlisted semantic cues.
