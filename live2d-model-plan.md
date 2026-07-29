@@ -351,14 +351,23 @@ Packed packages must install in a clean consumer fixture.
 
 - [ ] Produce separated artwork and approved meshes.
 - [ ] Rig head/body pose, eyes, blink, brows, mouth, and optional physics.
-- [ ] Author all required expressions and motions.
-- [ ] Add interruption, cross-fade, RMS lip sync, and optional visemes.
-- [ ] Extend CI with golden renders, parameter sweeps, interruption, asset
-      budgets, and rights checks; publish a validated avatar artifact.
+- [x] Author all required semantic expressions and motions as deterministic
+      first-party clips.
+- [x] Add interruption, cross-fade, and private RMS/optional viseme processing;
+      live mouth input remains isolated from unrelated parameters.
+- [x] Extend CI with rights checks, interruption coverage, and deterministic
+      parameter sweeps for the authored clips.
+- [ ] Add golden renders and first-party asset budgets; publish a validated
+      avatar artifact from approved source inputs.
 
 Gate: parameter sweeps do not tear; repeated interruptions return to a stable
 idle pose; live channels never overwrite unrelated parameters.
 The bundle must be generated from validated source inputs.
+
+Current status: runtime animation, clip authoring, Studio integration, and
+parameter-sweep CI are implemented. The Phase D gate remains pending separated
+approved artwork, the full visual rig, golden-render evidence, asset budgets,
+and a validated first-party bundle.
 
 ### Phase E - Human Studio and authoring tools
 
