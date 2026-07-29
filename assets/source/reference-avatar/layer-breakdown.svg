@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1600" viewBox="0 0 2048 1600" role="img" aria-labelledby="title desc">
+  <title id="title">Reference avatar layer breakdown</title>
+  <desc id="desc">Exploded canonical layers, mask relationships, pivots, and draw direction.</desc>
+  <rect width="2048" height="1600" fill="#f5f7fa"/>
+  <g stroke="#263047" stroke-width="10" stroke-linejoin="round">
+    <path id="hair_c_back" fill="#3d4a68" d="M120 500Q120 100 370 80Q650 130 620 520L550 700H190Z"/>
+    <path id="torso_c_base_mesh" fill="#aebac8" d="M70 1450Q100 1050 370 980Q640 1050 670 1450Z"/>
+    <path id="neck_c" fill="#d99b7b" d="M290 870H450V1080H290Z"/>
+    <ellipse id="face_c_base_mesh" fill="#d99b7b" cx="900" cy="470" rx="250" ry="330"/>
+    <path id="face_c_shadow" fill="#b96f62" opacity=".35" d="M900 140Q1150 180 1150 470Q1150 730 900 800Q1020 620 990 350Z"/>
+    <g id="eye_l" transform="translate(1260 250)"><path id="eye_l_sclera" fill="#e8edf2" d="M0 100Q100 10 200 100Q100 190 0 100Z"/><ellipse id="eye_l_iris" fill="#396e80" cx="100" cy="100" rx="42" ry="58"/><circle id="eye_l_pupil" fill="#263047" cx="100" cy="105" r="20"/><path id="eye_l_lid_upper_mesh" fill="none" d="M0 100Q100 10 200 100"/></g>
+    <g id="eye_r" transform="translate(1570 250)"><path id="eye_r_sclera" fill="#e8edf2" d="M0 100Q100 10 200 100Q100 190 0 100Z"/><ellipse id="eye_r_iris" fill="#396e80" cx="100" cy="100" rx="42" ry="58"/><circle id="eye_r_pupil" fill="#263047" cx="100" cy="105" r="20"/><path id="eye_r_lid_upper_mesh" fill="none" d="M0 100Q100 10 200 100"/></g>
+    <g id="mouth_c" transform="translate(1320 620)"><ellipse id="mouth_c_interior" fill="#263047" cx="170" cy="110" rx="160" ry="90"/><path id="mouth_c_tongue" fill="#b96f62" d="M50 150Q170 95 290 150Q240 205 170 205Q100 205 50 150Z"/><path id="mouth_c_teeth_upper" fill="#e8edf2" d="M30 90Q170 20 310 90Q170 125 30 90Z"/><path id="mouth_c_lip_upper_mesh" fill="none" d="M10 105Q170 10 330 105"/><path id="mouth_c_lip_lower_mesh" fill="none" d="M10 115Q170 220 330 115"/></g>
+    <path id="hair_c_front_mesh" fill="#64759c" d="M730 1050Q730 800 1000 770Q1270 800 1270 1050Q1110 930 1020 860Q920 1040 750 1110Z"/>
+    <path id="outfit_c_front_mesh" fill="#e8edf2" d="M740 1510Q780 1210 1000 1160Q1220 1210 1260 1510Z"/>
+    <path id="emblem_c" fill="#36b8a5" d="M1000 1320l55 55-55 55-55-55Z"/>
+  </g>
+  <g fill="#36b8a5" stroke="#263047" stroke-width="5">
+    <circle cx="370" cy="900" r="14"/><circle cx="900" cy="800" r="14"/><circle cx="1360" cy="350" r="12"/><circle cx="1670" cy="350" r="12"/><circle cx="1490" cy="730" r="12"/>
+  </g>
+  <g fill="none" stroke="#36b8a5" stroke-width="8" stroke-dasharray="18 14">
+    <path d="M630 470H650"/><path d="M1150 470H1260"/><path d="M1460 350H1570"/><path d="M1490 440V620"/><path d="M1000 800V770"/>
+  </g>
+</svg>

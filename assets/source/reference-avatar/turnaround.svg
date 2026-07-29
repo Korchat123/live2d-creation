@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1200" viewBox="0 0 2048 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Original avatar turnaround</title>
+  <desc id="desc">Front, three-quarter, side, and back construction studies.</desc>
+  <rect width="2048" height="1200" fill="#f5f7fa"/>
+  <g stroke="#263047" stroke-width="12" stroke-linejoin="round">
+    <g id="front" transform="translate(90 100)"><path fill="#aebac8" d="M20 1000Q40 720 250 650Q460 720 480 1000Z"/><ellipse fill="#d99b7b" cx="250" cy="390" rx="170" ry="230"/><path fill="#3d4a68" d="M75 390Q45 80 250 45Q470 90 425 430L360 275Q260 225 110 420Z"/><path fill="none" d="M145 380h70m70 0h70M185 515q65 40 130 0"/><path fill="#36b8a5" d="M250 760l35 35-35 35-35-35Z"/></g>
+    <g id="three_quarter" transform="translate(570 100)"><path fill="#aebac8" d="M20 1000Q40 720 250 650Q460 720 480 1000Z"/><path fill="#d99b7b" d="M90 370Q100 155 285 150Q450 175 420 430Q385 615 220 620Q90 570 90 370Z"/><path fill="#3d4a68" d="M70 390Q45 80 270 45Q465 100 430 420L360 260Q250 235 100 430Z"/><path fill="none" d="M155 380h65m65 5h50M225 520q60 35 110 0"/><path fill="#36b8a5" d="M250 760l35 35-35 35-35-35Z"/></g>
+    <g id="side" transform="translate(1050 100)"><path fill="#aebac8" d="M20 1000Q40 720 250 650Q460 720 480 1000Z"/><path fill="#d99b7b" d="M120 380Q120 160 300 150Q420 200 390 360L445 415L385 445Q360 610 200 620Q120 560 120 380Z"/><path fill="#3d4a68" d="M90 400Q60 100 290 45Q445 100 410 320L330 220Q190 250 120 450Z"/><path fill="none" d="M310 365h55M315 520q45 20 80-5"/><path fill="#36b8a5" d="M250 760l35 35-35 35-35-35Z"/></g>
+    <g id="back" transform="translate(1530 100)"><path fill="#aebac8" d="M20 1000Q40 720 250 650Q460 720 480 1000Z"/><path fill="#3d4a68" d="M70 400Q50 75 250 45Q470 85 430 420L390 650H110Z"/><path fill="#64759c" d="M105 300Q250 180 395 300L360 580H140Z"/><path fill="none" d="M80 720h340"/></g>
+  </g>
+</svg>

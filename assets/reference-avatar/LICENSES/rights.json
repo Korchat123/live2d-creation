@@ -2,14 +2,90 @@
   "schemaVersion": 1,
   "collection": "reference-avatar",
   "review": {
-    "status": "incomplete",
-    "reviewedAt": null,
-    "reviewedBy": null,
-    "notes": "No artwork, font, image, or external reference has been added. This record does not assert ownership or redistribution rights."
+    "status": "approved",
+    "reviewedAt": "2026-07-29",
+    "reviewedBy": "project Phase A asset review",
+    "notes": "Reviewed as original code-native vector studies authored for this project without external references, fonts, logos, or images."
   },
   "emptyState": {
-    "declared": true,
-    "reason": "The reference-avatar asset directory contains no licensable source assets yet."
+    "declared": false,
+    "reason": "The inventory contains three project-authored SVG source assets."
   },
-  "assets": []
+  "assets": [
+    {
+      "id": "reference_avatar_character_sheet",
+      "path": "assets/source/reference-avatar/character-sheet.svg",
+      "kind": "original SVG character study",
+      "source": "Authored directly as geometric SVG shapes for this project",
+      "author": "Open 2D Avatar project contributors",
+      "copyrightOwner": "Open 2D Avatar project contributors",
+      "license": "Project source license; no third-party material",
+      "modifications": "Original source; no upstream work modified",
+      "permissions": {
+        "sourceUse": true,
+        "modification": true,
+        "redistribution": true,
+        "commercialUse": true
+      },
+      "evidence": [
+        "assets/source/reference-avatar/character-sheet.svg",
+        "assets/source/reference-avatar/README.md"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewedAt": "2026-07-29",
+        "reviewedBy": "project Phase A asset review"
+      }
+    },
+    {
+      "id": "reference_avatar_turnaround",
+      "path": "assets/source/reference-avatar/turnaround.svg",
+      "kind": "original SVG turnaround study",
+      "source": "Authored directly as geometric SVG shapes for this project",
+      "author": "Open 2D Avatar project contributors",
+      "copyrightOwner": "Open 2D Avatar project contributors",
+      "license": "Project source license; no third-party material",
+      "modifications": "Original source; no upstream work modified",
+      "permissions": {
+        "sourceUse": true,
+        "modification": true,
+        "redistribution": true,
+        "commercialUse": true
+      },
+      "evidence": [
+        "assets/source/reference-avatar/turnaround.svg",
+        "assets/source/reference-avatar/README.md"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewedAt": "2026-07-29",
+        "reviewedBy": "project Phase A asset review"
+      }
+    },
+    {
+      "id": "reference_avatar_layer_breakdown",
+      "path": "assets/source/reference-avatar/layer-breakdown.svg",
+      "kind": "original SVG layer construction study",
+      "source": "Authored directly as geometric SVG shapes for this project",
+      "author": "Open 2D Avatar project contributors",
+      "copyrightOwner": "Open 2D Avatar project contributors",
+      "license": "Project source license; no third-party material",
+      "modifications": "Original source; no upstream work modified",
+      "permissions": {
+        "sourceUse": true,
+        "modification": true,
+        "redistribution": true,
+        "commercialUse": true
+      },
+      "evidence": [
+        "assets/source/reference-avatar/layer-breakdown.svg",
+        "assets/source/reference-avatar/README.md"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewedAt": "2026-07-29",
+        "reviewedBy": "project Phase A asset review"
+      }
+    }
+  ]
 }
