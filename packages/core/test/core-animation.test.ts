@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { CoreAnimation, FakeClock, mixParameters } from "../src/index.js";
+import {
+  CoreAnimation,
+  FakeClock,
+  REQUIRED_EXPRESSION_IDS,
+  REQUIRED_MOTION_IDS,
+  evaluateAnimationClip,
+  evaluateNamedAnimation,
+  mixParameters,
+  type AnimationClip,
+  type NamedAnimationClips,
+} from "../src/index.js";
 import type { CommandEnvelope, ControlSource } from "@open-avatar/schema";
 
 const context = (source: ControlSource) => ({ source });
@@ -178,5 +188,118 @@ describe("mixParameters", () => {
         [{ x: 0.2, y: 0.4 }, { x: 8 }],
       ),
     ).toEqual({ x: 1, y: 0.4 });
+  });
+});
+
+describe("animation clips", () => {
+  const pulse = (parameterId: string, value: number): AnimationClip => ({
+    durationMs: 1_000,
+    tracks: [
+      {
+        parameterId,
+        keyframes: [
+          { timeMs: 0, value: 0 },
+          { timeMs: 500, value },
+          { timeMs: 1_000, value: 0 },
+        ],
+      },
+    ],
+  });
+
+  it("evaluates linear, step, clamped, and looping keyframes deterministically", () => {
+    const clip: AnimationClip = {
+      durationMs: 1_000,
+      loop: true,
+      tracks: [
+        {
+          parameterId: "headY",
+          keyframes: [
+            { timeMs: 0, value: 0 },
+            { timeMs: 500, value: 1, interpolation: "step" },
+            { timeMs: 1_000, value: 0 },
+          ],
+        },
+        {
+          parameterId: "brow",
+          keyframes: [
+            { timeMs: 0, value: -1 },
+            { timeMs: 1_000, value: 1 },
+          ],
+        },
+      ],
+    };
+
+    expect(evaluateAnimationClip(clip, 250)).toEqual({
+      headY: 0.5,
+      brow: -0.5,
+    });
+    expect(evaluateAnimationClip(clip, 750)).toEqual({
+      headY: 1,
+      brow: 0.5,
+    });
+    expect(evaluateAnimationClip(clip, 1_250)).toEqual(
+      evaluateAnimationClip(clip, 250),
+    );
+  });
+
+  it("resolves every planned expression and motion by semantic name", () => {
+    const clips: NamedAnimationClips = {
+      expressions: Object.fromEntries(
+        REQUIRED_EXPRESSION_IDS.map((id, index) => [
+          id,
+          pulse(`expression.${id}`, index / REQUIRED_EXPRESSION_IDS.length),
+        ]),
+      ),
+      motions: Object.fromEntries(
+        REQUIRED_MOTION_IDS.map((id, index) => [
+          id,
+          pulse(`motion.${id}`, (index + 1) / REQUIRED_MOTION_IDS.length),
+        ]),
+      ),
+    };
+
+    for (const id of REQUIRED_EXPRESSION_IDS)
+      expect(
+        evaluateNamedAnimation(clips, "expression", id, 500),
+      ).toHaveProperty(`expression.${id}`);
+    for (const id of REQUIRED_MOTION_IDS)
+      expect(evaluateNamedAnimation(clips, "motion", id, 500)).toHaveProperty(
+        `motion.${id}`,
+      );
+    expect(evaluateNamedAnimation(clips, "motion", "unknown", 0)).toBeNull();
+  });
+
+  it("rejects malformed authored keyframes at evaluation time", () => {
+    expect(() =>
+      evaluateAnimationClip(
+        {
+          durationMs: 100,
+          tracks: [
+            {
+              parameterId: "headX",
+              keyframes: [
+                { timeMs: 50, value: 0 },
+                { timeMs: 20, value: 1 },
+              ],
+            },
+          ],
+        },
+        75,
+      ),
+    ).toThrow(/increasing times/);
+    expect(() =>
+      evaluateAnimationClip(
+        {
+          durationMs: 100,
+          tracks: [
+            {
+              parameterId: "headX",
+              keyframes: [{ timeMs: 0, value: Number.NaN }],
+            },
+          ],
+        },
+        0,
+      ),
+    ).toThrow(/finite values/);
   });
 });

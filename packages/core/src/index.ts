@@ -52,6 +52,114 @@ export interface ParameterDefinition {
 }
 export type ParameterLayer = Readonly<Record<string, number>>;
 
+export type KeyframeInterpolation = "linear" | "step";
+export interface ParameterKeyframe {
+  timeMs: number;
+  value: number;
+  interpolation?: KeyframeInterpolation;
+}
+export interface ParameterTrack {
+  parameterId: string;
+  keyframes: readonly ParameterKeyframe[];
+}
+export interface AnimationClip {
+  durationMs: number;
+  loop?: boolean;
+  tracks: readonly ParameterTrack[];
+}
+export interface NamedAnimationClips {
+  expressions: Readonly<Record<string, AnimationClip>>;
+  motions: Readonly<Record<string, AnimationClip>>;
+}
+
+export const REQUIRED_EXPRESSION_IDS = [
+  "neutral",
+  "happy",
+  "sad",
+  "angry",
+  "surprised",
+  "thinking",
+] as const;
+export const REQUIRED_MOTION_IDS = [
+  "idle",
+  "nod",
+  "wave",
+  "explain",
+  "shrug",
+] as const;
+
+export function evaluateAnimationClip(
+  clip: AnimationClip,
+  elapsedMs: number,
+): Record<string, number> {
+  if (!Number.isFinite(elapsedMs))
+    throw new RangeError("elapsedMs must be finite");
+  if (!Number.isFinite(clip.durationMs) || clip.durationMs < 0)
+    throw new RangeError("clip durationMs must be finite and non-negative");
+
+  const localTime =
+    clip.loop && clip.durationMs > 0
+      ? ((elapsedMs % clip.durationMs) + clip.durationMs) % clip.durationMs
+      : Math.min(clip.durationMs, Math.max(0, elapsedMs));
+  const values: Record<string, number> = {};
+  for (const track of clip.tracks) {
+    if (track.keyframes.length === 0) continue;
+    values[track.parameterId] = evaluateTrack(track, localTime);
+  }
+  return values;
+}
+
+export function evaluateNamedAnimation(
+  clips: NamedAnimationClips,
+  channel: "expression" | "motion",
+  id: string,
+  elapsedMs: number,
+): Record<string, number> | null {
+  const clip =
+    channel === "expression" ? clips.expressions[id] : clips.motions[id];
+  return clip ? evaluateAnimationClip(clip, elapsedMs) : null;
+}
+
+function evaluateTrack(track: ParameterTrack, timeMs: number): number {
+  const frames = track.keyframes;
+  const first = frames[0]!;
+  assertKeyframe(first, track.parameterId, 0);
+  if (timeMs <= first.timeMs) return first.value;
+
+  for (let index = 1; index < frames.length; index += 1) {
+    const previous = frames[index - 1]!;
+    const next = frames[index]!;
+    assertKeyframe(next, track.parameterId, index);
+    if (next.timeMs <= previous.timeMs)
+      throw new RangeError(
+        `keyframes for ${track.parameterId} must have increasing times`,
+      );
+    if (timeMs <= next.timeMs) {
+      if ((previous.interpolation ?? "linear") === "step")
+        return previous.value;
+      const progress =
+        (timeMs - previous.timeMs) / (next.timeMs - previous.timeMs);
+      return previous.value + (next.value - previous.value) * progress;
+    }
+  }
+  return frames[frames.length - 1]!.value;
+}
+
+function assertKeyframe(
+  keyframe: ParameterKeyframe,
+  parameterId: string,
+  index: number,
+): void {
+  if (
+    !Number.isFinite(keyframe.timeMs) ||
+    keyframe.timeMs < 0 ||
+    !Number.isFinite(keyframe.value)
+  )
+    throw new RangeError(
+      `keyframe ${index} for ${parameterId} must contain finite values and a non-negative time`,
+    );
+}
+
 export function mixParameters(
   definitions: Readonly<Record<string, ParameterDefinition>>,
   layers: readonly ParameterLayer[],
