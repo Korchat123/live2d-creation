@@ -1,4 +1,5 @@
 import manifest from "../../../assets/fixtures/minimal-avatar/avatar.json" with { type: "json" };
+import generatedManifest from "../../../assets/source/reference-avatar/generated-test-avatar-v1/avatar.json" with { type: "json" };
 import clips from "../../../assets/reference-avatar/animation-clips.json" with { type: "json" };
 import type { NamedAnimationClips } from "@open-avatar/core";
 import type { ControlSource } from "@open-avatar/schema";
@@ -8,6 +9,11 @@ import faceUrl from "../../../assets/fixtures/minimal-avatar/layers/face_c_base.
 import mouthUrl from "../../../assets/fixtures/minimal-avatar/layers/mouth_c_lower_mesh.svg?url";
 import torsoUrl from "../../../assets/fixtures/minimal-avatar/layers/torso_c_base.svg?url";
 import render from "../../../assets/fixtures/minimal-avatar/render.json" with { type: "json" };
+import generatedEyeWhitesUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eye-whites.png?url";
+import generatedFaceCutoutUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait-eye-hole-base.png?url";
+import generatedEyelidsUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eyelids.png?url";
+import generatedPupilsUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupils.png?url";
+import generatedRender from "../../../assets/source/reference-avatar/generated-test-avatar-v1/render.json" with { type: "json" };
 import { AvatarRenderer, type RenderBundle } from "@open-avatar/renderer-pixi";
 import {
   TrustedStudioAdapter,
@@ -19,6 +25,13 @@ import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) throw new Error("Missing application root");
+const usingGeneratedAvatar =
+  new URLSearchParams(window.location.search).get("avatar") === "generated";
+const avatarManifest = usingGeneratedAvatar ? generatedManifest : manifest;
+const avatarRender = usingGeneratedAvatar ? generatedRender : render;
+const avatarName = usingGeneratedAvatar
+  ? "Generated test avatar"
+  : "Minimal original avatar";
 
 root.innerHTML = `
   <header>
@@ -32,7 +45,7 @@ root.innerHTML = `
   <main>
     <section class="stage-card">
       <div class="heading">
-        <div><p class="eyebrow">Live preview</p><h2>Minimal original avatar</h2></div>
+        <div><p class="eyebrow">Live preview</p><h2>${avatarName}</h2></div>
         <button id="dispose" class="quiet">Dispose renderer</button>
       </div>
       <div id="stage" class="stage"><canvas id="avatar" aria-label="Animated avatar preview"></canvas></div>
@@ -76,7 +89,7 @@ const query = <T extends Element = HTMLElement>(selector: string): T => {
   return element;
 };
 
-const adapter = new TrustedStudioAdapter(manifest, {
+const adapter = new TrustedStudioAdapter(avatarManifest, {
   clips: clips as NamedAnimationClips,
 });
 const renderer = new AvatarRenderer();
@@ -88,9 +101,16 @@ const assetUrls: Record<string, string> = {
   "layers/mouth_c_lower_mesh.svg": mouthUrl,
   "layers/torso_c_base.svg": torsoUrl,
 };
+if (usingGeneratedAvatar)
+  Object.assign(assetUrls, {
+    "layers/eye-whites.png": generatedEyeWhitesUrl,
+    "layers/portrait-eye-hole-base.png": generatedFaceCutoutUrl,
+    "layers/eyelids.png": generatedEyelidsUrl,
+    "layers/pupils.png": generatedPupilsUrl,
+  });
 const bundle: RenderBundle = {
-  ...(render as RenderBundle),
-  layers: render.layers.map((layer) => ({
+  ...(avatarRender as RenderBundle),
+  layers: avatarRender.layers.map((layer) => ({
     ...layer,
     assetUrl: assetUrls[layer.assetUrl] ?? layer.assetUrl,
   })),
@@ -225,7 +245,7 @@ for (const [action, label] of [
   ["expression", "Expressions"],
   ["motion", "Motions"],
 ] as const) {
-  const capability = manifest.capabilities[action];
+  const capability = avatarManifest.capabilities[action];
   if (!capability) continue;
   const group = document.createElement("fieldset");
   group.className = "semantic-actions";

@@ -52,3 +52,14 @@ test("matches the approved first-party fixture render", async ({
     { animations: "disabled" },
   );
 });
+
+test("loads the generated test avatar without replacing the fixture", async ({
+  page,
+}) => {
+  await page.goto("/?avatar=generated");
+  await expect(page.locator("#status")).toHaveText("Renderer ready");
+  await expect(
+    page.getByRole("heading", { name: "Generated test avatar" }),
+  ).toBeVisible();
+  await expect(page.locator("#avatar")).toBeVisible();
+});

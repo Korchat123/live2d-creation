@@ -8,6 +8,7 @@ export interface AvatarLayer {
   readonly x: number;
   readonly y: number;
   readonly zIndex: number;
+  readonly scale?: number;
   readonly deform?: {
     readonly parameter: string;
     readonly amount: number;
@@ -206,6 +207,7 @@ export class PixiWebGLBackend implements RendererBackend {
           /* eslint-enable @typescript-eslint/no-unsafe-assignment */
           display.label = layer.id;
           display.position.set(layer.x, layer.y);
+          display.scale.set(layer.scale ?? 1);
           display.zIndex = layer.zIndex;
           root.addChild(display);
           const basePositions =
