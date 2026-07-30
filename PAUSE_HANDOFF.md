@@ -8,10 +8,11 @@ Remote: `origin` (`Korchat123/live2d-creation`)
 
 The latest pushed commit is:
 
-`332acb6 Add private and deterministic audio-driven lip sync`
+`75dbf0c Add Phase C package validation workflow`
 
 All commits through that point are pushed to GitHub. Commit messages use plain,
-readable English.
+readable English. The working tree may contain an in-progress browser/coverage
+tooling change; preserve it unless the owning task confirms otherwise.
 
 ## Completed work
 
@@ -26,6 +27,10 @@ readable English.
   and validated-bundle runtime loading.
 - Phase D deterministic named animation-clip evaluation and private RMS/optional
   viseme lip-sync processing.
+- Phase C package validation workflow: it packs the schema, core, controls,
+  runtime, and validator packages; installs them through file-based overrides
+  in a clean consumer fixture; imports their public entry points; and uploads
+  commit-labeled, non-release archive artifacts.
 
 Recent pushed feature commits:
 
@@ -39,29 +44,21 @@ The last complete repository CI run passed security and rights checks,
 formatting, lint, type checks, 46 tests, and production builds. Later scoped
 checks passed 9 core animation tests and 7 audio tests.
 
-## Intentional uncommitted work
+## Current delivery state
 
-These Phase C delivery files are present but not committed:
+The Phase C package-validation workflow and Phase C status update are committed
+and pushed in `75dbf0c`. Local verification completed successfully:
 
-- `.github/workflows/phase-c-package-check.yml`
-- `docs/phase-status/phase-c.md`
-- `live2d-model-plan.md`
-
-They add a package-pack/clean-consumer workflow and Phase C status update. Review
-before committing:
-
-- replace the nonexistent workflow path `vitest.workspace.ts` with
-  `vitest.config.ts`;
-- include `@open-avatar/validator` in the clean-consumer import check;
-- run the package workflow logic locally where practical;
-- run full `corepack pnpm run ci`;
-- commit with a readable message and push.
+- the exact clean-consumer workflow logic installed all five packed packages
+  and imported their public entry points;
+- `corepack pnpm run ci` passed safety and rights checks, formatting, lint,
+  type checks, 57 tests, and production builds.
 
 No first-party Phase D avatar asset edits were made before the pause.
 
 ## Remaining phases
 
-1. Finish and push Phase C CI/CD evidence. Keep Phase C marked pending until its
+1. Finish Phase C CI/CD evidence. Keep Phase C marked pending until its
    browser-matrix, coverage, and GitHub clean-consumer checks are evidenced.
 2. Complete Phase D authored first-party expression/motion data, connect clips
    and audio output to the runtime, validate the avatar artifact, and add Phase D
@@ -79,9 +76,11 @@ No first-party Phase D avatar asset edits were made before the pause.
 Start the next session with:
 
 > Read `PAUSE_HANDOFF.md`, `live2d-model-plan.md`, and
-> `subagent-work-plan.md`. Continue from the saved Phase C delivery work. Keep
-> every task/feature in a separate readable-English commit, run its checks, and
-> push it to `origin/main`. Preserve `.env` and secret exclusions.
+> `subagent-work-plan.md`. Preserve any current in-progress browser/coverage
+> tooling change, then complete the remaining Phase C gate evidence before
+> beginning first-party Phase D asset work. Keep every task/feature in a
+> separate readable-English commit, run its checks, and push it to
+> `origin/main`. Preserve `.env` and secret exclusions.
 
-Before editing, run `git status --short` and confirm the three intentional Phase
-C files above are the only uncommitted changes.
+Before editing, run `git status --short` and identify the owner and intent of
+every uncommitted file.

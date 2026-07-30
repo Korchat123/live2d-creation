@@ -9,6 +9,11 @@ export interface AvatarLayer {
   readonly y: number;
   readonly zIndex: number;
   readonly scale?: number;
+  readonly alpha?: {
+    readonly parameter: string;
+    readonly minimum?: number;
+    readonly maximum?: number;
+  };
   readonly deform?: {
     readonly parameter: string;
     readonly amount: number;
@@ -261,6 +266,15 @@ export class PixiWebGLBackend implements RendererBackend {
               (layer.rotation?.degrees ?? 0) *
               Math.PI) /
             180;
+          if (layer.alpha) {
+            const value = pose.parameters[layer.alpha.parameter] ?? 0;
+            const minimum = layer.alpha.minimum ?? 0;
+            const maximum = layer.alpha.maximum ?? 1;
+            display.alpha = Math.min(
+              1,
+              Math.max(0, minimum + value * (maximum - minimum)),
+            );
+          }
           if (
             !layer.deform ||
             !(display instanceof MeshPlane) ||

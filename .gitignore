@@ -56,9 +56,8 @@ temp/
 
 # Release artifacts
 artifacts/
-release/
+/release/
 *.tgz
 *.zip
 *.tar
 *.tar.gz
-

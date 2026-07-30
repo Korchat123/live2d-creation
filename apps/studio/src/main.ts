@@ -1,395 +1,41 @@
-import manifest from "../../../assets/fixtures/minimal-avatar/avatar.json" with { type: "json" };
-import generatedManifest from "../../../assets/source/reference-avatar/generated-test-avatar-v1/avatar.json" with { type: "json" };
-import clips from "../../../assets/reference-avatar/animation-clips.json" with { type: "json" };
-import type { NamedAnimationClips } from "@open-avatar/core";
-import type { ControlSource } from "@open-avatar/schema";
-import eyeUrl from "../../../assets/fixtures/minimal-avatar/layers/eye_c_pair.svg?url";
-import browUrl from "../../../assets/fixtures/minimal-avatar/layers/brow_c_pair.svg?url";
-import faceUrl from "../../../assets/fixtures/minimal-avatar/layers/face_c_base.svg?url";
-import mouthUrl from "../../../assets/fixtures/minimal-avatar/layers/mouth_c_lower_mesh.svg?url";
-import torsoUrl from "../../../assets/fixtures/minimal-avatar/layers/torso_c_base.svg?url";
-import render from "../../../assets/fixtures/minimal-avatar/render.json" with { type: "json" };
-import generatedEyeWhitesUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eye-whites.png?url";
-import generatedFaceCutoutUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait-eye-hole-base.png?url";
-import generatedEyelidsUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eyelids.png?url";
-import generatedLeftPupilUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupil-left.png?url";
-import generatedRightPupilUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupil-right.png?url";
-import generatedRender from "../../../assets/source/reference-avatar/generated-test-avatar-v1/render.json" with { type: "json" };
-import { AvatarRenderer, type RenderBundle } from "@open-avatar/renderer-pixi";
-import {
-  TrustedStudioAdapter,
-  actionCommand,
-  resetCommand,
-  setCommand,
-} from "./controller.js";
+import portraitUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait.png?url";
+import { mountLayerLab } from "./authoring.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) throw new Error("Missing application root");
-const usingGeneratedAvatar =
-  new URLSearchParams(window.location.search).get("avatar") === "generated";
-const avatarManifest = usingGeneratedAvatar ? generatedManifest : manifest;
-const avatarRender = usingGeneratedAvatar ? generatedRender : render;
-const avatarName = usingGeneratedAvatar
-  ? "Generated test avatar"
-  : "Minimal original avatar";
 
 root.innerHTML = `
-  <header>
-    <div>
-      <p class="eyebrow">Open Avatar Studio · Phase B</p>
-      <h1>One avatar. One control language.</h1>
-      <p class="lede">Human gestures and scripted intelligence travel through the same validated command adapter.</p>
-    </div>
-    <span id="status" class="pill">Loading renderer…</span>
+  <header class="site-header">
+    <a class="brand" href="/">Open Avatar <span>VTuber Lab</span></a>
+    <nav aria-label="Primary"><a class="nav-link selected" href="/">1. Build avatar</a><a class="nav-link" href="/motion.html">2. Motion Lab</a></nav>
   </header>
   <main>
-    <section class="stage-card">
-      <div class="heading">
-        <div><p class="eyebrow">Live preview</p><h2>${avatarName}</h2></div>
-        <button id="dispose" class="quiet">Dispose renderer</button>
-      </div>
-      <div id="stage" class="stage"><canvas id="avatar" aria-label="Animated avatar preview"></canvas></div>
-      <div class="telemetry"><span>Frame <strong id="frame">—</strong></span><strong id="last">Waiting</strong></div>
-    </section>
-    <aside>
-      <section class="panel">
-        <p class="eyebrow">Trusted source · Human</p><h2>Direct controls</h2>
-        <label>Gaze X <output id="xv">0.00</output><input id="x" type="range" min="-1" max="1" value="0" step=".05"></label>
-        <label>Gaze Y <output id="yv">0.00</output><input id="y" type="range" min="-1" max="1" value="0" step=".05"></label>
-        <label>Mouth open <output id="mv">0.00</output><input id="mouth" type="range" min="0" max="1" value="0" step=".05"></label>
-        <div class="buttons" aria-label="Direct actions">
-          <button data-action="blink">Blink</button>
-          <div id="semantic-actions" class="buttons"></div>
-          <button id="reset" class="quiet">Reset</button>
+    <section id="builder" class="page active" aria-labelledby="builder-title">
+      <div class="hero"><div><p class="eyebrow">Local-first avatar authoring</p><h1 id="builder-title">Separate your portrait into a living avatar.</h1><p>Start with one image. Create every starter part, inspect the result of each crop, refine it with a brush, then export or open the separate Motion Lab page.</p></div><img src="${portraitUrl}" alt="Example source portrait for avatar authoring"></div>
+      <section id="layer-lab" class="workspace" aria-labelledby="workspace-title">
+        <div class="section-heading"><div><p class="eyebrow">Page 1</p><h2 id="workspace-title">Avatar Builder</h2></div><span class="status">Nothing leaves this browser</span></div>
+        <div class="workspace-grid">
+          <aside class="tool-panel"><label class="file-picker">Choose portrait<input id="source-image" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="note">The example is local. Your upload replaces it only in this browser.</p><p>Active part: <strong id="active-layer">face base</strong></p><div class="layer-buttons" aria-label="Avatar art parts"><button type="button" data-layer="face base" class="selected">Face base</button><button type="button" data-layer="left eye white">L eye white</button><button type="button" data-layer="right eye white">R eye white</button><button type="button" data-layer="left pupil iris">L pupil/iris</button><button type="button" data-layer="right pupil iris">R pupil/iris</button><button type="button" data-layer="left eye highlight">L highlight</button><button type="button" data-layer="right eye highlight">R highlight</button><button type="button" data-layer="left upper eyelid">L upper lid</button><button type="button" data-layer="right upper eyelid">R upper lid</button><button type="button" data-layer="left lower eyelid">L lower lid</button><button type="button" data-layer="right lower eyelid">R lower lid</button><button type="button" data-layer="left eyebrow">L eyebrow</button><button type="button" data-layer="right eyebrow">R eyebrow</button><button type="button" data-layer="mouth closed lips">Closed lips</button><button type="button" data-layer="mouth interior">Mouth interior</button><button type="button" data-layer="teeth">Teeth</button><button type="button" data-layer="tongue">Tongue</button><button type="button" data-layer="neck">Neck</button><button type="button" data-layer="torso">Torso</button><button type="button" data-layer="front hair">Front hair</button><button type="button" data-layer="back hair">Back hair</button><button type="button" data-layer="accessory">Accessory</button><button type="button" data-layer="left hand arm">L hand/arm</button><button type="button" data-layer="right hand arm">R hand/arm</button></div><label>Brush radius <output id="brush-value">24 px</output><input id="brush-size" type="range" min="4" max="80" value="24"></label><div class="buttons"><button id="brush-add" type="button" class="selected">Add</button><button id="brush-erase" type="button" class="quiet">Erase</button></div><div class="buttons"><button id="undo-selection" type="button" class="quiet" disabled>Undo</button><button id="redo-selection" type="button" class="quiet" disabled>Redo</button><button id="clear-selection" type="button" class="quiet">Clear</button></div></aside>
+          <div class="canvas-panel"><div class="canvas-toolbar"><button id="suggest-all-layers" type="button">Create all starter masks</button><button id="suggest-layers" type="button" class="quiet">Suggest this part</button><button id="show-source" type="button" class="quiet">Compare source</button></div><canvas id="layer-canvas" aria-label="Paint a layer mask over the source portrait"></canvas><p class="note">Create all starter masks makes 24 editable suggestions. Paint to add pixels, use Erase to deselect, then review every part.</p><p id="builder-status" class="note" aria-live="polite">Loading example portrait…</p></div>
+          <aside class="layer-panel"><h3>Part results</h3><div id="layer-output" class="layer-output-list" aria-live="polite"></div><button id="validate-project" type="button">Validate for Motion Lab</button><button id="open-motion" type="button" class="quiet" disabled>Open Motion Lab page</button><button id="export-project" type="button" class="quiet" disabled>Export project</button></aside>
         </div>
-        <p class="note">Keyboard: 1–6 expressions, I/N/W/E/S motions, B blink, R reset.</p>
       </section>
-      <section class="panel ai">
-        <div class="heading"><div><p class="eyebrow">Trusted source · AI</p><h2>Scripted controller</h2></div><span id="override" class="pill">Available</span></div>
-        <p>Uses the exact same adapter path as human input.</p>
-        <button id="script">Run AI sequence</button>
-      </section>
-      <section class="panel">
-        <div class="heading"><div><p class="eyebrow">Command session</p><h2>Record and replay</h2></div><span id="recording-status" class="pill">Idle</span></div>
-        <div class="buttons"><button id="record">Start recording</button><button id="replay" class="quiet" disabled>Replay session</button><button id="clear-recording" class="quiet" disabled>Clear</button></div>
-        <p id="recording-summary" class="note">No provider-neutral commands recorded.</p>
-        <ol id="timeline" class="timeline" aria-label="Recent command diagnostics"></ol>
-      </section>
-      <section class="panel">
-        <p class="eyebrow">Bundle truth</p><h2>Capabilities</h2>
-        <ul id="caps"></ul><p class="note">Unsupported actions are safely rejected.</p>
-      </section>
-    </aside>
+    </section>
   </main>
   <div id="announce" class="sr" role="status" aria-live="polite"></div>`;
 
-const query = <T extends Element = HTMLElement>(selector: string): T => {
-  const element = document.querySelector<T>(selector);
-  if (!element) throw new Error(`Missing ${selector}`);
-  return element;
-};
+const lab = document.querySelector<HTMLElement>("#layer-lab");
+const openMotion = document.querySelector<HTMLButtonElement>("#open-motion");
+if (!lab || !openMotion) throw new Error("Missing authoring controls");
 
-const adapter = new TrustedStudioAdapter(avatarManifest, {
-  clips: clips as NamedAnimationClips,
-});
-const renderer = new AvatarRenderer();
-const canvas = query<HTMLCanvasElement>("#avatar");
-const assetUrls: Record<string, string> = {
-  "layers/brow_c_pair.svg": browUrl,
-  "layers/eye_c_pair.svg": eyeUrl,
-  "layers/face_c_base.svg": faceUrl,
-  "layers/mouth_c_lower_mesh.svg": mouthUrl,
-  "layers/torso_c_base.svg": torsoUrl,
-};
-if (usingGeneratedAvatar)
-  Object.assign(assetUrls, {
-    "layers/eye-whites.png": generatedEyeWhitesUrl,
-    "layers/portrait-eye-hole-base.png": generatedFaceCutoutUrl,
-    "layers/eyelids.png": generatedEyelidsUrl,
-    "layers/pupil-left.png": generatedLeftPupilUrl,
-    "layers/pupil-right.png": generatedRightPupilUrl,
-  });
-const bundle: RenderBundle = {
-  ...(avatarRender as RenderBundle),
-  layers: avatarRender.layers.map((layer) => ({
-    ...layer,
-    assetUrl: assetUrls[layer.assetUrl] ?? layer.assetUrl,
-  })),
-};
-let disposed = false;
-let timer: number | undefined;
-let replayTimers: number[] = [];
-let latestRecording = adapter.recording();
-let lastFrame = performance.now();
-
-const viewport = () => {
-  const bounds = query("#stage").getBoundingClientRect();
-  return {
-    width: Math.max(256, bounds.width),
-    height: Math.max(256, bounds.height),
-    resolution: Math.min(devicePixelRatio, 2),
-  };
-};
-
-const submit = (command: unknown, source: ControlSource) => {
-  const result = adapter.submit(command, source);
-  query("#last").textContent = result.message;
-  query("#announce").textContent = result.message;
-};
-
-const updateRecordingUi = () => {
-  const recording = adapter.isRecording();
-  query("#recording-status").textContent = recording ? "Recording" : "Idle";
-  query<HTMLButtonElement>("#record").textContent = recording
-    ? "Stop recording"
-    : "Start recording";
-  query<HTMLButtonElement>("#replay").disabled =
-    recording || latestRecording.commands.length === 0;
-  query<HTMLButtonElement>("#clear-recording").disabled =
-    recording || latestRecording.commands.length === 0;
-  query("#recording-summary").textContent = latestRecording.commands.length
-    ? `${latestRecording.commands.length} command${latestRecording.commands.length === 1 ? "" : "s"} ready for deterministic replay.`
-    : "No provider-neutral commands recorded.";
-  const timeline = query<HTMLOListElement>("#timeline");
-  timeline.replaceChildren();
-  for (const event of adapter.diagnostics().slice(-8).reverse()) {
-    const item = document.createElement("li");
-    item.className = event.accepted ? "accepted" : "rejected";
-    item.textContent = `${event.source}: ${event.command} — ${event.accepted ? "accepted" : "rejected"}`;
-    timeline.append(item);
-  }
-};
-
-const frame = (now: number) => {
-  if (disposed) return;
-  const snapshot = adapter.snapshot();
-  renderer.render(snapshot.pose);
-  query("#frame").textContent = `${(now - lastFrame).toFixed(1)} ms`;
-  lastFrame = now;
-  const remaining = snapshot.humanOverrideUntil - performance.now();
-  query("#override").textContent =
-    remaining > 0 ? `Human override ${Math.ceil(remaining)} ms` : "Available";
-  updateRecordingUi();
-  requestAnimationFrame(frame);
-};
-
-void renderer
-  .load(canvas, bundle, viewport())
-  .then(() => {
-    query("#status").textContent = "Renderer ready";
-    requestAnimationFrame(frame);
-  })
-  .catch(() => {
-    query("#status").textContent = "Renderer unavailable";
-  });
-
-for (const id of ["x", "y", "mouth"]) {
-  query<HTMLInputElement>(`#${id}`).addEventListener("input", () => {
-    const x = Number(query<HTMLInputElement>("#x").value);
-    const y = Number(query<HTMLInputElement>("#y").value);
-    const mouth = Number(query<HTMLInputElement>("#mouth").value);
-    query<HTMLOutputElement>("#xv").value = x.toFixed(2);
-    query<HTMLOutputElement>("#yv").value = y.toFixed(2);
-    query<HTMLOutputElement>("#mv").value = mouth.toFixed(2);
-    submit(
-      setCommand(
-        adapter.createId("human"),
-        id === "mouth"
-          ? { channel: "mouthOpen", value: mouth }
-          : { channel: "gaze", x, y },
-      ),
-      "human",
-    );
-  });
-}
-
-document
-  .querySelectorAll<HTMLButtonElement>("[data-action]")
-  .forEach((button) =>
-    button.addEventListener("click", () =>
-      submit(
-        actionCommand(
-          adapter.createId("human"),
-          button.dataset.action as "blink" | "expression" | "motion",
-          button.dataset.contentId,
-        ),
-        "human",
-      ),
-    ),
+mountLayerLab(lab, portraitUrl);
+lab.addEventListener("avatarprojectready", (event) => {
+  sessionStorage.setItem(
+    "open-avatar-project",
+    JSON.stringify((event as CustomEvent).detail),
   );
-query("#reset").addEventListener("click", () =>
-  submit(resetCommand(adapter.createId("human")), "human"),
-);
-query("#record").addEventListener("click", () => {
-  if (adapter.isRecording()) latestRecording = adapter.stopRecording();
-  else adapter.startRecording();
-  updateRecordingUi();
 });
-query("#clear-recording").addEventListener("click", () => {
-  for (const id of replayTimers) clearTimeout(id);
-  replayTimers = [];
-  adapter.clearRecording();
-  latestRecording = adapter.recording();
-  updateRecordingUi();
-});
-query("#replay").addEventListener("click", () => {
-  for (const id of replayTimers) clearTimeout(id);
-  replayTimers = latestRecording.commands.map((item) =>
-    window.setTimeout(() => submit(item.command, item.source), item.atMs),
-  );
-  query("#announce").textContent =
-    `Replaying ${latestRecording.commands.length} recorded commands`;
-});
-
-const semanticActions = query("#semantic-actions");
-for (const [action, label] of [
-  ["expression", "Expressions"],
-  ["motion", "Motions"],
-] as const) {
-  const capability = avatarManifest.capabilities[action];
-  if (!capability) continue;
-  const group = document.createElement("fieldset");
-  group.className = "semantic-actions";
-  group.innerHTML = `<legend>${label}</legend>`;
-  for (const contentId of capability.content) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.action = action;
-    button.dataset.contentId = contentId;
-    button.textContent = contentId;
-    button.addEventListener("click", () =>
-      submit(
-        actionCommand(adapter.createId("human"), action, contentId),
-        "human",
-      ),
-    );
-    group.append(button);
-  }
-  semanticActions.append(group);
-}
-query("#script").addEventListener("click", () => {
-  const steps = [
-    () =>
-      submit(
-        setCommand(adapter.createId("ai"), {
-          channel: "gaze",
-          x: -0.7,
-          y: 0.3,
-        }),
-        "ai",
-      ),
-    () =>
-      submit(
-        setCommand(adapter.createId("ai"), {
-          channel: "mouthOpen",
-          value: 0.85,
-        }),
-        "ai",
-      ),
-    () => submit(actionCommand(adapter.createId("ai"), "blink"), "ai"),
-    () => submit(actionCommand(adapter.createId("ai"), "expression"), "ai"),
-    () => submit(actionCommand(adapter.createId("ai"), "motion"), "ai"),
-    () => submit(resetCommand(adapter.createId("ai")), "ai"),
-  ];
-  let index = 0;
-  const next = () => {
-    steps[index]?.();
-    index += 1;
-    if (index < steps.length) timer = window.setTimeout(next, 600);
-  };
-  next();
-});
-
-for (const capability of [
-  "gaze",
-  "blink",
-  "mouthOpen",
-  "expression",
-  "motion",
-  "reset",
-]) {
-  const available = adapter.capabilities().includes(capability as never);
-  query("#caps").insertAdjacentHTML(
-    "beforeend",
-    `<li><span>${capability}</span><strong class="${available ? "yes" : "no"}">${available ? "Available" : "Not authored"}</strong></li>`,
-  );
-}
-
-const resizeObserver = new ResizeObserver(() => {
-  if (!disposed && renderer.state === "ready") renderer.resize(viewport());
-});
-resizeObserver.observe(query("#stage"));
-
-const dispose = () => {
-  if (disposed) return;
-  disposed = true;
-  if (timer) clearTimeout(timer);
-  for (const id of replayTimers) clearTimeout(id);
-  replayTimers = [];
-  resizeObserver.disconnect();
-  renderer.dispose();
-  query("#status").textContent = "Renderer disposed";
-};
-query("#dispose").addEventListener("click", dispose);
-addEventListener("pagehide", dispose);
-
-const shortcuts: Record<string, () => void> = {
-  Digit1: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "neutral"),
-      "human",
-    ),
-  Digit2: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "happy"),
-      "human",
-    ),
-  Digit3: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "sad"),
-      "human",
-    ),
-  Digit4: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "angry"),
-      "human",
-    ),
-  Digit5: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "surprised"),
-      "human",
-    ),
-  Digit6: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "expression", "thinking"),
-      "human",
-    ),
-  KeyI: () =>
-    submit(actionCommand(adapter.createId("human"), "motion", "idle"), "human"),
-  KeyN: () =>
-    submit(actionCommand(adapter.createId("human"), "motion", "nod"), "human"),
-  KeyW: () =>
-    submit(actionCommand(adapter.createId("human"), "motion", "wave"), "human"),
-  KeyE: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "motion", "explain"),
-      "human",
-    ),
-  KeyS: () =>
-    submit(
-      actionCommand(adapter.createId("human"), "motion", "shrug"),
-      "human",
-    ),
-  KeyB: () =>
-    submit(actionCommand(adapter.createId("human"), "blink"), "human"),
-  KeyR: () => submit(resetCommand(adapter.createId("human")), "human"),
-};
-addEventListener("keydown", (event) => {
-  if (event.metaKey || event.ctrlKey || event.altKey) return;
-  if (event.target instanceof HTMLInputElement) return;
-  const shortcut = shortcuts[event.code];
-  if (!shortcut) return;
-  event.preventDefault();
-  shortcut();
+openMotion.addEventListener("click", () => {
+  window.location.assign("/motion.html");
 });

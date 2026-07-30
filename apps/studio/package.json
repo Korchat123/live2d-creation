@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.0.0",
     "@open-avatar/core": "workspace:*",
     "@open-avatar/renderer-pixi": "workspace:*",
     "@open-avatar/schema": "workspace:*"

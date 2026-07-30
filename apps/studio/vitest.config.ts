@@ -1,17 +1,20 @@
-import { fileURLToPath, URL } from "node:url";
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: { include: ["test/**/*.test.ts"], environment: "node" },
   resolve: {
     alias: {
-      "@open-avatar/core": fileURLToPath(
-        new URL("../../packages/core/src/index.ts", import.meta.url),
+      "@open-avatar/core": resolve(
+        import.meta.dirname,
+        "../../packages/core/src/index.ts",
       ),
-      "@open-avatar/renderer-pixi": fileURLToPath(
-        new URL("../../packages/renderer-pixi/src/index.ts", import.meta.url),
+      "@open-avatar/renderer-pixi": resolve(
+        import.meta.dirname,
+        "../../packages/renderer-pixi/src/index.ts",
       ),
-      "@open-avatar/schema": fileURLToPath(
-        new URL("../../packages/schema/src/index.ts", import.meta.url),
+      "@open-avatar/schema": resolve(
+        import.meta.dirname,
+        "../../packages/schema/src/index.ts",
       ),
     },
   },
