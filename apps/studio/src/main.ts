@@ -12,7 +12,8 @@ import render from "../../../assets/fixtures/minimal-avatar/render.json" with { 
 import generatedEyeWhitesUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eye-whites.png?url";
 import generatedFaceCutoutUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait-eye-hole-base.png?url";
 import generatedEyelidsUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/eyelids.png?url";
-import generatedPupilsUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupils.png?url";
+import generatedLeftPupilUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupil-left.png?url";
+import generatedRightPupilUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/pupil-right.png?url";
 import generatedRender from "../../../assets/source/reference-avatar/generated-test-avatar-v1/render.json" with { type: "json" };
 import { AvatarRenderer, type RenderBundle } from "@open-avatar/renderer-pixi";
 import {
@@ -106,7 +107,8 @@ if (usingGeneratedAvatar)
     "layers/eye-whites.png": generatedEyeWhitesUrl,
     "layers/portrait-eye-hole-base.png": generatedFaceCutoutUrl,
     "layers/eyelids.png": generatedEyelidsUrl,
-    "layers/pupils.png": generatedPupilsUrl,
+    "layers/pupil-left.png": generatedLeftPupilUrl,
+    "layers/pupil-right.png": generatedRightPupilUrl,
   });
 const bundle: RenderBundle = {
   ...(avatarRender as RenderBundle),

@@ -9,7 +9,16 @@
       "type": "image",
       "path": "layers/eye-whites.png"
     },
-    { "id": "pupils", "type": "image", "path": "layers/pupils.png" },
+    {
+      "id": "pupil_left",
+      "type": "image",
+      "path": "layers/pupil-left.png"
+    },
+    {
+      "id": "pupil_right",
+      "type": "image",
+      "path": "layers/pupil-right.png"
+    },
     {
       "id": "portrait_eye_hole_base",
       "type": "image",

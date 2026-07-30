@@ -11,12 +11,25 @@
       "scale": 0.4
     },
     {
-      "id": "pupils",
-      "assetUrl": "layers/pupils.png",
-      "x": 388,
-      "y": 154,
+      "id": "pupil_left",
+      "assetUrl": "layers/pupil-left.png",
+      "x": 460,
+      "y": 224,
       "zIndex": 1,
-      "scale": 0.15,
+      "scale": 0.09,
+      "translate": {
+        "xParameter": "gazeX",
+        "yParameter": "gazeY",
+        "amount": 5
+      }
+    },
+    {
+      "id": "pupil_right",
+      "assetUrl": "layers/pupil-right.png",
+      "x": 537,
+      "y": 224,
+      "zIndex": 1,
+      "scale": 0.09,
       "translate": {
         "xParameter": "gazeX",
         "yParameter": "gazeY",
