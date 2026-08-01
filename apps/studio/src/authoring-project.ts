@@ -1,4 +1,8 @@
-import type { ConceptProvenance } from "./generation-provider.js";
+import {
+  conceptTemplateId,
+  partsFirstTemplateId,
+  type ConceptProvenance,
+} from "./generation-provider.js";
 import {
   compositionControlVersion,
   legacyCompositionControlVersion,
@@ -223,7 +227,9 @@ const validateConcept = (concept: AcceptedConcept): void => {
   boundedText(concept.prompt, "concept prompt", 16 * 1024);
   if (
     !["comfyui", "fake"].includes(concept.provenance.provider) ||
-    concept.provenance.templateId !== "open-avatar-concept-v1" ||
+    ![conceptTemplateId, partsFirstTemplateId].includes(
+      concept.provenance.templateId,
+    ) ||
     !/^[a-f0-9]{64}$/u.test(concept.provenance.artifactSha256) ||
     !Number.isSafeInteger(concept.provenance.seed) ||
     concept.provenance.seed < 0 ||

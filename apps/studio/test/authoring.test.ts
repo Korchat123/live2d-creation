@@ -4,6 +4,7 @@ import {
   automaticLayerRegions,
   automaticallySuggestedLayers,
   createInpaintWorkflow,
+  createPartsFirstWorkflow,
   createSegmentWorkflow,
   cropBoundsFromAlpha,
   eyeRegionsFromGuide,
@@ -100,6 +101,23 @@ it("creates a fixed local inpainting workflow with only the supplied image names
     channel: "alpha",
   });
   expect(workflow["7"]?.inputs.seed).toBe(42);
+});
+
+it("creates parts from a dependency composite without requesting an assembled character", () => {
+  const workflow = createPartsFirstWorkflow(
+    "animagine.safetensors",
+    "dependency-composite.png",
+    "face-base-region.png",
+    "purpose-generated face base",
+    "different character",
+    43,
+  );
+  expect(workflow["2"]?.inputs.image).toBe("dependency-composite.png");
+  expect(workflow["3"]?.inputs.image).toBe("face-base-region.png");
+  expect(workflow["5"]?.inputs.text).toContain("single isolated part");
+  expect(workflow["5"]?.inputs.text).toContain("no complete character");
+  expect(workflow["6"]?.inputs.text).toContain("texture atlas");
+  expect(workflow["7"]?.inputs).toMatchObject({ seed: 43, denoise: 1 });
 });
 
 it("finds the smallest rectangle enclosing an authored crop mask", () => {

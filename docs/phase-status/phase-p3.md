@@ -29,6 +29,13 @@ Reviewed: 2026-08-01
   generated-art entries, four expressions, and zero missing-art entries. It
   proved separate coat, sleeves, corset, skirt, legs, footwear, hat, prop, and
   arm jobs, but visual approval remains blocked by an obscured generated face.
+- The default automatic route no longer requests a complete portrait. It starts
+  from a transparent canonical canvas and generates each enabled part inside a
+  bounded region, conditioned only on the text specification and already
+  generated dependency composite. Each purpose-generated part is isolated with
+  part-specific SAM cleanup, with bounded difference as fallback, before the
+  first full-character composite is assembled. Complete-portrait segmentation
+  remains a legacy/import recovery path.
 
 ## Blocking art evidence
 

@@ -103,6 +103,23 @@ it("accepts the portrait concept canvas without rejecting legacy projects", () =
   ).not.toThrow();
 });
 
+it("accepts a transparent parts-first canvas as the generation source", () => {
+  expect(() =>
+    createAuthoringProject(
+      {
+        ...concept,
+        width: 896,
+        height: 1152,
+        provenance: {
+          ...concept.provenance,
+          templateId: "open-avatar-parts-first-v1" as const,
+        },
+      },
+      { projectId: "parts-first-project", createdAt: 100 },
+    ),
+  ).not.toThrow();
+});
+
 it("rejects unknown composition-control provenance", () => {
   const project = createAuthoringProject(concept, {
     projectId: "project-1",

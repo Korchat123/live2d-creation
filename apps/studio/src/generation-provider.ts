@@ -4,6 +4,7 @@ const MAX_ARTIFACT_EDGE = 1152;
 const POLL_LIMIT = 180;
 
 export const conceptTemplateId = "open-avatar-concept-v1";
+export const partsFirstTemplateId = "open-avatar-parts-first-v1";
 
 export const conceptNodeAllowlist = [
   "CheckpointLoaderSimple",
@@ -49,7 +50,7 @@ export type ConceptPromptPlan = {
 
 export type ConceptProvenance = {
   readonly provider: "comfyui" | "fake";
-  readonly templateId: typeof conceptTemplateId;
+  readonly templateId: typeof conceptTemplateId | typeof partsFirstTemplateId;
   readonly checkpoint: string;
   readonly seed: number;
   readonly artifactSha256: string;
@@ -716,6 +717,18 @@ const blobAsDataUrl = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob);
   });
 
+const createTransparentPartsCanvas = async (): Promise<Blob> => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 896;
+  canvas.height = 1152;
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not create the parts-first canvas."));
+    }, "image/png"),
+  );
+};
+
 export const mountPromptWorkspace = (
   host: HTMLElement,
   provider: GenerationProvider,
@@ -751,6 +764,7 @@ export const mountPromptWorkspace = (
 
   let controller: AbortController | undefined;
   let providerReady = false;
+  let providerCheckpoints: readonly string[] = [];
   type CandidateVariant = Readonly<{
     candidate: ConceptCandidate;
     decoded: DecodedImage;
@@ -837,6 +851,7 @@ export const mountPromptWorkspace = (
     try {
       const health = await provider.health();
       providerReady = health.state === "ready";
+      providerCheckpoints = health.approvedCheckpoints;
       checkpoint.replaceChildren(
         new Option(
           health.approvedCheckpoints.length
@@ -899,6 +914,42 @@ export const mountPromptWorkspace = (
       try {
         const submittedPrompt = prompt.value.trim();
         const seed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+        if (options.automaticBuild) {
+          validateConceptRequest(
+            {
+              prompt: submittedPrompt,
+              checkpoint: checkpoint.value,
+              seed,
+            },
+            new Set(providerCheckpoints),
+          );
+          const blank = await createTransparentPartsCanvas();
+          const detail: AcceptedConceptDetail = {
+            image: await blobAsDataUrl(blank),
+            width: 896,
+            height: 1152,
+            prompt: submittedPrompt,
+            provenance: {
+              provider: "comfyui",
+              templateId: partsFirstTemplateId,
+              checkpoint: checkpoint.value,
+              seed,
+              artifactSha256: await sha256(blank),
+            },
+          };
+          output.hidden = true;
+          provenance.textContent =
+            "Parts-first build: no complete portrait will be generated or cropped.";
+          host.dataset.pipelineBusy = "true";
+          status.textContent =
+            "Part manifest ready. Generating independent transparent artwork…";
+          host.dispatchEvent(
+            new CustomEvent<AcceptedConceptDetail>("avatarconceptgenerated", {
+              detail,
+            }),
+          );
+          return;
+        }
         const candidate = await provider.generate(
           {
             prompt: submittedPrompt,

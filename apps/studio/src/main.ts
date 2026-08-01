@@ -13,6 +13,7 @@ import {
 import {
   ComfyGenerationProvider,
   mountPromptWorkspace,
+  partsFirstTemplateId,
   type AcceptedConceptDetail,
 } from "./generation-provider.js";
 import { createPartGenerationJobs } from "./part-generation.js";
@@ -229,7 +230,7 @@ const heroDescription =
   document.querySelector<HTMLElement>(".hero p:last-child");
 if (heroDescription)
   heroDescription.textContent =
-    "Describe the character. Studio generates the design, transparent parts, motion states, and Open Avatar project automatically on this computer.";
+    "Describe the character. Studio generates independent transparent parts first, then assembles and animates the Open Avatar on this computer.";
 document.querySelector<HTMLElement>("#prompt-workspace-title")!.textContent =
   "Generate your avatar";
 const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
@@ -237,7 +238,7 @@ const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
 );
 if (workspaceDescription)
   workspaceDescription.textContent =
-    "One generation can take several minutes because every motion part is created and checked locally.";
+    "No complete portrait is cropped. Every motion part is generated independently and checked locally before the first full composite is assembled.";
 generate.textContent = "Generate Open Avatar";
 check.hidden = true;
 accept.hidden = true;
@@ -253,8 +254,8 @@ automaticPanel.className = "automatic-avatar";
 automaticPanel.innerHTML = `
   <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
   <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
-    <li data-stage="concept">Generate character design</li>
-    <li data-stage="parts">Generate and extract transparent parts</li>
+    <li data-stage="concept">Create character specification and part manifest</li>
+    <li data-stage="parts">Generate independent transparent parts</li>
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
@@ -333,7 +334,7 @@ promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
     stage("concept", "complete");
     stage("parts", "active");
     automaticStatus.textContent =
-      "Generating and extracting transparent layers. Keep ComfyUI open…";
+      "Generating independent transparent layers before assembly. Keep ComfyUI open…";
     try {
       let authoringProject = createAuthoringProject(concept, {
         projectId: crypto.randomUUID(),
@@ -352,7 +353,10 @@ promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
       };
       const partJobs = createPartGenerationJobs(authoringProject);
       await labController.loadSource(concept.image);
-      const project = await labController.buildAutomatically(partJobs);
+      const project =
+        concept.provenance.templateId === partsFirstTemplateId
+          ? await labController.buildFromParts(partJobs)
+          : await labController.buildAutomatically(partJobs);
       stage("parts", "complete");
       stage("rig", "complete");
       stage("project", "complete");

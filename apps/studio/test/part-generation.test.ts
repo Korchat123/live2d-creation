@@ -74,6 +74,8 @@ describe("purpose-generated part orchestration", () => {
     expect(face).toEqual(
       expect.objectContaining({
         sourceConceptSha256: "b".repeat(64),
+        checkpoint: "fixture.safetensors",
+        seed: expect.any(Number),
         canvas: { width: 2048, height: 2048 },
         dependencies: ["neck"],
       }),

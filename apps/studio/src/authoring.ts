@@ -81,6 +81,35 @@ export const createInpaintWorkflow = (
   },
 });
 
+export const createPartsFirstWorkflow = (
+  checkpoint: string,
+  sourceName: string,
+  maskName: string,
+  prompt: string,
+  negative: string,
+  seed: number,
+): Readonly<Record<string, ComfyNode>> => {
+  const workflow = createInpaintWorkflow(
+    checkpoint,
+    sourceName,
+    maskName,
+    `${prompt}, generate only this single isolated part inside the masked area, preserve already drawn dependency parts, no complete character, no contact sheet, no atlas`,
+    seed,
+  ) as Record<string, ComfyNode>;
+  workflow["6"] = {
+    class_type: "CLIPTextEncode",
+    inputs: {
+      text: `${negative}, complete character, assembled character, contact sheet, texture atlas, checkerboard, label, guide line`,
+      clip: ["1", 1],
+    },
+  };
+  workflow["7"] = {
+    ...workflow["7"]!,
+    inputs: { ...workflow["7"]!.inputs, denoise: 1 },
+  };
+  return workflow;
+};
+
 export const createSegmentWorkflow = (
   checkpoint: string,
   sourceName: string,
@@ -342,6 +371,7 @@ const download = (name: string, contents: string): void => {
 
 export type LayerLabController = Readonly<{
   loadSource(source: string): Promise<void>;
+  buildFromParts(jobs: readonly PartGenerationJob[]): Promise<ExportedProject>;
   buildAutomatically(
     jobs?: readonly PartGenerationJob[],
   ): Promise<ExportedProject>;
@@ -1347,6 +1377,113 @@ export const mountLayerLab = (
     artworkCanvases.set(name, target);
     return target.toDataURL("image/png");
   };
+  const composeGeneratedParts = (background = "transparent") => {
+    const composite = document.createElement("canvas");
+    composite.width = canvas.width;
+    composite.height = canvas.height;
+    const compositeContext = composite.getContext("2d");
+    if (!compositeContext)
+      throw new Error("Could not compose generated dependency parts.");
+    if (background === "white") {
+      compositeContext.fillStyle = "#ffffff";
+      compositeContext.fillRect(0, 0, composite.width, composite.height);
+    }
+    layerNames.forEach((name) => {
+      const artwork = artworkCanvases.get(name);
+      if (artwork) compositeContext.drawImage(artwork, 0, 0);
+    });
+    return composite;
+  };
+  const extractGeneratedDifference = async (
+    generatedSource: string,
+    baseline: HTMLCanvasElement,
+    name: string,
+  ): Promise<string | undefined> => {
+    const generated = await loadImage(generatedSource);
+    const generatedCanvas = document.createElement("canvas");
+    generatedCanvas.width = canvas.width;
+    generatedCanvas.height = canvas.height;
+    const generatedContext = generatedCanvas.getContext("2d", {
+      willReadFrequently: true,
+    });
+    const baselineContext = baseline.getContext("2d", {
+      willReadFrequently: true,
+    });
+    const region = getMask(name);
+    const regionContext = region.getContext("2d", { willReadFrequently: true });
+    if (!generatedContext || !baselineContext || !regionContext)
+      throw new Error("Could not inspect generated part pixels.");
+    generatedContext.drawImage(generated, 0, 0, canvas.width, canvas.height);
+    const generatedPixels = generatedContext.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    const baselinePixels = baselineContext.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    ).data;
+    const regionPixels = regionContext.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    ).data;
+    const mask = document.createElement("canvas");
+    mask.width = canvas.width;
+    mask.height = canvas.height;
+    const maskContext = mask.getContext("2d");
+    if (!maskContext) return undefined;
+    const maskPixels = maskContext.createImageData(canvas.width, canvas.height);
+    for (let offset = 0; offset < generatedPixels.data.length; offset += 4) {
+      if ((regionPixels[offset + 3] ?? 0) === 0) continue;
+      const difference =
+        Math.abs(
+          (generatedPixels.data[offset] ?? 0) - (baselinePixels[offset] ?? 0),
+        ) +
+        Math.abs(
+          (generatedPixels.data[offset + 1] ?? 0) -
+            (baselinePixels[offset + 1] ?? 0),
+        ) +
+        Math.abs(
+          (generatedPixels.data[offset + 2] ?? 0) -
+            (baselinePixels[offset + 2] ?? 0),
+        );
+      if (difference < 24) continue;
+      maskPixels.data[offset] = 255;
+      maskPixels.data[offset + 1] = 255;
+      maskPixels.data[offset + 2] = 255;
+      maskPixels.data[offset + 3] = 255;
+    }
+    maskContext.putImageData(maskPixels, 0, 0);
+    const bounds = cropBoundsFromAlpha(
+      maskPixels.data,
+      canvas.width,
+      canvas.height,
+    );
+    if (!bounds) return undefined;
+    const targetMask = getMask(name);
+    const targetMaskContext = targetMask.getContext("2d");
+    if (!targetMaskContext) return undefined;
+    targetMaskContext.clearRect(0, 0, canvas.width, canvas.height);
+    targetMaskContext.drawImage(mask, 0, 0);
+    const artwork = document.createElement("canvas");
+    artwork.width = canvas.width;
+    artwork.height = canvas.height;
+    const artworkContext = artwork.getContext("2d");
+    if (!artworkContext) return undefined;
+    artworkContext.drawImage(generatedCanvas, 0, 0);
+    artworkContext.globalCompositeOperation = "destination-in";
+    artworkContext.drawImage(mask, 0, 0);
+    artworkContext.globalCompositeOperation = "source-over";
+    artworkCanvases.set(name, artwork);
+    const result = artwork.toDataURL("image/png");
+    generatedArtwork.set(name, result);
+    return result;
+  };
   const waitForComfyOutput = async (promptId: string): Promise<string> => {
     for (let attempt = 0; attempt < 90; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 1000));
@@ -1449,7 +1586,7 @@ export const mountLayerLab = (
         )
       : undefined;
     if (!sam3)
-      throw new Error("SAM3 is required to extract generated mouth parts.");
+      throw new Error("SAM3 is required to isolate generated avatar parts.");
     const sourceName = await uploadToComfy(
       artworkSource,
       `open-avatar-generated-${targetLayer.replaceAll(" ", "-")}.png`,
@@ -1524,10 +1661,14 @@ export const mountLayerLab = (
         );
         return;
       }
-      const sourceCanvas = document.createElement("canvas");
-      sourceCanvas.width = canvas.width;
-      sourceCanvas.height = canvas.height;
-      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      const sourceCanvas = generatedArtwork.size
+        ? composeGeneratedParts("white")
+        : document.createElement("canvas");
+      if (!generatedArtwork.size) {
+        sourceCanvas.width = canvas.width;
+        sourceCanvas.height = canvas.height;
+        sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      }
       const sourceName = await uploadToComfy(
         sourceCanvas.toDataURL("image/png"),
         "open-avatar-segment-source.png",
@@ -1725,10 +1866,14 @@ export const mountLayerLab = (
     expressionButtons.forEach((item) => (item.disabled = true));
     expressionStatus.textContent = `Uploading the portrait and ${name} mask to local ComfyUI…`;
     try {
-      const sourceCanvas = document.createElement("canvas");
-      sourceCanvas.width = canvas.width;
-      sourceCanvas.height = canvas.height;
-      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      const sourceCanvas = generatedArtwork.size
+        ? composeGeneratedParts("white")
+        : document.createElement("canvas");
+      if (!generatedArtwork.size) {
+        sourceCanvas.width = canvas.width;
+        sourceCanvas.height = canvas.height;
+        sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      }
       const [sourceName, maskName, checkpoints] = await Promise.all([
         uploadToComfy(
           sourceCanvas.toDataURL("image/png"),
@@ -1960,6 +2105,83 @@ export const mountLayerLab = (
       completeAll.disabled = false;
       repair.disabled = false;
       renderLayers();
+    }
+  };
+  const completePartsFirst = async (
+    jobs: readonly PartGenerationJob[],
+  ): Promise<void> => {
+    completeAll.disabled = true;
+    repair.disabled = true;
+    try {
+      for (const [index, job] of jobs.entries()) {
+        selectedLayer = job.partId;
+        layerName.textContent = job.partId;
+        clearMask(job.partId);
+        if (!paintBoundedFallback(job.partId))
+          throw new Error(
+            `No bounded generation region exists for ${job.partId}.`,
+          );
+        let generated: string | undefined;
+        for (let attempt = 1; attempt <= 2 && !generated; attempt += 1) {
+          announce(
+            `Generating independent part ${index + 1} of ${jobs.length}: ${job.partId}${attempt > 1 ? " (retry 2/2)" : ""}…`,
+          );
+          const baseline = composeGeneratedParts("white");
+          const [sourceName, maskName] = await Promise.all([
+            uploadToComfy(
+              baseline.toDataURL("image/png"),
+              `open-avatar-parts-context-${job.partId.replaceAll(" ", "-")}.png`,
+            ),
+            uploadToComfy(
+              getMask(job.partId).toDataURL("image/png"),
+              `open-avatar-parts-mask-${job.partId.replaceAll(" ", "-")}.png`,
+            ),
+          ]);
+          const response = await fetch("/comfy/prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: createPartsFirstWorkflow(
+                job.checkpoint,
+                sourceName,
+                maskName,
+                job.prompt,
+                job.negative,
+                (job.seed + attempt - 1) >>> 0,
+              ),
+            }),
+          });
+          if (!response.ok)
+            throw new Error(
+              `ComfyUI rejected the parts-first ${job.partId} workflow.`,
+            );
+          const queued = (await response.json()) as { prompt_id?: unknown };
+          if (typeof queued.prompt_id !== "string")
+            throw new Error("ComfyUI did not return a parts-first job id.");
+          const generatedSource = await toDataUrl(
+            await waitForComfyOutput(queued.prompt_id),
+          );
+          generated = (await segmentGeneratedPart(generatedSource, job.partId))
+            ? generatedArtwork.get(job.partId)
+            : await extractGeneratedDifference(
+                generatedSource,
+                baseline,
+                job.partId,
+              );
+        }
+        if (!generated)
+          throw new Error(
+            `Parts-first generation produced no independent ${job.partId} pixels.`,
+          );
+        saveDraft();
+      }
+      renderLayers();
+      announce(
+        "Independent parts completed. Building the first full-character composite now.",
+      );
+    } finally {
+      completeAll.disabled = false;
+      repair.disabled = false;
     }
   };
   const suggestAllParts = async (): Promise<void> => {
@@ -2281,6 +2503,31 @@ export const mountLayerLab = (
   return {
     loadSource: (nextSource) => load(nextSource),
     loadProject: (project) => load(project.source, project),
+    buildFromParts: async (jobs) => {
+      await completePartsFirst(jobs);
+      await makeAvatarMotionReady();
+      const project = buildProject(jobs.map(({ partId }) => partId));
+      const missingRequired = findMissingRequiredMotionLayers(project.layers);
+      if (missingRequired.length)
+        throw new Error(
+          `Parts-first generation is missing required motion layers: ${missingRequired.join(", ")}.`,
+        );
+      const missingGenerated = jobs
+        .map(({ partId }) => partId)
+        .filter((name) => !project.generatedArtwork[name]);
+      if (missingGenerated.length)
+        throw new Error(
+          `Parts-first generation is missing transparent artwork: ${missingGenerated.join(", ")}.`,
+        );
+      const missingExpressions = (
+        Object.keys(expressionLayers) as ExpressionName[]
+      ).filter((name) => !project.expressionArtwork[name]);
+      if (missingExpressions.length)
+        throw new Error(
+          `Parts-first generation is missing expression artwork: ${missingExpressions.join(", ")}.`,
+        );
+      return project;
+    },
     buildAutomatically: async (jobs) => {
       await completeAllMissing(jobs);
       await makeAvatarMotionReady();

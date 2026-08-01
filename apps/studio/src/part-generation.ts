@@ -18,6 +18,8 @@ export type PartGenerationJob = Readonly<{
   partId: PartId;
   dependencies: readonly PartId[];
   sourceConceptSha256: string;
+  checkpoint: string;
+  seed: number;
   canvas: Readonly<{ width: 2048; height: 2048 }>;
   anchor: NormalizedPoint;
   prompt: string;
@@ -151,12 +153,14 @@ export const createPartGenerationJobs = (
 ): readonly PartGenerationJob[] => {
   const sourceConceptSha256 = project.acceptedConcept.provenance.artifactSha256;
   const identity = biblePrompt(project.characterBible);
-  return dependencyOrderedParts(project.partPlan).map((partId) => ({
+  return dependencyOrderedParts(project.partPlan).map((partId, index) => ({
     templateId: partGenerationTemplateId,
     partId,
     dependencies:
       project.partPlan.find((entry) => entry.id === partId)?.dependencies ?? [],
     sourceConceptSha256,
+    checkpoint: project.acceptedConcept.provenance.checkpoint,
+    seed: (project.acceptedConcept.provenance.seed + index + 1) >>> 0,
     canvas: { width: 2048, height: 2048 },
     anchor: landmarkAnchor(project, partId),
     prompt: `same approved character, ${identity}, purpose-generated ${partId}, ${partPurpose[partId]}, full-canvas aligned RGBA layer, transparent background, clean anime line art`,

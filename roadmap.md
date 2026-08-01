@@ -28,7 +28,11 @@ Open Avatar rather than an Editor-exported Cubism model.
 ## Part-first artifact contract
 
 The accepted source of truth is a manifest plus separate full-canvas RGBA
-images. A generated atlas or contact sheet is only a derived review preview; it
+images. The default flow does not generate a complete portrait first. It starts
+with a transparent canonical canvas, bounded part regions, and a character
+specification; each job receives only its declared dependency composite as
+visual context. The first complete character image is assembled from accepted
+parts. A generated atlas or contact sheet is only a derived review preview; it
 is never split to create project art.
 
 Every character requires a clean face base beneath hair and facial features,
@@ -205,6 +209,20 @@ face and made the hat too dominant. Studio now strengthens face-visibility
 conditioning and recognizes color words between "long" and "hair" when
 planning side-hair jobs. See
 `docs/authoring/expanded-part-first-physical-smoke.md`.
+
+The default one-click implementation now follows the strict part-first
+contract. It no longer submits the complete-character concept workflow. Studio
+creates a transparent 896 by 1152 canvas and prompt-derived manifest locally,
+generates each isolated part against only the already-created dependency
+composite, isolates that newly generated part with part-specific SAM cleanup
+(bounded image difference is the fallback), and assembles the full character
+only after the part queue. The old portrait
+segmentation/inpainting path remains available solely for imported portrait
+recovery and legacy projects. This new path still needs a labelled physical
+ComfyUI reconstruction before its art-quality gate can pass. A startup smoke
+verified that no concept artifact was created and that the queue advanced
+directly from back hair to torso; see
+`docs/authoring/parts-first-startup-smoke.md`.
 
 ## Primary references
 
