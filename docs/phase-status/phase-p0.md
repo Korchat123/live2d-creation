@@ -13,7 +13,9 @@ Reviewed: 2026-07-31
   P1 and ordinary CI uses a deterministic fake.
 - The reference device is Windows 11 with an RTX 3050 6 GB laptop GPU and about
   16 GB system RAM. P1 uses conservative single-job and artifact limits.
-- No checkpoint is chosen automatically. Unknown checkpoint, LoRA, control
+- No arbitrary discovered checkpoint is chosen automatically. When exactly one
+  installed checkpoint is present in the host allowlist, Studio may select that
+  sole approved choice. Unknown checkpoint, LoRA, control
   model, or generated-output rights block export.
 - The existing uncommitted Studio changes are preserved and assigned to the
   root P1 integration task. They are prototype input, not accepted P1 evidence.

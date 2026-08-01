@@ -13,7 +13,8 @@ Reviewed: 2026-07-31
   768-pixel canvas, one output, bounded sampling, and no prompt-controlled path,
   URL, node, or checkpoint.
 - Checkpoints must be present in host configuration and the installed inventory;
-  no discovered checkpoint is selected automatically.
+  no arbitrary discovered checkpoint is selected automatically; the sole
+  installed checkpoint in the host allowlist is selected as the safe default.
 - Prompt size, seed, job concurrency, timeout, output type, filename,
   subfolder, encoded bytes, decoded dimensions, alpha policy, and artifact hash
   are bounded or validated.

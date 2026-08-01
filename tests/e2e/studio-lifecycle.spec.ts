@@ -1,65 +1,43 @@
 import { expect, test } from "@playwright/test";
 
-test("renders, accepts human input, resizes, and disposes safely", async ({
+test("renders the automatic Builder without exposing manual phase tools", async ({
   page,
 }) => {
-  const pixiWarnings: string[] = [];
-  page.on("console", (message) => {
-    if (
-      message.type() === "warning" &&
-      message.text().includes("TextureSource managed by Assets")
-    )
-      pixiWarnings.push(message.text());
-  });
   await page.goto("/");
 
-  await expect(page.locator("#status")).toHaveText("Renderer ready");
-  await expect(page.locator("#semantic-actions button")).toHaveCount(11);
-  await page.getByRole("button", { name: "sad" }).click();
-  await expect(page.locator("#last")).toHaveText("human: play expression");
-  await page.keyboard.press("KeyW");
-  await expect(page.locator("#last")).toHaveText("human: play motion");
-  await page.locator("#x").fill("0.5");
-  await expect(page.locator("#xv")).toHaveText("0.50");
-  await expect(page.locator("#last")).toHaveText("human: set gaze");
-
-  await page.setViewportSize({ width: 900, height: 700 });
-  await expect(page.locator("#avatar")).toBeVisible();
-
-  await page.locator("#dispose").click();
-  await expect(page.locator("#status")).toHaveText("Renderer disposed");
-  await page.locator("#dispose").click();
-  await expect(page.locator("#status")).toHaveText("Renderer disposed");
-  await expect.poll(() => pixiWarnings).toEqual([]);
-});
-
-test("matches the approved first-party fixture render", async ({
-  page,
-  browserName,
-}) => {
-  test.skip(
-    browserName !== "chromium",
-    "The committed pixel baseline is reviewed on Chromium.",
-  );
-  await page.setViewportSize({ width: 900, height: 700 });
-  await page.goto("/");
-  await expect(page.locator("#status")).toHaveText("Renderer ready");
-
-  await page.locator("#x").fill("0.5");
-  await page.locator("#mouth").fill("0.65");
-  await expect(page.locator("#stage")).toHaveScreenshot(
-    "minimal-avatar-controls.png",
-    { animations: "disabled" },
-  );
-});
-
-test("loads the generated test avatar without replacing the fixture", async ({
-  page,
-}) => {
-  await page.goto("/?avatar=generated");
-  await expect(page.locator("#status")).toHaveText("Renderer ready");
   await expect(
-    page.getByRole("heading", { name: "Generated test avatar" }),
+    page.getByRole("heading", {
+      name: "Prompt once. Get a ready-to-use 2D avatar.",
+    }),
   ).toBeVisible();
-  await expect(page.locator("#avatar")).toBeVisible();
+  await expect(page.locator("#automatic-progress li")).toHaveCount(4);
+  await expect(page.locator("#layer-lab")).toBeHidden();
+  await expect(page.locator("#project-review")).toBeHidden();
+});
+
+test("keeps the prompt workspace usable when ComfyUI is not configured", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator("#generation-status")).toContainText(
+    "No checkpoint is allowlisted",
+  );
+  await page.locator("#character-prompt").fill("blue-haired librarian");
+  await expect(page.locator("#concept-prompt-plan")).toContainText(
+    "blue-haired librarian",
+  );
+  await expect(page.locator("#generate-concept")).toBeDisabled();
+});
+
+test("Motion Lab fails safely without a validated project", async ({
+  page,
+}) => {
+  await page.goto("/motion.html");
+  await expect(page.getByRole("heading", { name: "Motion Lab" })).toBeVisible();
+  await expect(page.locator("#motion-status")).toHaveText(
+    "No validated project found. Return to Builder, create the parts, then validate it.",
+  );
+  await expect(page.locator("#motion-canvas")).toBeVisible();
+  await page.getByRole("link", { name: "Return to Builder" }).click();
+  await expect(page).toHaveURL(/\/$/u);
 });

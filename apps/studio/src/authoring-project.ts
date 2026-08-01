@@ -1,4 +1,5 @@
 import type { ConceptProvenance } from "./generation-provider.js";
+import { compositionControlVersion } from "./composition-control.js";
 
 const MAX_CONCEPT_DATA_URL_LENGTH = 6 * 1024 * 1024;
 const MAX_PROJECT_LENGTH = MAX_CONCEPT_DATA_URL_LENGTH + 96 * 1024;
@@ -159,6 +160,18 @@ const validateConcept = (concept: AcceptedConcept): void => {
   )
     throw new Error("The accepted concept provenance is invalid.");
   boundedText(concept.provenance.checkpoint, "checkpoint", 256);
+  if (concept.provenance.compositionControl) {
+    if (
+      concept.provenance.compositionControl.templateId !==
+      compositionControlVersion
+    )
+      throw new Error("The composition control provenance is invalid.");
+    boundedText(
+      concept.provenance.compositionControl.controlNet,
+      "composition control model",
+      256,
+    );
+  }
 };
 
 const validateBible = (value: Partial<CharacterBible>): CharacterBible => ({

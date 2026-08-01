@@ -12,6 +12,9 @@ export const conceptNodeAllowlist = [
   "KSampler",
   "VAEDecode",
   "SaveImage",
+  "LoadImage",
+  "ControlNetLoader",
+  "ControlNetApplyAdvanced",
 ] as const;
 
 type ComfyNode = {
@@ -22,6 +25,7 @@ type ComfyNode = {
 export type ProviderHealth = {
   readonly state: "ready" | "offline" | "misconfigured";
   readonly approvedCheckpoints: readonly string[];
+  readonly approvedControlNets?: readonly string[];
   readonly message: string;
 };
 
@@ -49,6 +53,10 @@ export type ConceptProvenance = {
   readonly checkpoint: string;
   readonly seed: number;
   readonly artifactSha256: string;
+  readonly compositionControl?: Readonly<{
+    templateId: typeof compositionControlVersion;
+    controlNet: string;
+  }>;
 };
 
 export type ConceptCandidate = {
@@ -81,6 +89,10 @@ export interface GenerationProvider {
     options: GenerationOptions,
   ): Promise<ConceptCandidate>;
 }
+
+export const defaultApprovedCheckpoint = (
+  checkpoints: readonly string[],
+): string => (checkpoints.length === 1 ? (checkpoints[0] ?? "") : "");
 
 export type DecodedImage = {
   readonly width: number;
@@ -199,12 +211,12 @@ export const createConceptPromptPlan = (
   const clothing = "clothing and accessories exactly as described";
   const palette = "consistent color palette";
   const pose =
-    "looking at viewer, front view, full body, standing, zoomed out, centered composition, neutral pose, head fully inside frame, complete head, complete hair, margin above hair, visible neck, visible shoulders, plain white background";
+    "looking at viewer, front view, full body, standing, zoomed out, centered composition, neutral pose, head fully inside frame, complete head, complete hair, generous margin above hair, visible neck, visible shoulders, isolated on a blank pure white background, no props";
   const quality = animagine
     ? "masterpiece, high score, great score, absurdres"
     : "high quality";
   const negative = animagine
-    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, background object, scenery"
+    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
     : "cropped head, cropped hair, cropped shoulders, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic";
   return {
     profile: animagine ? "animagine-xl-4" : "generic",
@@ -223,10 +235,11 @@ export const createConceptPromptPlan = (
 
 export const createConceptWorkflow = (
   request: ConceptRequest,
+  control?: Readonly<{ controlNet: string; image: string }>,
 ): Readonly<Record<string, ComfyNode>> => {
   const plan = createConceptPromptPlan(request.prompt, request.checkpoint);
   const animagine = plan.profile === "animagine-xl-4";
-  return {
+  const workflow: Record<string, ComfyNode> = {
     "1": {
       class_type: "CheckpointLoaderSimple",
       inputs: { ckpt_name: request.checkpoint },
@@ -263,8 +276,8 @@ export const createConceptWorkflow = (
         scheduler: "normal",
         denoise: 1,
         model: ["1", 0],
-        positive: ["2", 0],
-        negative: ["3", 0],
+        positive: control ? ["10", 0] : ["2", 0],
+        negative: control ? ["10", 1] : ["3", 0],
         latent_image: ["4", 0],
       },
     },
@@ -277,6 +290,30 @@ export const createConceptWorkflow = (
       inputs: { filename_prefix: "open-avatar-concept", images: ["6", 0] },
     },
   };
+  if (control) {
+    workflow["8"] = {
+      class_type: "LoadImage",
+      inputs: { image: control.image },
+    };
+    workflow["9"] = {
+      class_type: "ControlNetLoader",
+      inputs: { control_net_name: control.controlNet },
+    };
+    workflow["10"] = {
+      class_type: "ControlNetApplyAdvanced",
+      inputs: {
+        positive: ["2", 0],
+        negative: ["3", 0],
+        control_net: ["9", 0],
+        image: ["8", 0],
+        strength: 0.75,
+        start_percent: 0,
+        end_percent: 0.75,
+        vae: ["1", 2],
+      },
+    };
+  }
+  return workflow;
 };
 
 const sniffImageMime = (bytes: Uint8Array): "image/png" | "image/webp" => {
@@ -353,14 +390,18 @@ const firstHistoryImage = (
 
 export class ComfyGenerationProvider implements GenerationProvider {
   readonly #approvedCheckpoints: ReadonlySet<string>;
+  readonly #approvedControlNets: ReadonlySet<string>;
   readonly #fetch: Fetcher;
   readonly #sleep: Sleeper;
+  readonly #createCompositionControl: () => Promise<Blob>;
   #active = false;
 
   constructor(
     approvedCheckpoints: readonly string[],
     fetcher: Fetcher = fetch,
     sleeper: Sleeper = defaultSleep,
+    approvedControlNets: readonly string[] = [],
+    createCompositionControl: () => Promise<Blob> = createCompositionControlPng,
   ) {
     this.#approvedCheckpoints = new Set(
       approvedCheckpoints.filter(
@@ -370,8 +411,17 @@ export class ComfyGenerationProvider implements GenerationProvider {
           !hasControlCharacter(checkpoint),
       ),
     );
-    this.#fetch = fetcher;
+    this.#approvedControlNets = new Set(
+      approvedControlNets.filter(
+        (controlNet) =>
+          controlNet.length > 0 &&
+          controlNet.length <= 256 &&
+          !hasControlCharacter(controlNet),
+      ),
+    );
+    this.#fetch = fetcher.bind(globalThis);
     this.#sleep = sleeper;
+    this.#createCompositionControl = createCompositionControl;
   }
 
   async health(signal?: AbortSignal): Promise<ProviderHealth> {
@@ -384,11 +434,15 @@ export class ComfyGenerationProvider implements GenerationProvider {
       };
     try {
       const request = signal ? { signal } : undefined;
-      const [stats, models] = await Promise.all([
+      const [stats, models, controlNets] = await Promise.all([
         this.#fetch("/comfy/system_stats", request),
         this.#fetch("/comfy/models/checkpoints", request),
+        this.#approvedControlNets.size
+          ? this.#fetch("/comfy/models/controlnet", request)
+          : Promise.resolve(undefined),
       ]);
-      if (!stats.ok || !models.ok) throw new Error("Provider health failed.");
+      if (!stats.ok || !models.ok || (controlNets && !controlNets.ok))
+        throw new Error("Provider health failed.");
       const discovered = (await models.json()) as unknown;
       if (!Array.isArray(discovered))
         return {
@@ -406,10 +460,30 @@ export class ComfyGenerationProvider implements GenerationProvider {
           approvedCheckpoints: [],
           message: "None of the allowlisted checkpoints are installed.",
         };
+      const discoveredControlNets = controlNets
+        ? ((await controlNets.json()) as unknown)
+        : [];
+      if (!Array.isArray(discoveredControlNets))
+        throw new Error("ComfyUI returned an invalid ControlNet inventory.");
+      const approvedControlNets = discoveredControlNets.filter(
+        (value): value is string =>
+          typeof value === "string" && this.#approvedControlNets.has(value),
+      );
+      if (
+        this.#approvedControlNets.size > 0 &&
+        approvedControlNets.length === 0
+      )
+        return {
+          state: "misconfigured",
+          approvedCheckpoints: approved,
+          approvedControlNets: [],
+          message: "None of the allowlisted ControlNet models are installed.",
+        };
       return {
         state: "ready",
         approvedCheckpoints: approved,
-        message: `Local ComfyUI is ready with ${approved.length} approved checkpoint${approved.length === 1 ? "" : "s"}.`,
+        approvedControlNets,
+        message: `Local ComfyUI is ready with ${approved.length} approved checkpoint${approved.length === 1 ? "" : "s"}${approvedControlNets.length ? " and composition control" : ""}.`,
       };
     } catch (error) {
       if (signal?.aborted) throw abortError();
@@ -441,6 +515,34 @@ export class ComfyGenerationProvider implements GenerationProvider {
     await Promise.all(calls);
   }
 
+  async #uploadCompositionControl(signal: AbortSignal): Promise<string> {
+    const form = new FormData();
+    form.append(
+      "image",
+      await this.#createCompositionControl(),
+      `${compositionControlVersion}.png`,
+    );
+    form.append("type", "input");
+    form.append("overwrite", "true");
+    const response = await this.#fetch("/comfy/upload/image", {
+      method: "POST",
+      body: form,
+      signal,
+    });
+    if (!response.ok)
+      throw new Error("ComfyUI rejected the composition control image.");
+    const uploaded = (await response.json()) as {
+      name?: unknown;
+      subfolder?: unknown;
+      type?: unknown;
+    };
+    const name = boundedString(uploaded.name, "control image name");
+    const subfolder = safeSubfolder(uploaded.subfolder);
+    if (uploaded.type !== "input")
+      throw new Error("ComfyUI returned an unexpected control image type.");
+    return subfolder ? `${subfolder}/${name}` : name;
+  }
+
   async generate(
     request: ConceptRequest,
     options: GenerationOptions,
@@ -456,6 +558,13 @@ export class ComfyGenerationProvider implements GenerationProvider {
     };
     options.signal.addEventListener("abort", cancel, { once: true });
     try {
+      const controlNet = this.#approvedControlNets.values().next().value;
+      const control = controlNet
+        ? {
+            controlNet,
+            image: await this.#uploadCompositionControl(options.signal),
+          }
+        : undefined;
       options.onProgress?.({
         stage: "submitting",
         message: "Submitting the reviewed concept workflow…",
@@ -463,7 +572,9 @@ export class ComfyGenerationProvider implements GenerationProvider {
       const response = await this.#fetch("/comfy/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: createConceptWorkflow(request) }),
+        body: JSON.stringify({
+          prompt: createConceptWorkflow(request, control),
+        }),
         signal: options.signal,
       });
       if (!response.ok)
@@ -522,6 +633,14 @@ export class ComfyGenerationProvider implements GenerationProvider {
           checkpoint: request.checkpoint,
           seed: request.seed,
           artifactSha256: await sha256(imageBlob),
+          ...(controlNet
+            ? {
+                compositionControl: {
+                  templateId: compositionControlVersion,
+                  controlNet,
+                },
+              }
+            : {}),
         },
       };
     } catch (error) {
@@ -600,6 +719,7 @@ const blobAsDataUrl = (blob: Blob): Promise<string> =>
 export const mountPromptWorkspace = (
   host: HTMLElement,
   provider: GenerationProvider,
+  options: Readonly<{ automaticBuild?: boolean }> = {},
 ): void => {
   const prompt = host.querySelector<HTMLTextAreaElement>("#character-prompt");
   const checkpoint = host.querySelector<HTMLSelectElement>(
@@ -639,6 +759,16 @@ export const mountPromptWorkspace = (
   }>;
   const candidates: CandidateVariant[] = [];
   let acceptedCandidate: CandidateVariant | undefined;
+
+  const candidateDetail = async (
+    variant: CandidateVariant,
+  ): Promise<AcceptedConceptDetail> => ({
+    image: await blobAsDataUrl(variant.candidate.image),
+    width: variant.decoded.width,
+    height: variant.decoded.height,
+    prompt: variant.prompt,
+    provenance: variant.candidate.provenance,
+  });
 
   const renderPromptPlan = (): void => {
     const plan = createConceptPromptPlan(prompt.value, checkpoint.value);
@@ -716,9 +846,12 @@ export const mountPromptWorkspace = (
         ),
         ...health.approvedCheckpoints.map((name) => new Option(name, name)),
       );
+      checkpoint.value = defaultApprovedCheckpoint(health.approvedCheckpoints);
       renderPromptPlan();
-      status.textContent = health.message;
-      generate.disabled = true;
+      status.textContent = checkpoint.value
+        ? `${health.message} ${checkpoint.value} selected.`
+        : health.message;
+      generate.disabled = !providerReady || !checkpoint.value;
     } finally {
       check.disabled = false;
     }
@@ -734,15 +867,8 @@ export const mountPromptWorkspace = (
   accept.addEventListener("click", () => {
     if (!acceptedCandidate) return;
     accept.disabled = true;
-    void blobAsDataUrl(acceptedCandidate.candidate.image)
-      .then((image) => {
-        const detail: AcceptedConceptDetail = {
-          image,
-          width: acceptedCandidate!.decoded.width,
-          height: acceptedCandidate!.decoded.height,
-          prompt: acceptedCandidate!.prompt,
-          provenance: acceptedCandidate!.candidate.provenance,
-        };
+    void candidateDetail(acceptedCandidate)
+      .then((detail) => {
         host.dispatchEvent(
           new CustomEvent<AcceptedConceptDetail>("avatarconceptaccepted", {
             detail,
@@ -803,7 +929,19 @@ export const mountPromptWorkspace = (
         }
         acceptedCandidate = variant;
         renderVariants();
-        status.textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"} ready. Compare and accept one design.`;
+        if (options.automaticBuild) {
+          const detail = await candidateDetail(variant);
+          host.dataset.pipelineBusy = "true";
+          status.textContent =
+            "Character generated. Preparing transparent avatar parts…";
+          host.dispatchEvent(
+            new CustomEvent<AcceptedConceptDetail>("avatarconceptgenerated", {
+              detail,
+            }),
+          );
+        } else {
+          status.textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"} ready. Compare and accept one design.`;
+        }
       } catch (error) {
         status.textContent =
           error instanceof DOMException && error.name === "AbortError"
@@ -813,7 +951,10 @@ export const mountPromptWorkspace = (
               : "Generation failed.";
       } finally {
         controller = undefined;
-        generate.disabled = !providerReady || !checkpoint.value;
+        generate.disabled =
+          !providerReady ||
+          !checkpoint.value ||
+          host.dataset.pipelineBusy === "true";
         check.disabled = false;
         cancel.disabled = true;
       }
@@ -823,3 +964,7 @@ export const mountPromptWorkspace = (
   renderPromptPlan();
   void setHealth();
 };
+import {
+  compositionControlVersion,
+  createCompositionControlPng,
+} from "./composition-control.js";

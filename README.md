@@ -1,6 +1,6 @@
 # Prompt-to-Live2D Studio
 
-This repository is planning a prompt-first authoring Studio that generates a
+This repository contains a prompt-first authoring Studio that generates a
 consistent 2D character and purpose-built, transparent parts, then assembles
 and rigs them for the existing Open Avatar browser runtime. It also plans
 non-destructive prompt edits for generated projects and a layered PSD handoff
@@ -38,11 +38,23 @@ Useful individual commands are `pnpm format:check`, `pnpm lint`,
 
 ## Local concept-generation spike
 
+The default Studio experience is now one-click: enter a character prompt and
+choose **Generate Live2D avatar**. Studio generates the concept, extracts and
+repairs transparent motion parts through local ComfyUI, creates blink and mouth
+states, validates the result, and enables Open Avatar project download and
+Motion Lab preview. Generated project files can be uploaded from the same
+screen. Character-bible and Portrait Layer Lab controls are internal recovery
+tools and are not part of the default user flow.
+
 Phase P1 can connect the Studio development server to a local ComfyUI instance
 at `127.0.0.1:8188`. Checkpoint discovery never authorizes a model
 automatically. Before starting Studio, set `VITE_COMFY_CHECKPOINTS` to a
 comma-separated allowlist of installed checkpoint filenames whose rights you
-have reviewed, then run `pnpm --filter @open-avatar/studio dev`.
+have reviewed. Set `VITE_COMFY_CONTROLNETS` the same way when using the reviewed
+composition-control workflow, then run
+`pnpm --filter @open-avatar/studio dev`. Studio automatically selects a model
+only when the host allowlist and installed inventory intersect at exactly one
+checkpoint; it never selects an arbitrary discovered model.
 
 Generated candidates remain drafts until explicit acceptance. The P1 gate
 passed a labelled physical ComfyUI generation and cancellation test on the
@@ -54,9 +66,12 @@ character bible, normalized landmarks, bounded part dependencies, IndexedDB
 persistence, and validated project-file round trips are implemented. The next
 gate is the production-model control experiment in `roadmap.md`. The
 prompt-only Animagine benchmark passed hardware stability but failed framing
-and identity quality, so the checkpoint is not production-approved. Its frozen
-protocol and evidence are recorded in
+and identity quality. The verified OpenPose SDXL control improved framing to
+19/20, but the strict crop/background gate still failed, so the workflow is not
+production-approved. Its frozen protocol and evidence are recorded in
 [`docs/authoring/production-model-benchmark.md`](docs/authoring/production-model-benchmark.md).
+The controlled results are in
+[`docs/authoring/controlled-composition-benchmark.md`](docs/authoring/controlled-composition-benchmark.md).
 
 See `docs/phase-status/` for historical delivery evidence and `AGENTS.md` for
 repository contribution boundaries.

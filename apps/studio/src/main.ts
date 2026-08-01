@@ -1,11 +1,15 @@
 import portraitUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait.png?url";
-import { mountLayerLab } from "./authoring.js";
+import { mountLayerLab, type ExportedProject } from "./authoring.js";
+import {
+  parseAutomaticAvatarProject,
+  saveAutomaticAvatarProject,
+  serializeAutomaticAvatarProject,
+} from "./automatic-avatar.js";
 import {
   ComfyGenerationProvider,
   mountPromptWorkspace,
   type AcceptedConceptDetail,
 } from "./generation-provider.js";
-import { mountProjectReview } from "./project-review.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -18,25 +22,25 @@ root.innerHTML = `
   </header>
   <main>
     <section id="builder" class="page active" aria-labelledby="builder-title">
-      <div class="hero"><div><p class="eyebrow">Local-first avatar authoring</p><h1 id="builder-title">Describe and build a living 2D avatar.</h1><p>Generate an original concept first, then approve its design before creating aligned parts and an Open Avatar rig. The portrait tools remain available for legacy projects and reference-guided correction.</p></div><img src="${portraitUrl}" alt="Example source portrait for avatar authoring"></div>
+      <div class="hero"><div><p class="eyebrow">Local-first avatar authoring</p><h1 id="builder-title">Prompt once. Get a ready-to-use 2D avatar.</h1><p>Describe the character. Studio generates the design, transparent parts, motion states, and Open Avatar project automatically on this computer.</p></div><img src="${portraitUrl}" alt="Example source portrait for avatar authoring"></div>
       <section id="prompt-workspace" class="prompt-workspace" aria-labelledby="prompt-workspace-title">
         <div>
           <p class="eyebrow">Default workflow</p>
-          <h2 id="prompt-workspace-title">Generate a character concept</h2>
-          <p>Describe the character, choose an explicitly allowlisted local checkpoint, and generate one review candidate. A candidate never changes the active project until a later approval step.</p>
+          <h2 id="prompt-workspace-title">Generate your avatar</h2>
+          <p>One generation can take several minutes because every motion part is created and checked locally.</p>
         </div>
         <div class="prompt-controls">
           <label>Character description<textarea id="character-prompt" rows="5" maxlength="16384" placeholder="Original anime librarian with shoulder-length blue hair, round glasses, navy jacket, warm expression, neutral front pose"></textarea></label>
-          <label>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
-          <details class="prompt-plan"><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
-          <div class="buttons"><button id="check-generation" type="button">Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate concept</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
+          <label hidden>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
+          <details class="prompt-plan" hidden><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
+          <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate Live2D avatar</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
           <p id="generation-status" class="note" aria-live="polite">Checking the local generation provider…</p>
         </div>
         <figure class="concept-candidate">
           <div class="concept-image-stage"><img id="concept-output" alt="Generated character concept candidate" hidden><div id="landmark-overlay" aria-hidden="true"></div></div>
           <figcaption><span id="concept-provenance">No candidate generated.</span></figcaption>
-          <div id="concept-variants" class="concept-variants" aria-label="Generated concept candidates"></div>
-          <button id="accept-concept" type="button" disabled>Accept design</button>
+          <div id="concept-variants" class="concept-variants" aria-label="Generated concept candidates" hidden></div>
+          <button id="accept-concept" type="button" disabled hidden>Accept design</button>
         </figure>
       </section>
       <section id="project-review" class="project-review" aria-labelledby="project-review-title" hidden>
@@ -54,7 +58,7 @@ root.innerHTML = `
         </div>
         <div class="project-actions"><button id="save-authoring-project" type="button">Save project file</button><label class="file-picker">Load project file<input id="load-authoring-project" type="file" accept="application/json,.json"></label><p id="project-review-status" class="note" aria-live="polite">Accept a design to begin.</p></div>
       </section>
-      <section id="layer-lab" class="workspace" aria-labelledby="workspace-title">
+      <section id="layer-lab" class="workspace" aria-labelledby="workspace-title" hidden>
         <div class="section-heading"><div><p class="eyebrow">Legacy and correction tools</p><h2 id="workspace-title">Portrait Layer Lab</h2></div><span class="status">Local computer only</span></div>
         <div class="workspace-grid">
           <aside class="tool-panel"><label class="file-picker">Choose portrait<input id="source-image" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="note">The example is local. Your upload replaces it only in this browser.</p><section class="eye-guide" aria-labelledby="eye-guide-title"><h3 id="eye-guide-title">Exact eye guides</h3><p class="note">For each eye click: outer corner, inner corner, top lid, lower lid. This gives the crop its actual portrait shape.</p><div class="buttons"><button id="guide-left-eye" type="button">Guide left eye</button><button id="guide-right-eye" type="button">Guide right eye</button></div><button id="create-guided-eyes" type="button">Create guided eye layers</button><button id="clear-eye-guides" type="button" class="quiet">Clear guides</button><p id="eye-guide-status" class="note" aria-live="polite">No eye guides set.</p></section><section class="eye-guide" aria-labelledby="repair-title"><h3 id="repair-title">Local missing-art repair</h3><p class="note">Uses your current layer mask and local ComfyUI. Generated art is a draft—compare it with the portrait.</p><label>Repair instruction<textarea id="repair-prompt" rows="3" placeholder="Complete the hidden lower eyelid with matching skin and line art."></textarea></label><button id="generate-repair" type="button">Generate selected part</button><p id="repair-status" class="note" aria-live="polite">ComfyUI is used only through this computer.</p><img id="repair-output" class="repair-output" alt="Local ComfyUI generated repair" hidden></section><p>Active part: <strong id="active-layer">face base</strong></p><div class="layer-buttons" aria-label="Avatar art parts"><button type="button" data-layer="face base" class="selected">Face base</button><button type="button" data-layer="left eye white">L eye white</button><button type="button" data-layer="right eye white">R eye white</button><button type="button" data-layer="left pupil iris">L pupil/iris</button><button type="button" data-layer="right pupil iris">R pupil/iris</button><button type="button" data-layer="left eye highlight">L highlight</button><button type="button" data-layer="right eye highlight">R highlight</button><button type="button" data-layer="left upper eyelid">L upper lid</button><button type="button" data-layer="right upper eyelid">R upper lid</button><button type="button" data-layer="left lower eyelid">L lower lid</button><button type="button" data-layer="right lower eyelid">R lower lid</button><button type="button" data-layer="left eyebrow">L eyebrow</button><button type="button" data-layer="right eyebrow">R eyebrow</button><button type="button" data-layer="mouth closed lips">Closed lips</button><button type="button" data-layer="mouth interior">Mouth interior</button><button type="button" data-layer="teeth">Teeth</button><button type="button" data-layer="tongue">Tongue</button><button type="button" data-layer="neck">Neck</button><button type="button" data-layer="torso">Torso</button><button type="button" data-layer="front hair">Front hair</button><button type="button" data-layer="back hair">Back hair</button><button type="button" data-layer="accessory">Accessory</button><button type="button" data-layer="left hand arm">L hand/arm</button><button type="button" data-layer="right hand arm">R hand/arm</button></div><label>Brush radius <output id="brush-value">24 px</output><input id="brush-size" type="range" min="4" max="80" value="24"></label><div class="buttons"><button id="brush-add" type="button" class="selected">Add</button><button id="brush-erase" type="button" class="quiet">Erase</button></div><div class="buttons"><button id="undo-selection" type="button" class="quiet" disabled>Undo</button><button id="redo-selection" type="button" class="quiet" disabled>Redo</button><button id="clear-selection" type="button" class="quiet">Clear</button></div></aside>
@@ -171,44 +175,213 @@ arrangeAuthoringPanels();
 
 const promptWorkspace =
   document.querySelector<HTMLElement>("#prompt-workspace");
-if (!promptWorkspace) throw new Error("Missing prompt workspace");
+const projectReview = document.querySelector<HTMLElement>("#project-review");
+const lab = document.querySelector<HTMLElement>("#layer-lab");
+const generate = document.querySelector<HTMLButtonElement>("#generate-concept");
+const check = document.querySelector<HTMLButtonElement>("#check-generation");
+const accept = document.querySelector<HTMLButtonElement>("#accept-concept");
+const variants = document.querySelector<HTMLElement>("#concept-variants");
+const plan = document.querySelector<HTMLElement>(".prompt-plan");
+const checkpoint = document
+  .querySelector<HTMLSelectElement>("#concept-checkpoint")
+  ?.closest("label");
+if (
+  !promptWorkspace ||
+  !projectReview ||
+  !lab ||
+  !generate ||
+  !check ||
+  !accept ||
+  !variants ||
+  !plan ||
+  !checkpoint
+)
+  throw new Error("Missing automatic avatar controls");
+
+document.querySelector<HTMLElement>("#builder-title")!.textContent =
+  "Prompt once. Get a ready-to-use 2D avatar.";
+const heroDescription =
+  document.querySelector<HTMLElement>(".hero p:last-child");
+if (heroDescription)
+  heroDescription.textContent =
+    "Describe the character. Studio generates the design, transparent parts, motion states, and Open Avatar project automatically on this computer.";
+document.querySelector<HTMLElement>("#prompt-workspace-title")!.textContent =
+  "Generate your avatar";
+const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
+  ":scope > div:first-child > p:last-child",
+);
+if (workspaceDescription)
+  workspaceDescription.textContent =
+    "One generation can take several minutes because every motion part is created and checked locally.";
+generate.textContent = "Generate Live2D avatar";
+check.hidden = true;
+accept.hidden = true;
+variants.hidden = true;
+plan.hidden = true;
+checkpoint.hidden = true;
+projectReview.hidden = true;
+lab.hidden = true;
+
+const automaticPanel = document.createElement("section");
+automaticPanel.id = "automatic-avatar";
+automaticPanel.className = "automatic-avatar";
+automaticPanel.innerHTML = `
+  <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
+  <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
+    <li data-stage="concept">Generate character design</li>
+    <li data-stage="parts">Generate and extract transparent parts</li>
+    <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
+    <li data-stage="project">Validate and package Open Avatar project</li>
+  </ol>
+  <p id="automatic-status" class="note" aria-live="polite">Enter a prompt, then choose Generate Live2D avatar.</p>
+  <div class="buttons">
+    <button id="download-automatic-project" type="button" disabled>Download project</button>
+    <button id="open-automatic-motion" type="button" class="quiet" disabled>Open avatar</button>
+    <label class="file-picker">Upload generated project<input id="upload-automatic-project" type="file" accept="application/json,.json"></label>
+  </div>`;
+promptWorkspace.after(automaticPanel);
+
+const automaticState =
+  automaticPanel.querySelector<HTMLElement>("#automatic-state")!;
+const automaticStatus =
+  automaticPanel.querySelector<HTMLElement>("#automatic-status")!;
+const downloadProject = automaticPanel.querySelector<HTMLButtonElement>(
+  "#download-automatic-project",
+)!;
+const openAvatar = automaticPanel.querySelector<HTMLButtonElement>(
+  "#open-automatic-motion",
+)!;
+const uploadProject = automaticPanel.querySelector<HTMLInputElement>(
+  "#upload-automatic-project",
+)!;
+const stage = (name: string, state: "active" | "complete" | "error") => {
+  const item = automaticPanel.querySelector<HTMLElement>(
+    `[data-stage="${name}"]`,
+  );
+  if (item) item.dataset.state = state;
+};
+const resetStages = () =>
+  automaticPanel
+    .querySelectorAll<HTMLElement>("[data-stage]")
+    .forEach((item) => delete item.dataset.state);
+
+let activeProject: ExportedProject | undefined;
+const labController = mountLayerLab(lab, portraitUrl);
+const internalAnnouncement = document.querySelector<HTMLElement>("#announce");
+if (internalAnnouncement)
+  new MutationObserver(() => {
+    if (
+      promptWorkspace.dataset.pipelineBusy === "true" &&
+      internalAnnouncement.textContent
+    )
+      automaticStatus.textContent = internalAnnouncement.textContent;
+  }).observe(internalAnnouncement, { childList: true, subtree: true });
+const makeProjectAvailable = async (
+  project: ExportedProject,
+): Promise<void> => {
+  activeProject = project;
+  await saveAutomaticAvatarProject(project);
+  downloadProject.disabled = false;
+  openAvatar.disabled = false;
+};
+const download = (): void => {
+  if (!activeProject) return;
+  const url = URL.createObjectURL(
+    new Blob([serializeAutomaticAvatarProject(activeProject)], {
+      type: "application/json",
+    }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "generated.open-avatar-project.json";
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
+  const concept = (event as CustomEvent<AcceptedConceptDetail>).detail;
+  void (async () => {
+    resetStages();
+    downloadProject.disabled = true;
+    openAvatar.disabled = true;
+    automaticState.textContent = "Building";
+    stage("concept", "complete");
+    stage("parts", "active");
+    automaticStatus.textContent =
+      "Generating and extracting transparent layers. Keep ComfyUI open…";
+    try {
+      await labController.loadSource(concept.image);
+      const project = await labController.buildAutomatically();
+      stage("parts", "complete");
+      stage("rig", "complete");
+      stage("project", "complete");
+      await makeProjectAvailable(project);
+      automaticState.textContent = "Ready";
+      automaticStatus.textContent =
+        "Avatar ready. Download the project or open it in Motion Lab.";
+    } catch (error) {
+      const active = automaticPanel.querySelector<HTMLElement>(
+        '[data-state="active"]',
+      );
+      if (active) active.dataset.state = "error";
+      automaticState.textContent = "Needs retry";
+      automaticStatus.textContent =
+        error instanceof Error
+          ? error.message
+          : "Automatic avatar build failed.";
+    } finally {
+      delete promptWorkspace.dataset.pipelineBusy;
+      generate.disabled = false;
+    }
+  })();
+});
+
+downloadProject.addEventListener("click", download);
+openAvatar.addEventListener("click", () =>
+  window.location.assign("/motion.html"),
+);
+uploadProject.addEventListener("change", () => {
+  void (async () => {
+    const file = uploadProject.files?.[0];
+    if (!file) return;
+    resetStages();
+    automaticState.textContent = "Loading";
+    automaticStatus.textContent = "Validating the generated project…";
+    try {
+      const project = parseAutomaticAvatarProject(await file.text());
+      await labController.loadProject(project);
+      await makeProjectAvailable(project);
+      ["concept", "parts", "rig", "project"].forEach((name) =>
+        stage(name, "complete"),
+      );
+      automaticState.textContent = "Ready";
+      automaticStatus.textContent =
+        "Generated project loaded. Download it again or open the avatar.";
+    } catch (error) {
+      automaticState.textContent = "Rejected";
+      automaticStatus.textContent =
+        error instanceof Error ? error.message : "Could not load the project.";
+    } finally {
+      uploadProject.value = "";
+    }
+  })();
+});
+
 const approvedCheckpoints = (import.meta.env.VITE_COMFY_CHECKPOINTS ?? "")
   .split(",")
   .map((checkpoint) => checkpoint.trim())
   .filter(Boolean);
+const approvedControlNets = (import.meta.env.VITE_COMFY_CONTROLNETS ?? "")
+  .split(",")
+  .map((controlNet) => controlNet.trim())
+  .filter(Boolean);
 mountPromptWorkspace(
   promptWorkspace,
-  new ComfyGenerationProvider(approvedCheckpoints),
+  new ComfyGenerationProvider(
+    approvedCheckpoints,
+    fetch,
+    undefined,
+    approvedControlNets,
+  ),
+  { automaticBuild: true },
 );
-const projectReview = document.querySelector<HTMLElement>("#project-review");
-const conceptOutput =
-  document.querySelector<HTMLImageElement>("#concept-output");
-if (!projectReview || !conceptOutput)
-  throw new Error("Missing authoring project review controls");
-const projectController = mountProjectReview(projectReview, conceptOutput);
-promptWorkspace.addEventListener("avatarconceptaccepted", (event) => {
-  projectController.acceptConcept(
-    (event as CustomEvent<AcceptedConceptDetail>).detail,
-  );
-});
-void projectController.restore().catch((error: unknown) => {
-  const status = document.querySelector<HTMLElement>("#project-review-status");
-  if (status)
-    status.textContent =
-      error instanceof Error ? error.message : "Could not restore project.";
-});
-
-const lab = document.querySelector<HTMLElement>("#layer-lab");
-const openMotion = document.querySelector<HTMLButtonElement>("#open-motion");
-if (!lab || !openMotion) throw new Error("Missing authoring controls");
-
-mountLayerLab(lab, portraitUrl);
-lab.addEventListener("avatarprojectready", (event) => {
-  sessionStorage.setItem(
-    "open-avatar-project",
-    JSON.stringify((event as CustomEvent).detail),
-  );
-});
-openMotion.addEventListener("click", () => {
-  window.location.assign("/motion.html");
-});

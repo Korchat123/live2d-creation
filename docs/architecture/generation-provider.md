@@ -35,7 +35,8 @@ memory reported by the selected inference stack.
 - at most 16 KiB of prompt text after UTF-8 encoding;
 - 180-second job timeout with user cancellation;
 - polling no faster than once per second when WebSocket progress is unavailable;
-- no checkpoint is selected automatically;
+- a checkpoint is selected automatically only when exactly one host-allowlisted
+  checkpoint is installed; otherwise selection is explicit;
 - no custom workflow graph or provider endpoint is read from a project; and
 - candidate output is temporary until explicit acceptance.
 
@@ -49,7 +50,8 @@ update.
 The provider seam must support:
 
 - health and capability discovery;
-- explicit checkpoint selection from a host-supplied allowlist;
+- selection restricted to a host-supplied allowlist, with the sole approved
+  installed checkpoint selected by default;
 - reviewed template selection;
 - prompt submission;
 - progress or bounded polling;

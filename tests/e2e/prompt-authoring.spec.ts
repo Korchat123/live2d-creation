@@ -1,73 +1,72 @@
 import { expect, test } from "@playwright/test";
 
-const acceptedConcept = {
-  image:
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-  width: 768,
-  height: 768,
-  prompt: "blue-haired librarian",
-  provenance: {
-    provider: "fake",
-    templateId: "open-avatar-concept-v1",
-    checkpoint: "v1-5-pruned-emaonly.safetensors",
-    seed: 7,
-    artifactSha256: "0".repeat(64),
-  },
-};
+const image =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+const requiredLayers = [
+  "face base",
+  "left eye white",
+  "right eye white",
+  "left pupil iris",
+  "right pupil iris",
+  "left upper eyelid",
+  "right upper eyelid",
+  "left lower eyelid",
+  "right lower eyelid",
+  "mouth closed lips",
+  "mouth interior",
+  "torso",
+];
 
-test("accepts, reviews, and restores a private prompt-first project", async ({
+const generatedProject = JSON.stringify({
+  version: 1,
+  updatedAt: 7,
+  source: image,
+  layers: Object.fromEntries(requiredLayers.map((name) => [name, image])),
+  generatedArtwork: {},
+  expressionArtwork: {},
+  missingArtwork: [],
+  limitations: [],
+});
+
+test("presents one-click generation and restores a generated project", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Generate a character concept" }),
+    page.getByRole("heading", {
+      name: "Prompt once. Get a ready-to-use 2D avatar.",
+    }),
   ).toBeVisible();
-  await expect(page.locator("#generation-status")).toContainText(
-    "No checkpoint is allowlisted",
-  );
+  await expect(
+    page.getByRole("button", { name: "Generate Live2D avatar" }),
+  ).toBeVisible();
+  await expect(page.locator("#project-review")).toBeHidden();
+  await expect(page.locator("#layer-lab")).toBeHidden();
+  await expect(page.locator("#concept-checkpoint")).toBeHidden();
+  await expect(page.locator("#accept-concept")).toBeHidden();
+
   await page
     .getByLabel("Character description")
     .fill("blue-haired woman with a navy jacket");
-  await page.getByText("Review interpreted generation request").click();
-  await expect(page.locator("#concept-prompt-plan")).toContainText(
-    "blue-haired woman with a navy jacket",
-  );
-  await expect(page.locator("#concept-prompt-plan")).toContainText(
-    "complete head",
+  await expect(page.locator("#automatic-status")).toContainText(
+    "Enter a prompt",
   );
 
-  await page
-    .locator("#prompt-workspace")
-    .evaluate(
-      (element, detail) =>
-        element.dispatchEvent(
-          new CustomEvent("avatarconceptaccepted", { detail }),
-        ),
-      acceptedConcept,
-    );
-  await expect(page.locator("#project-review")).toBeVisible();
-  await page.getByLabel("Character name").fill("Aoi");
-  await page.getByLabel("Visual style").fill("clean anime line art");
-  await page.getByLabel("Palette").fill("navy and muted blue");
-  await page.getByLabel("Outfit rules").fill("navy librarian jacket");
-  await page
-    .getByLabel("Identity-locked features")
-    .fill("round glasses, blue hair, oval face");
-
-  for (const name of ["leftEye", "rightEye", "nose", "mouth", "chin", "neck"]) {
-    await page.locator(`[data-landmark="${name}"][data-axis="x"]`).fill("0.5");
-    await page.locator(`[data-landmark="${name}"][data-axis="y"]`).fill("0.5");
-  }
-  await expect(page.locator("#project-review-status")).toHaveText(
-    "Character bible complete. Ready for project review.",
+  await page.locator("#upload-automatic-project").setInputFiles({
+    name: "avatar.open-avatar-project.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(generatedProject),
+  });
+  await expect(page.locator("#automatic-state")).toHaveText("Ready");
+  await expect(page.locator("#download-automatic-project")).toBeEnabled();
+  await expect(page.locator("#open-automatic-motion")).toBeEnabled();
+  await expect(page.locator('[data-stage="project"]')).toHaveAttribute(
+    "data-state",
+    "complete",
   );
-  await page.locator('[data-part-id="accessory"]').check();
-
-  await page.reload();
-  await expect(page.locator("#project-review")).toBeVisible();
-  await expect(page.getByLabel("Character name")).toHaveValue("Aoi");
-  await expect(page.locator('[data-part-id="accessory"]')).toBeChecked();
-  await expect(page.locator("#landmark-status")).toHaveText(
-    "6/6 landmarks marked.",
+  await page.locator("#open-automatic-motion").click();
+  await expect(page).toHaveURL(/\/motion\.html$/u);
+  await expect(page.locator("#motion-status")).toContainText(
+    "Motion preview is live",
   );
 });

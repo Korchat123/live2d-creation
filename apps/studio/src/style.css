@@ -6,6 +6,9 @@
 * {
   box-sizing: border-box;
 }
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
   min-width: 320px;
@@ -340,6 +343,65 @@ li strong {
   border: 1px solid #385063;
   border-radius: 1.25rem;
   background: #0d1c28;
+}
+
+.automatic-avatar {
+  margin-top: 1.25rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  border: 1px solid #31506f;
+  border-radius: 1rem;
+  background: rgb(10 25 38 / 92%);
+}
+
+.automatic-progress {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: automatic-stage;
+}
+
+.automatic-progress li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: #aec0d1;
+}
+
+.automatic-progress li::before {
+  counter-increment: automatic-stage;
+  content: counter(automatic-stage);
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid #31506f;
+  border-radius: 999px;
+}
+
+.automatic-progress li[data-state="active"] {
+  color: #eaf4ff;
+}
+
+.automatic-progress li[data-state="active"]::before {
+  border-color: #72e6c1;
+  box-shadow: 0 0 0 3px rgb(114 230 193 / 20%);
+}
+
+.automatic-progress li[data-state="complete"]::before {
+  content: "✓";
+  color: #06130e;
+  border-color: #72e6c1;
+  background: #72e6c1;
+}
+
+.automatic-progress li[data-state="error"]::before {
+  content: "!";
+  color: white;
+  border-color: #ff5b77;
+  background: #b52f4b;
 }
 
 .prompt-workspace h2 {

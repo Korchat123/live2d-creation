@@ -6,6 +6,22 @@ Updated: 2026-08-01
 Open Avatar remains the default automated rig, preview, and export. A
 Cubism-ready layered PSD is the optional handoff to Live2D Cubism Editor.
 
+## Default product flow
+
+The user-facing phase UI has been retired. The default flow is:
+
+1. enter one character prompt;
+2. generate one controlled concept locally;
+3. automatically segment and generate transparent motion parts;
+4. generate expression states and the conservative Open Avatar motion setup;
+5. validate and download the generated project or open it in Motion Lab; and
+6. upload a previously generated project into the same screen.
+
+Character-bible fields, landmarks, masks, and manual painting remain internal
+metadata or recovery tools. They must not block the one-click happy path. The
+optional Cubism route remains an Editor handoff; automatic output is labelled
+Open Avatar rather than an Editor-exported Cubism model.
+
 ## Risk-resolution matrix
 
 | Risk                                             | Resolution                                                                                                                                                                                                                                   | Gate                                                                                                                                                                                                                       |
@@ -57,7 +73,8 @@ part plan, provenance, and blocking rights state.
    `xinsir/controlnet-openpose-sdxl-1.0` SafeTensors checkpoint, stated
    Apache-2.0, published SHA-256
    `b8524e557a7df60d081f5d4a0eb109967d107df217943bf88c2d99b9ebcc06c5`.
-   It remains unapproved until its exact file and local hash are verified.
+   The installed 2,502,139,104-byte file exactly matches that hash. This
+   verifies the file but does not by itself approve production use.
 2. Generate the reviewed full-body pose/layout map inside Studio. Do not add a
    third-party pose preprocessor or custom ComfyUI nodes for this experiment.
 3. Extend the application-owned node allowlist only with the built-in image,
@@ -106,12 +123,21 @@ gates.
 
 ## Current next action
 
-P2 is accepted. The Animagine XL 4.0 Opt checkpoint is hash-verified and passed
-the 20-job hardware and single-subject gates, but prompt-only generation failed
-the framing gate at 17/20 and showed identity drift. It is not approved for
-production. The next action is a bounded, reviewed SDXL composition-control and
-identity-reference experiment; P3 remains blocked until that controlled
-workflow passes the same suite.
+P2 is accepted. The Animagine XL 4.0 Opt prompt-only run framed 17/20 samples.
+The verified OpenPose SDXL control improved the first controlled run to 18/20
+and the final tuned run to 19/20, with 40/40 controlled jobs completing without
+OOM or an abandoned queue. The final run still produced one top crop, one halo,
+and one faint panel/background treatment, so the strict scene gate remains
+failed and the workflow is not production-approved. P3 artifact validation and
+dependency-ordered orchestration are implemented, but P3 art acceptance remains
+blocked for production-quality release pending a passing subject/background
+check and a separately rights-reviewed identity-reference experiment. These
+review gates do not interrupt the one-click local draft workflow.
+See `docs/authoring/controlled-composition-benchmark.md` and
+`docs/phase-status/phase-p3.md`. The local one-click draft pipeline now passes
+physically: one prompt and one action produced a downloadable 24-layer project
+with 24 generated-art entries, four expressions, and no missing parts. See
+`docs/authoring/one-click-physical-smoke.md`.
 
 ## Primary references
 

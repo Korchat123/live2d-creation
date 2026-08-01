@@ -6,6 +6,7 @@ import {
   conceptTemplateId,
   createConceptPromptPlan,
   createConceptWorkflow,
+  defaultApprovedCheckpoint,
   validateConceptRequest,
   validateImageArtifact,
   type ConceptCandidate,
@@ -33,6 +34,16 @@ const candidate = (): ConceptCandidate => ({
 });
 
 describe("prompt generation policy", () => {
+  it("selects a sole approved checkpoint but requires a choice among several", () => {
+    expect(defaultApprovedCheckpoint([])).toBe("");
+    expect(defaultApprovedCheckpoint(["animagine.safetensors"])).toBe(
+      "animagine.safetensors",
+    );
+    expect(
+      defaultApprovedCheckpoint(["first.safetensors", "second.safetensors"]),
+    ).toBe("");
+  });
+
   it("keeps the reviewed workflow inside the node allowlist and fixed budgets", () => {
     const workflow = createConceptWorkflow({
       prompt: "blue-haired librarian",
@@ -82,6 +93,28 @@ describe("prompt generation policy", () => {
       steps: 28,
       cfg: 5,
       sampler_name: "euler_ancestral",
+    });
+    const controlled = createConceptWorkflow(request, {
+      controlNet: "pose.safetensors",
+      image: "open-avatar-openpose-v1.png",
+    });
+    expect(controlled["8"]).toMatchObject({
+      class_type: "LoadImage",
+      inputs: { image: "open-avatar-openpose-v1.png" },
+    });
+    expect(controlled["9"]).toMatchObject({
+      class_type: "ControlNetLoader",
+      inputs: { control_net_name: "pose.safetensors" },
+    });
+    expect(controlled["10"]?.class_type).toBe("ControlNetApplyAdvanced");
+    expect(controlled["10"]?.inputs).toMatchObject({
+      strength: 0.75,
+      start_percent: 0,
+      end_percent: 0.75,
+    });
+    expect(controlled["5"]?.inputs).toMatchObject({
+      positive: ["10", 0],
+      negative: ["10", 1],
     });
   });
 
@@ -166,6 +199,26 @@ describe("prompt generation policy", () => {
 });
 
 describe("ComfyUI adapter", () => {
+  it("invokes the fetch adapter with the browser global receiver", async () => {
+    const receivers: unknown[] = [];
+    const fetcher: typeof fetch = function (this: unknown, input) {
+      receivers.push(this);
+      const url = String(input);
+      return Promise.resolve(
+        url === "/comfy/models/checkpoints"
+          ? new Response(JSON.stringify(["approved.safetensors"]))
+          : new Response("{}"),
+      );
+    };
+    const provider = new ComfyGenerationProvider(
+      ["approved.safetensors"],
+      fetcher,
+    );
+
+    await expect(provider.health()).resolves.toMatchObject({ state: "ready" });
+    expect(receivers).toEqual([globalThis, globalThis]);
+  });
+
   it("reports missing allowlist configuration without network access", async () => {
     const fetcher = vi.fn<typeof fetch>();
     const provider = new ComfyGenerationProvider([], fetcher);
@@ -192,6 +245,28 @@ describe("ComfyUI adapter", () => {
     await expect(provider.health()).resolves.toMatchObject({
       state: "ready",
       approvedCheckpoints: ["approved.safetensors"],
+    });
+  });
+
+  it("requires an allowlisted composition model when configured", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response("{}"))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(["approved.safetensors"])),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(["pose.safetensors"])),
+      );
+    const provider = new ComfyGenerationProvider(
+      ["approved.safetensors"],
+      fetcher,
+      async () => undefined,
+      ["pose.safetensors"],
+    );
+    await expect(provider.health()).resolves.toMatchObject({
+      state: "ready",
+      approvedControlNets: ["pose.safetensors"],
     });
   });
 
@@ -255,6 +330,68 @@ describe("ComfyUI adapter", () => {
         ),
       ),
     ).toBe(true);
+  });
+
+  it("uploads and records the application-owned composition control", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/comfy/upload/image")
+        return new Response(
+          JSON.stringify({
+            name: "open-avatar-openpose-v1.png",
+            subfolder: "",
+            type: "input",
+          }),
+        );
+      if (url === "/comfy/prompt")
+        return new Response(JSON.stringify({ prompt_id: "controlled-job" }));
+      if (url === "/comfy/history/controlled-job")
+        return new Response(
+          JSON.stringify({
+            "controlled-job": {
+              outputs: {
+                "7": {
+                  images: [
+                    {
+                      filename: "controlled.png",
+                      subfolder: "",
+                      type: "output",
+                    },
+                  ],
+                },
+              },
+            },
+          }),
+        );
+      if (url.startsWith("/comfy/view?")) return new Response(pngBlob());
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    const provider = new ComfyGenerationProvider(
+      ["approved.safetensors"],
+      fetcher,
+      async () => undefined,
+      ["pose.safetensors"],
+      async () => pngBlob(),
+    );
+    const result = await provider.generate(
+      {
+        prompt: "blue-haired librarian",
+        checkpoint: "approved.safetensors",
+        seed: 7,
+      },
+      { signal: new AbortController().signal },
+    );
+    expect(result.provenance.compositionControl).toEqual({
+      templateId: "open-avatar-openpose-v1",
+      controlNet: "pose.safetensors",
+    });
+    const submission = fetcher.mock.calls.find(
+      ([input]) => String(input) === "/comfy/prompt",
+    );
+    const body = JSON.parse(String(submission?.[1]?.body)) as {
+      prompt: Record<string, { class_type: string }>;
+    };
+    expect(body.prompt["10"]?.class_type).toBe("ControlNetApplyAdvanced");
   });
 
   it("cancels the provider when the caller aborts an active job", async () => {

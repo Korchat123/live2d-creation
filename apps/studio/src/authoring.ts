@@ -309,10 +309,16 @@ const download = (name: string, contents: string): void => {
   URL.revokeObjectURL(link.href);
 };
 
+export type LayerLabController = Readonly<{
+  loadSource(source: string): Promise<void>;
+  buildAutomatically(): Promise<ExportedProject>;
+  loadProject(project: ExportedProject): Promise<void>;
+}>;
+
 export const mountLayerLab = (
   host: HTMLElement,
   exampleSource: string,
-): void => {
+): LayerLabController => {
   const input = host.querySelector<HTMLInputElement>("#source-image");
   const canvas = host.querySelector<HTMLCanvasElement>("#layer-canvas");
   const size = host.querySelector<HTMLInputElement>("#brush-size");
@@ -416,10 +422,10 @@ export const mountLayerLab = (
     !openMotion ||
     !status
   )
-    return;
+    throw new Error("Missing layer-lab controls.");
 
   const context = canvas.getContext("2d");
-  if (!context) return;
+  if (!context) throw new Error("Could not initialize the layer canvas.");
   const masks = new Map<string, HTMLCanvasElement>();
   const artworkCanvases = new Map<string, HTMLCanvasElement>();
   const generatedArtwork = new Map<string, string>();
@@ -428,6 +434,7 @@ export const mountLayerLab = (
   const future = new Map<string, string[]>();
   let image: HTMLImageElement | undefined;
   let source = exampleSource;
+  let loadGeneration = 0;
   let selectedLayer = "face base";
   let drawing = false;
   let mode: "add" | "erase" = "add";
@@ -727,60 +734,79 @@ export const mountLayerLab = (
     });
     saveDraft();
   };
-  const load = (nextSource: string, draft?: ExportedProject) => {
-    const next = new Image();
-    next.onload = async () => {
-      image = next;
-      source = nextSource;
-      canvas.width = next.naturalWidth;
-      canvas.height = next.naturalHeight;
-      masks.clear();
-      artworkCanvases.clear();
-      generatedArtwork.clear();
-      expressionArtwork.clear();
-      history.clear();
-      future.clear();
-      if (draft) {
-        await Promise.all(
-          Object.entries(draft.layers).map(
-            ([name, maskSource]) =>
-              new Promise<void>((resolve) => {
-                const restored = new Image();
-                restored.onload = () => {
-                  getMask(name).getContext("2d")?.drawImage(restored, 0, 0);
-                  resolve();
-                };
-                restored.onerror = () => resolve();
-                restored.src = maskSource;
-              }),
-          ),
-        );
-        Object.entries(draft.generatedArtwork).forEach(([name, artwork]) =>
-          generatedArtwork.set(name, artwork),
-        );
-        Object.entries(draft.expressionArtwork).forEach(([name, artwork]) => {
-          if (name in expressionLayers)
-            expressionArtwork.set(name as ExpressionName, artwork);
-        });
-      }
-      eyeGuides.clear();
-      guidingEye = undefined;
-      guidePoints = [];
-      detectEyeSuggestions();
-      undo.disabled = true;
-      redo.disabled = true;
-      openMotion.disabled = true;
-      exportProject.disabled = true;
-      renderLayers();
-      draw();
-      announce(
-        draft
-          ? "Restored your saved local draft."
-          : "Portrait loaded locally. Select a layer and paint its mask.",
-      );
-    };
-    next.src = nextSource;
-  };
+  const load = (nextSource: string, draft?: ExportedProject): Promise<void> =>
+    new Promise((resolve, reject) => {
+      const generation = ++loadGeneration;
+      const next = new Image();
+      next.onerror = () =>
+        reject(new Error("Could not load the avatar image."));
+      next.onload = async () => {
+        try {
+          if (generation !== loadGeneration) {
+            resolve();
+            return;
+          }
+          image = next;
+          source = nextSource;
+          canvas.width = next.naturalWidth;
+          canvas.height = next.naturalHeight;
+          masks.clear();
+          artworkCanvases.clear();
+          generatedArtwork.clear();
+          expressionArtwork.clear();
+          history.clear();
+          future.clear();
+          if (draft) {
+            await Promise.all(
+              Object.entries(draft.layers).map(
+                ([name, maskSource]) =>
+                  new Promise<void>((resolve) => {
+                    const restored = new Image();
+                    restored.onload = () => {
+                      getMask(name).getContext("2d")?.drawImage(restored, 0, 0);
+                      resolve();
+                    };
+                    restored.onerror = () => resolve();
+                    restored.src = maskSource;
+                  }),
+              ),
+            );
+            Object.entries(draft.generatedArtwork).forEach(([name, artwork]) =>
+              generatedArtwork.set(name, artwork),
+            );
+            Object.entries(draft.expressionArtwork).forEach(
+              ([name, artwork]) => {
+                if (name in expressionLayers)
+                  expressionArtwork.set(name as ExpressionName, artwork);
+              },
+            );
+          }
+          eyeGuides.clear();
+          guidingEye = undefined;
+          guidePoints = [];
+          detectEyeSuggestions();
+          undo.disabled = true;
+          redo.disabled = true;
+          openMotion.disabled = true;
+          exportProject.disabled = true;
+          renderLayers();
+          draw();
+          announce(
+            draft
+              ? "Restored your saved local draft."
+              : "Portrait loaded locally. Select a layer and paint its mask.",
+          );
+          resolve();
+        } catch (error) {
+          reject(
+            error instanceof Error
+              ? error
+              : new Error("Could not restore the avatar layers."),
+          );
+        }
+      };
+      next.src = nextSource;
+    });
   const suggestedRegions: Record<string, [number, number, number, number]> = {
     "face base": [0.28, 0.08, 0.44, 0.5],
     "left eye white": [0.39, 0.17, 0.12, 0.06],
@@ -1125,6 +1151,9 @@ export const mountLayerLab = (
       );
       if (bounds) exported[name] = mask.toDataURL("image/png");
     });
+    const everyVisibleLayerGenerated = Object.keys(exported).every((name) =>
+      generatedArtwork.has(name),
+    );
     return {
       version: 1,
       updatedAt: Date.now(),
@@ -1135,10 +1164,15 @@ export const mountLayerLab = (
         Record<ExpressionName, string>
       >,
       missingArtwork: findMissingArtwork(exported),
-      limitations: [
-        "A flat portrait cannot create hidden pixels for large head turns or hands.",
-        "Starter masks are crops, not newly created hidden artwork. Repair or generate dedicated eye-white, pupil, eyelid, and mouth artwork before production rigging.",
-      ],
+      limitations: everyVisibleLayerGenerated
+        ? [
+            "Automatic segmentation and generated hidden artwork still require visual review at motion extremes.",
+            "Large head turns and complex hand motion remain outside the conservative automatic rig.",
+          ]
+        : [
+            "A flat portrait cannot create hidden pixels for large head turns or hands.",
+            "Starter masks are crops, not newly created hidden artwork. Generate or repair every visible layer before production rigging.",
+          ],
     };
   };
   const saveDraft = (): void => {
@@ -1731,13 +1765,25 @@ export const mountLayerLab = (
         await suggestSelectedPart();
         const mask = getMask(name);
         const context = mask.getContext("2d");
-        const hasMask =
+        let hasMask =
           context &&
           cropBoundsFromAlpha(
             context.getImageData(0, 0, mask.width, mask.height).data,
             mask.width,
             mask.height,
           );
+        if (!hasMask && context) {
+          paintSuggestion(name);
+          hasMask = cropBoundsFromAlpha(
+            context.getImageData(0, 0, mask.width, mask.height).data,
+            mask.width,
+            mask.height,
+          );
+          if (hasMask)
+            announce(
+              `SAM3 returned no ${name} pixels. Using the bounded automatic fallback region…`,
+            );
+        }
         if (!hasMask) continue;
         await generateRepair();
         if (repairOutput.src) generatedArtwork.set(name, repairOutput.src);
@@ -1778,7 +1824,7 @@ export const mountLayerLab = (
         announce("Choose a PNG, JPEG, or WebP image.");
         return;
       }
-      load(await asDataUrl(file));
+      await load(await asDataUrl(file));
     })();
   });
   host.querySelectorAll<HTMLButtonElement>("[data-layer]").forEach((button) =>
@@ -2062,5 +2108,27 @@ export const mountLayerLab = (
       return undefined;
     }
   })();
-  load(savedDraft?.source ?? exampleSource, savedDraft);
+  void load(savedDraft?.source ?? exampleSource, savedDraft);
+  return {
+    loadSource: (nextSource) => load(nextSource),
+    loadProject: (project) => load(project.source, project),
+    buildAutomatically: async () => {
+      await completeAllMissing();
+      await makeAvatarMotionReady();
+      const project = buildProject();
+      if (!isProjectReady(project.layers))
+        throw new Error(
+          "Automatic part generation did not produce every required motion layer.",
+        );
+      openMotion.disabled = false;
+      exportProject.disabled = false;
+      host.dispatchEvent(
+        new CustomEvent("avatarprojectready", {
+          bubbles: true,
+          detail: project,
+        }),
+      );
+      return project;
+    },
+  };
 };

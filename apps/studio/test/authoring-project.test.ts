@@ -78,6 +78,27 @@ it("rejects unknown versions, oversized concepts, and invalid dimensions", () =>
   ).toThrow("image limit");
 });
 
+it("rejects unknown composition-control provenance", () => {
+  const project = createAuthoringProject(concept, {
+    projectId: "project-1",
+    createdAt: 100,
+  });
+  const value = JSON.parse(serializeAuthoringProject(project)) as {
+    acceptedConcept: {
+      provenance: {
+        compositionControl?: { templateId: string; controlNet: string };
+      };
+    };
+  };
+  value.acceptedConcept.provenance.compositionControl = {
+    templateId: "unknown-control",
+    controlNet: "pose.safetensors",
+  };
+  expect(() => parseAuthoringProject(JSON.stringify(value))).toThrow(
+    "composition control provenance",
+  );
+});
+
 it("requires a reviewed bible and all normalized landmarks", () => {
   let project = createAuthoringProject(concept, {
     projectId: "project-1",

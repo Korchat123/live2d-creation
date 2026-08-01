@@ -4,6 +4,7 @@ import {
   type ExpressionName,
   type ExportedProject,
 } from "./authoring.js";
+import { loadAutomaticAvatarProject } from "./automatic-avatar.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -65,14 +66,18 @@ const parseProject = (raw: string | null): ExportedProject | undefined => {
   }
 };
 
-const project = parseProject(sessionStorage.getItem("open-avatar-project"));
+const project =
+  parseProject(sessionStorage.getItem("open-avatar-project")) ??
+  (await loadAutomaticAvatarProject().catch(() => undefined));
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) window.location.reload();
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible" || !project) return;
-  const latest = parseProject(sessionStorage.getItem("open-avatar-project"));
-  if (latest && latest.updatedAt > project.updatedAt) window.location.reload();
+  void loadAutomaticAvatarProject().then((latest) => {
+    if (latest && latest.updatedAt > project.updatedAt)
+      window.location.reload();
+  });
 });
 root.innerHTML = `
   <header class="site-header"><a class="brand" href="/">Open Avatar <span>VTuber Lab</span></a><nav aria-label="Primary"><a class="nav-link" href="/">1. Build avatar</a><a class="nav-link selected" href="/motion.html">2. Motion Lab</a></nav></header>
