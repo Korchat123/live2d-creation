@@ -72,7 +72,7 @@ are prohibited.
 
 | Risk                                                                     | Resolution                                                                                                                                                                                                                                                               | Gate                                                                                                                                                                  |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Poor SD 1.5 character quality                                            | Benchmark Animagine XL 4.0 through a reviewed ComfyUI template. Translate natural-language descriptions into the model's required tag structure. Keep SD 1.5 only as technical fallback evidence.                                                                        | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
+| Poor SD 1.5 character quality                                            | Keep Animagine XL 4.0 as the reviewed SDXL/inpainting checkpoint and evaluate Z-Image Turbo as a separate split-model reference generator. Never treat its Qwen3 text encoder as the diffusion model.                                                                    | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
 | RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears. | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
 | Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
 | Body, hair, and clothing colors bleed together                           | Build in registered stages: opaque adult base suit and anatomy envelope, facial identity, hair, clothing, then accessories. Freeze anchors and protected pixels between stages; garment jobs cannot repaint skin, face, or hair.                                         | The final composite matches the accepted dressed reference while each garment/accessory remains an independent aligned layer and skin tone stays consistent.          |
@@ -173,6 +173,20 @@ recovery, context-loss, soak, rights, documentation, and release-readiness
 gates.
 
 ## Current next action
+
+Z-Image Turbo is now an optional reviewed concept profile using its separate
+diffusion model, Qwen3-4B text encoder, and VAE. A physical 768 by 1152 smoke
+completed in about 40.16 seconds on the reference RTX 3050 and produced a
+complete front-facing catgirl with readable face, hands, skirt, legs, and
+boots. Experimental OpenPose conditioning is disabled by default because the
+failed Studio candidate embedded the control graph and collapsed the face and
+outfit, while the same machine's prompt-only Z-Image workflow produced the
+desired anime/Vtuber direction. See
+`docs/authoring/z-image-turbo-reference-smoke.md`.
+
+This result approves only reference-generation experimentation. Visible
+accepted pixels must still be preserved rather than repainted, and semantic
+mask, hidden-overlap, expression, rigging, and Motion Lab gates remain open.
 
 The strict independent-parts experiment is superseded. Its startup smoke proved
 that Studio could skip the concept workflow, but the first raw part immediately

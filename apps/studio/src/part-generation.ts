@@ -222,7 +222,9 @@ export const createPartGenerationJobs = (
     dependencies:
       project.partPlan.find((entry) => entry.id === partId)?.dependencies ?? [],
     sourceConceptSha256,
-    checkpoint: project.acceptedConcept.provenance.checkpoint,
+    checkpoint:
+      project.acceptedConcept.provenance.partCheckpoint ??
+      project.acceptedConcept.provenance.checkpoint,
     seed: (project.acceptedConcept.provenance.seed + index + 1) >>> 0,
     canvas: { width: 2048, height: 2048 },
     anchor: landmarkAnchor(project, partId),

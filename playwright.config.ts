@@ -18,7 +18,13 @@ export default defineConfig({
   webServer: {
     command:
       "corepack pnpm --filter @open-avatar/studio exec vite --host 127.0.0.1 --port 4173",
-    env: { ...process.env, VITE_COMFY_CHECKPOINTS: "" },
+    env: {
+      ...process.env,
+      VITE_COMFY_CHECKPOINTS: "",
+      VITE_COMFY_Z_IMAGE_DIFFUSION_MODEL: "",
+      VITE_COMFY_Z_IMAGE_TEXT_ENCODER: "",
+      VITE_COMFY_Z_IMAGE_VAE: "",
+    },
     port: 4173,
     reuseExistingServer: !process.env.CI,
   },

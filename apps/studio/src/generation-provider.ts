@@ -15,6 +15,7 @@ const MAX_ARTIFACT_EDGE = 1152;
 const POLL_LIMIT = 180;
 
 export const conceptTemplateId = "open-avatar-concept-v1";
+export const zImageTurboConceptTemplateId = "open-avatar-z-image-turbo-v1";
 export const partsFirstTemplateId = "open-avatar-parts-first-v1";
 
 export const avatarStyleIds = ["vtuber", "anime", "soft-anime"] as const;
@@ -22,11 +23,11 @@ export type AvatarStyleId = (typeof avatarStyleIds)[number];
 
 const avatarStylePrompts: Readonly<Record<AvatarStyleId, string>> = {
   vtuber:
-    "professional VTuber model art, crisp variable-width anime line art, clean flat cel shading, high color separation, rig-friendly readable shapes",
+    "polished VTuber character art, expressive detailed face, crisp tapered anime line art, clean two-step cel shading, grouped hair locks, readable garment seams, rig-friendly boundaries",
   anime:
-    "Japanese TV anime character design, precise clean line art, two-tone cel shading, balanced natural anime colors, readable silhouette",
+    "polished Japanese TV anime character design, expressive detailed face, precise clean line art, two-tone cel shading, balanced natural anime colors",
   "soft-anime":
-    "soft modern anime illustration, delicate clean line art, restrained pastel palette, soft cel shading, clearly separated material boundaries",
+    "polished soft anime character art, expressive detailed face, delicate clean line art, restrained pastel palette, soft cel shading, readable material boundaries",
 };
 
 export const describeAvatarStyle = (
@@ -45,7 +46,18 @@ export const conceptNodeAllowlist = [
   "LoadImage",
   "ControlNetLoader",
   "ControlNetApplyAdvanced",
+  "CLIPLoader",
+  "VAELoader",
+  "UNETLoader",
+  "EmptySD3LatentImage",
+  "ModelSamplingAuraFlow",
 ] as const;
+
+export type ZImageTurboAssets = Readonly<{
+  diffusionModel: string;
+  textEncoder: string;
+  vae: string;
+}>;
 
 type ComfyNode = {
   readonly class_type: (typeof conceptNodeAllowlist)[number];
@@ -67,7 +79,7 @@ export type ConceptRequest = {
 };
 
 export type ConceptPromptPlan = {
-  readonly profile: "animagine-xl-4" | "generic";
+  readonly profile: "animagine-xl-4" | "z-image-turbo" | "generic";
   readonly identity: string;
   readonly style: string;
   readonly appearance: string;
@@ -81,8 +93,12 @@ export type ConceptPromptPlan = {
 
 export type ConceptProvenance = {
   readonly provider: "comfyui" | "fake";
-  readonly templateId: typeof conceptTemplateId | typeof partsFirstTemplateId;
+  readonly templateId:
+    | typeof conceptTemplateId
+    | typeof zImageTurboConceptTemplateId
+    | typeof partsFirstTemplateId;
   readonly checkpoint: string;
+  readonly partCheckpoint?: string;
   readonly seed: number;
   readonly artifactSha256: string;
   readonly compositionControl?: Readonly<{
@@ -124,7 +140,9 @@ export interface GenerationProvider {
 
 export const defaultApprovedCheckpoint = (
   checkpoints: readonly string[],
-): string => (checkpoints.length === 1 ? (checkpoints[0] ?? "") : "");
+): string =>
+  checkpoints.find((checkpoint) => /z_image_turbo/iu.test(checkpoint)) ??
+  (checkpoints.length === 1 ? (checkpoints[0] ?? "") : "");
 
 export type DecodedImage = {
   readonly width: number;
@@ -233,8 +251,10 @@ const normalizePrompt = (value: string): string =>
   value.trim().replace(/\s+/gu, " ");
 
 const subjectTag = (description: string): "1girl" | "1boy" | "1other" => {
-  if (/\b(?:girl|woman|female|1girl)\b/iu.test(description)) return "1girl";
-  if (/\b(?:boy|man|male|1boy)\b/iu.test(description)) return "1boy";
+  if (/\b(?:cat[- ]?girl|girl|woman|female|1girl)\b/iu.test(description))
+    return "1girl";
+  if (/\b(?:cat[- ]?boy|boy|man|male|1boy)\b/iu.test(description))
+    return "1boy";
   return "1other";
 };
 
@@ -245,22 +265,50 @@ export const createConceptPromptPlan = (
 ): ConceptPromptPlan => {
   const identity = normalizePrompt(description);
   const animagine = /animagine-xl-4\.0/iu.test(checkpoint);
+  const zImageTurbo = /z_image_turbo/iu.test(checkpoint);
+  const hasHood = /\b(?:hood|hoodie|hooded)\b/iu.test(identity);
+  const hasJacket = /\b(?:jacket|hoodie|coat|tailcoat)\b/iu.test(identity);
+  const hasSkirt = /\bskirt\b/iu.test(identity);
+  const allowsLongOuterwear =
+    /\b(?:tailcoat|trench coat|long coat|floor[- ]length coat|ankle[- ]length coat|robe|cloak|cape)\b/iu.test(
+      identity,
+    );
   const appearance = animagine
-    ? `${subjectTag(identity)}, adult original character, solo, ${avatarStylePrompts[style]}`
-    : `adult original 2D avatar character, solo, ${avatarStylePrompts[style]}, clean silhouette`;
-  const clothing = "clothing and accessories exactly as described";
+    ? `${subjectTag(identity)}, adult, solo, original character`
+    : "adult original 2D avatar character, solo";
+  const clothing = [
+    "requested clothes exactly preserved, requested garment lengths preserved",
+    hasJacket && hasSkirt
+      ? "jacket and skirt remain separate visible layers"
+      : "garment layers remain visually distinct",
+  ].join(", ");
   const palette =
-    "consistent color palette, natural consistent skin tone, neutral white lighting, no colored light cast on skin";
-  const pose =
-    "looking at viewer, orthographic-looking front view, full body, standing, zoomed out, centered composition, neutral pose, level eyes, level shoulders, level hips, face fully visible and evenly lit, neutral closed mouth, both eyes open and visible, unobscured facial features, hair and headwear do not cover the eyes or face, entire character silhouette fully inside frame, character occupies about 75 percent of canvas height, complete head, complete hair, 5 to 10 percent safe margin around the silhouette, generous margin above hair, proportionate wearable headwear, arms slightly separated from the torso, legs slightly separated, held prop positioned beside one side with the hand silhouette visible, prop does not cross the face, hair, or central torso, both hands visible when present, both legs fully visible, complete shoes, generous margin below shoes, no body part touching the image edge, visible neck, visible shoulders, even lighting, isolated on a blank pure white background, no scenery";
+    "consistent palette, natural skin tone, neutral white lighting";
+  const faceVisibility = hasHood
+    ? "hood opening frames rather than covers face"
+    : "hair and accessories do not cover face";
+  const pose = `front view, looking at viewer, full body, centered neutral standing pose, symmetrical level shoulders and hips, face and both eyes fully visible, ${faceVisibility}, hands visible outside sleeves, arms slightly separated, legs and complete shoes visible, entire silhouette inside frame with safe margin, plain white background`;
   const quality = animagine
     ? "masterpiece, high score, great score, absurdres"
     : "high quality";
+  const garmentReject = [
+    hasHood ? "void inside hood, face covered by hood" : "",
+    allowsLongOuterwear ? "" : "floor-length coat, robe, cloak",
+    hasJacket && hasSkirt
+      ? "fused jacket and skirt, skirt hidden, zipper below garment hem"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
   const negative = animagine
-    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, crossed limbs, hidden hand, hidden face, obscured face, shadowed face, black face, unnatural skin color, gray skin, orange skin, blue skin, green skin, color cast, multicolored skin, hair covering eyes, hat covering face, oversized hat, giant hat, floating prop, prop crossing face, prop crossing torso, dramatic perspective, tilted head, wind-blown hair, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
-    : "cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic, unnatural skin color, gray skin, orange skin, blue skin, green skin, color cast, multicolored skin";
+    ? `lowres, bad anatomy, bad hands, extra digits, missing digits, extra limbs, cropped, close-up, missing feet, hidden hands, featureless face, blank face, hair covering eyes, ${garmentReject}, mannequin, minimalist vector icon, text, watermark, signature, multiple people, background object, scenery, worst quality, low quality`
+    : `cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, hidden hands, featureless face, blank face, ${garmentReject}, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic, unnatural skin color, color cast`;
   return {
-    profile: animagine ? "animagine-xl-4" : "generic",
+    profile: animagine
+      ? "animagine-xl-4"
+      : zImageTurbo
+        ? "z-image-turbo"
+        : "generic",
     identity,
     style: avatarStylePrompts[style],
     appearance,
@@ -269,7 +317,15 @@ export const createConceptPromptPlan = (
     pose,
     quality,
     negative,
-    positive: [appearance, identity, clothing, palette, pose, quality]
+    positive: [
+      appearance,
+      identity,
+      avatarStylePrompts[style],
+      clothing,
+      palette,
+      pose,
+      quality,
+    ]
       .filter(Boolean)
       .join(", "),
   };
@@ -278,12 +334,80 @@ export const createConceptPromptPlan = (
 export const createConceptWorkflow = (
   request: ConceptRequest,
   control?: Readonly<{ controlNet: string; image: string }>,
+  zImageAssets?: ZImageTurboAssets,
 ): Readonly<Record<string, ComfyNode>> => {
   const plan = createConceptPromptPlan(
     request.prompt,
     request.checkpoint,
     request.style,
   );
+  if (plan.profile === "z-image-turbo") {
+    if (!zImageAssets || zImageAssets.diffusionModel !== request.checkpoint)
+      throw new Error("The approved Z-Image Turbo assets are incomplete.");
+    return {
+      "1": {
+        class_type: "CLIPLoader",
+        inputs: {
+          clip_name: zImageAssets.textEncoder,
+          type: "lumina2",
+          device: "default",
+        },
+      },
+      "2": {
+        class_type: "VAELoader",
+        inputs: { vae_name: zImageAssets.vae },
+      },
+      "3": {
+        class_type: "UNETLoader",
+        inputs: {
+          unet_name: zImageAssets.diffusionModel,
+          weight_dtype: "default",
+        },
+      },
+      "4": {
+        class_type: "CLIPTextEncode",
+        inputs: { text: plan.positive, clip: ["1", 0] },
+      },
+      "5": {
+        class_type: "CLIPTextEncode",
+        inputs: { text: plan.negative, clip: ["1", 0] },
+      },
+      "6": {
+        class_type: "EmptySD3LatentImage",
+        inputs: { width: 768, height: 1152, batch_size: 1 },
+      },
+      "7": {
+        class_type: "ModelSamplingAuraFlow",
+        inputs: { shift: 3, model: ["3", 0] },
+      },
+      "8": {
+        class_type: "KSampler",
+        inputs: {
+          seed: request.seed,
+          steps: 8,
+          cfg: 1,
+          sampler_name: "res_multistep",
+          scheduler: "simple",
+          denoise: 1,
+          model: ["7", 0],
+          positive: ["4", 0],
+          negative: ["5", 0],
+          latent_image: ["6", 0],
+        },
+      },
+      "9": {
+        class_type: "VAEDecode",
+        inputs: { samples: ["8", 0], vae: ["2", 0] },
+      },
+      "10": {
+        class_type: "SaveImage",
+        inputs: {
+          filename_prefix: "open-avatar-z-image-concept",
+          images: ["9", 0],
+        },
+      },
+    };
+  }
   const animagine = plan.profile === "animagine-xl-4";
   const workflow: Record<string, ComfyNode> = {
     "1": {
@@ -436,10 +560,12 @@ const firstHistoryImage = (
 
 export class ComfyGenerationProvider implements GenerationProvider {
   readonly #approvedCheckpoints: ReadonlySet<string>;
+  readonly #approvedClassicCheckpoints: ReadonlySet<string>;
   readonly #approvedControlNets: ReadonlySet<string>;
   readonly #fetch: Fetcher;
   readonly #sleep: Sleeper;
   readonly #createCompositionControl: () => Promise<Blob>;
+  readonly #zImageAssets: ZImageTurboAssets | undefined;
   #active = false;
 
   constructor(
@@ -448,15 +574,31 @@ export class ComfyGenerationProvider implements GenerationProvider {
     sleeper: Sleeper = defaultSleep,
     approvedControlNets: readonly string[] = [],
     createCompositionControl: () => Promise<Blob> = createCompositionControlPng,
+    zImageAssets?: ZImageTurboAssets,
   ) {
-    this.#approvedCheckpoints = new Set(
-      approvedCheckpoints.filter(
-        (checkpoint) =>
-          checkpoint.length > 0 &&
-          checkpoint.length <= 256 &&
-          !hasControlCharacter(checkpoint),
-      ),
+    const safeCheckpoints = approvedCheckpoints.filter(
+      (checkpoint) =>
+        checkpoint.length > 0 &&
+        checkpoint.length <= 256 &&
+        !hasControlCharacter(checkpoint),
     );
+    this.#approvedClassicCheckpoints = new Set(safeCheckpoints);
+    this.#zImageAssets =
+      zImageAssets &&
+      [
+        zImageAssets.diffusionModel,
+        zImageAssets.textEncoder,
+        zImageAssets.vae,
+      ].every(
+        (name) =>
+          name.length > 0 && name.length <= 256 && !hasControlCharacter(name),
+      )
+        ? zImageAssets
+        : undefined;
+    this.#approvedCheckpoints = new Set([
+      ...safeCheckpoints,
+      ...(this.#zImageAssets ? [this.#zImageAssets.diffusionModel] : []),
+    ]);
     this.#approvedControlNets = new Set(
       approvedControlNets.filter(
         (controlNet) =>
@@ -480,16 +622,35 @@ export class ComfyGenerationProvider implements GenerationProvider {
       };
     try {
       const request = signal ? { signal } : undefined;
-      const [stats, models, controlNets] = await Promise.all([
-        this.#fetch("/comfy/system_stats", request),
-        this.#fetch("/comfy/models/checkpoints", request),
-        this.#approvedControlNets.size
-          ? this.#fetch("/comfy/models/controlnet", request)
-          : Promise.resolve(undefined),
-      ]);
-      if (!stats.ok || !models.ok || (controlNets && !controlNets.ok))
+      const [stats, models, controlNets, diffusionModels, textEncoders, vaes] =
+        await Promise.all([
+          this.#fetch("/comfy/system_stats", request),
+          this.#approvedClassicCheckpoints.size
+            ? this.#fetch("/comfy/models/checkpoints", request)
+            : Promise.resolve(undefined),
+          this.#approvedControlNets.size
+            ? this.#fetch("/comfy/models/controlnet", request)
+            : Promise.resolve(undefined),
+          this.#zImageAssets
+            ? this.#fetch("/comfy/models/diffusion_models", request)
+            : Promise.resolve(undefined),
+          this.#zImageAssets
+            ? this.#fetch("/comfy/models/text_encoders", request)
+            : Promise.resolve(undefined),
+          this.#zImageAssets
+            ? this.#fetch("/comfy/models/vae", request)
+            : Promise.resolve(undefined),
+        ]);
+      if (
+        !stats.ok ||
+        (models && !models.ok) ||
+        (controlNets && !controlNets.ok) ||
+        (diffusionModels && !diffusionModels.ok) ||
+        (textEncoders && !textEncoders.ok) ||
+        (vaes && !vaes.ok)
+      )
         throw new Error("Provider health failed.");
-      const discovered = (await models.json()) as unknown;
+      const discovered = models ? ((await models.json()) as unknown) : [];
       if (!Array.isArray(discovered))
         return {
           state: "offline",
@@ -498,13 +659,31 @@ export class ComfyGenerationProvider implements GenerationProvider {
         };
       const approved = discovered.filter(
         (value): value is string =>
-          typeof value === "string" && this.#approvedCheckpoints.has(value),
+          typeof value === "string" &&
+          this.#approvedClassicCheckpoints.has(value),
       );
+      const zInventories = await Promise.all(
+        [diffusionModels, textEncoders, vaes].map(async (response) =>
+          response ? ((await response.json()) as unknown) : [],
+        ),
+      );
+      if (zInventories.some((inventory) => !Array.isArray(inventory)))
+        throw new Error("ComfyUI returned an invalid Z-Image inventory.");
+      const zReady =
+        this.#zImageAssets !== undefined &&
+        (zInventories[0] as unknown[]).includes(
+          this.#zImageAssets.diffusionModel,
+        ) &&
+        (zInventories[1] as unknown[]).includes(
+          this.#zImageAssets.textEncoder,
+        ) &&
+        (zInventories[2] as unknown[]).includes(this.#zImageAssets.vae);
+      if (zReady) approved.push(this.#zImageAssets.diffusionModel);
       if (approved.length === 0)
         return {
           state: "misconfigured",
           approvedCheckpoints: [],
-          message: "None of the allowlisted checkpoints are installed.",
+          message: "None of the allowlisted generation models are installed.",
         };
       const discoveredControlNets = controlNets
         ? ((await controlNets.json()) as unknown)
@@ -529,7 +708,7 @@ export class ComfyGenerationProvider implements GenerationProvider {
         state: "ready",
         approvedCheckpoints: approved,
         approvedControlNets,
-        message: `Local ComfyUI is ready with ${approved.length} approved checkpoint${approved.length === 1 ? "" : "s"}${approvedControlNets.length ? " and composition control" : ""}.`,
+        message: `Local ComfyUI is ready with ${approved.length} approved generation model${approved.length === 1 ? "" : "s"}${approvedControlNets.length ? " and experimental composition control" : ""}.`,
       };
     } catch (error) {
       if (signal?.aborted) throw abortError();
@@ -604,7 +783,10 @@ export class ComfyGenerationProvider implements GenerationProvider {
     };
     options.signal.addEventListener("abort", cancel, { once: true });
     try {
-      const controlNet = this.#approvedControlNets.values().next().value;
+      const isZImageTurbo = /z_image_turbo/iu.test(request.checkpoint);
+      const controlNet = isZImageTurbo
+        ? undefined
+        : this.#approvedControlNets.values().next().value;
       const control = controlNet
         ? {
             controlNet,
@@ -619,7 +801,7 @@ export class ComfyGenerationProvider implements GenerationProvider {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: createConceptWorkflow(request, control),
+          prompt: createConceptWorkflow(request, control, this.#zImageAssets),
         }),
         signal: options.signal,
       });
@@ -671,12 +853,20 @@ export class ComfyGenerationProvider implements GenerationProvider {
       const imageBlob = await artifactResponse.blob();
       if (imageBlob.size === 0 || imageBlob.size > MAX_ARTIFACT_BYTES)
         throw new Error("The provider image exceeds the 4 MiB artifact limit.");
+      const partCheckpoint = this.#approvedClassicCheckpoints
+        .values()
+        .next().value;
       return {
         image: imageBlob,
         provenance: {
           provider: "comfyui",
-          templateId: conceptTemplateId,
+          templateId: isZImageTurbo
+            ? zImageTurboConceptTemplateId
+            : conceptTemplateId,
           checkpoint: request.checkpoint,
+          ...(isZImageTurbo && typeof partCheckpoint === "string"
+            ? { partCheckpoint }
+            : {}),
           seed: request.seed,
           artifactSha256: await sha256(imageBlob),
           ...(controlNet

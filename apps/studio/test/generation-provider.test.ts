@@ -43,6 +43,12 @@ describe("prompt generation policy", () => {
     expect(
       defaultApprovedCheckpoint(["first.safetensors", "second.safetensors"]),
     ).toBe("");
+    expect(
+      defaultApprovedCheckpoint([
+        "animagine-xl-4.0-opt.safetensors",
+        "z_image_turbo_bf16.safetensors",
+      ]),
+    ).toBe("z_image_turbo_bf16.safetensors");
   });
 
   it("keeps the reviewed workflow inside the node allowlist and fixed budgets", () => {
@@ -78,23 +84,16 @@ describe("prompt generation policy", () => {
       identity: "blue-haired woman with a navy jacket",
       quality: "masterpiece, high score, great score, absurdres",
     });
-    expect(plan.positive).toContain("1girl, adult original character, solo");
-    expect(plan.style).toContain("VTuber model art");
-    expect(plan.palette).toContain("natural consistent skin tone");
-    expect(plan.pose).toContain("margin above hair");
+    expect(plan.positive).toContain("1girl, adult, solo, original character");
+    expect(plan.style).toContain("polished VTuber character art");
+    expect(plan.palette).toContain("natural skin tone");
+    expect(plan.pose).toContain("safe margin");
     expect(plan.pose).toContain("complete shoes");
-    expect(plan.pose).toContain("75 percent");
-    expect(plan.pose).toContain("proportionate wearable headwear");
-    expect(plan.pose).toContain("face fully visible and evenly lit");
-    expect(plan.pose).toContain("headwear do not cover the eyes or face");
-    expect(plan.pose).toContain("arms slightly separated from the torso");
-    expect(plan.pose).toContain("prop does not cross the face");
-    expect(plan.pose).toContain("5 to 10 percent safe margin");
-    expect(plan.negative).toContain("giant hat");
-    expect(plan.negative).toContain("hat covering face");
-    expect(plan.negative).toContain("prop crossing torso");
+    expect(plan.pose).toContain("face and both eyes fully visible");
+    expect(plan.pose).toContain("hair and accessories do not cover face");
+    expect(plan.pose).toContain("arms slightly separated");
+    expect(plan.negative).toContain("floor-length coat");
     expect(plan.negative).toContain("multiple people");
-    expect(plan.negative).toContain("unnatural skin color");
     expect(plan.negative).toContain("close-up");
     const workflow = createConceptWorkflow(request);
     expect(workflow["2"]?.inputs.text).toBe(plan.positive);
@@ -133,6 +132,72 @@ describe("prompt generation policy", () => {
     });
   });
 
+  it("recognizes compact catgirl wording and rejects hood and garment collapse", () => {
+    const plan = createConceptPromptPlan(
+      "catgirl with a cream cat hoodie and short white skirt",
+      "animagine-xl-4.0-opt.safetensors",
+      "vtuber",
+    );
+    expect(plan.positive).toContain("1girl, adult, solo, original character");
+    expect(plan.positive.indexOf("catgirl")).toBeLessThan(
+      plan.positive.indexOf("front view"),
+    );
+    expect(plan.negative).toContain("void inside hood");
+    expect(plan.negative).toContain("floor-length coat");
+    expect(plan.negative).toContain("fused jacket and skirt");
+    expect(plan.negative).not.toContain("black face");
+  });
+
+  it("does not invent a hood or reject requested long outerwear", () => {
+    const plan = createConceptPromptPlan(
+      "adult woman wearing an oversized black military tailcoat and layered navy dress",
+      "animagine-xl-4.0-opt.safetensors",
+      "anime",
+    );
+    expect(plan.pose).not.toContain("hood opening");
+    expect(plan.clothing).not.toContain("jacket and skirt remain separate");
+    expect(plan.negative).not.toContain("floor-length coat");
+    expect(plan.negative).not.toContain("robe, cloak");
+  });
+
+  it("builds the reviewed Z-Image Turbo split-model workflow", () => {
+    const assets = {
+      diffusionModel: "z_image_turbo_bf16.safetensors",
+      textEncoder: "qwen_3_4b.safetensors",
+      vae: "ae.safetensors",
+    } as const;
+    const request = {
+      prompt: "adult anime catgirl in a short hoodie and pleated skirt",
+      checkpoint: assets.diffusionModel,
+      seed: 42,
+      style: "vtuber" as const,
+    };
+    const plan = createConceptPromptPlan(request.prompt, request.checkpoint);
+    expect(plan.profile).toBe("z-image-turbo");
+    const workflow = createConceptWorkflow(request, undefined, assets);
+    expect(workflow["1"]).toMatchObject({
+      class_type: "CLIPLoader",
+      inputs: { clip_name: assets.textEncoder, type: "lumina2" },
+    });
+    expect(workflow["3"]?.inputs.unet_name).toBe(assets.diffusionModel);
+    expect(workflow["6"]?.inputs).toEqual({
+      width: 768,
+      height: 1152,
+      batch_size: 1,
+    });
+    expect(workflow["8"]?.inputs).toMatchObject({
+      steps: 8,
+      cfg: 1,
+      sampler_name: "res_multistep",
+      scheduler: "simple",
+    });
+    expect(
+      Object.values(workflow).every((node) =>
+        conceptNodeAllowlist.includes(node.class_type),
+      ),
+    ).toBe(true);
+  });
+
   it("applies bounded anime style presets and persists their art direction", () => {
     const plan = createConceptPromptPlan(
       "adult librarian in a navy jacket",
@@ -142,7 +207,7 @@ describe("prompt generation policy", () => {
     expect(plan.style).toContain("Japanese TV anime character design");
     expect(plan.positive).toContain("two-tone cel shading");
     expect(describeAvatarStyle(" adult librarian ", "soft-anime")).toContain(
-      "soft modern anime illustration",
+      "polished soft anime character art",
     );
   });
 
@@ -284,6 +349,37 @@ describe("ComfyUI adapter", () => {
     await expect(provider.health()).resolves.toMatchObject({
       state: "ready",
       approvedCheckpoints: ["approved.safetensors"],
+    });
+  });
+
+  it("requires every allowlisted Z-Image Turbo split asset", async () => {
+    const assets = {
+      diffusionModel: "z_image_turbo_bf16.safetensors",
+      textEncoder: "qwen_3_4b.safetensors",
+      vae: "ae.safetensors",
+    } as const;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/comfy/system_stats") return new Response("{}");
+      if (url === "/comfy/models/diffusion_models")
+        return new Response(JSON.stringify([assets.diffusionModel]));
+      if (url === "/comfy/models/text_encoders")
+        return new Response(JSON.stringify([assets.textEncoder]));
+      if (url === "/comfy/models/vae")
+        return new Response(JSON.stringify([assets.vae]));
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    const provider = new ComfyGenerationProvider(
+      [],
+      fetcher,
+      undefined,
+      [],
+      undefined,
+      assets,
+    );
+    await expect(provider.health()).resolves.toMatchObject({
+      state: "ready",
+      approvedCheckpoints: [assets.diffusionModel],
     });
   });
 

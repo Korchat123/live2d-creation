@@ -53,11 +53,16 @@ Phase P1 can connect the Studio development server to a local ComfyUI instance
 at `127.0.0.1:8188`. Checkpoint discovery never authorizes a model
 automatically. Before starting Studio, set `VITE_COMFY_CHECKPOINTS` to a
 comma-separated allowlist of installed checkpoint filenames whose rights you
-have reviewed. Set `VITE_COMFY_CONTROLNETS` the same way when using the reviewed
-composition-control workflow, then run
+have reviewed. Composition control is experimental and disabled by default.
+To run an explicitly reviewed experiment, set `VITE_COMFY_CONTROLNETS` and
+`VITE_COMFY_ENABLE_COMPOSITION_CONTROL=true`, then run
 `pnpm --filter @open-avatar/studio dev`. Studio automatically selects a model
-only when the host allowlist and installed inventory intersect at exactly one
-checkpoint; it never selects an arbitrary discovered model.
+only when the host allowlist and installed inventory identify a reviewed
+profile; it never selects an arbitrary discovered model. Z-Image Turbo uses
+separate diffusion, text-encoder, and VAE allowlists through
+`VITE_COMFY_Z_IMAGE_DIFFUSION_MODEL`, `VITE_COMFY_Z_IMAGE_TEXT_ENCODER`, and
+`VITE_COMFY_Z_IMAGE_VAE`. Its Qwen file is the prompt encoder, not the image
+generator.
 
 Generated candidates remain drafts until explicit acceptance. The P1 gate
 passed a labelled physical ComfyUI generation and cancellation test on the

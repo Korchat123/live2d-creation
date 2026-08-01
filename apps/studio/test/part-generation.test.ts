@@ -96,6 +96,25 @@ describe("purpose-generated part orchestration", () => {
     expect(jobs.indexOf(torso!)).toBeLessThan(jobs.indexOf(outfit!));
   });
 
+  it("uses the separately approved part checkpoint after split-model concept generation", () => {
+    const splitModelProject = createAuthoringProject(
+      {
+        ...concept,
+        provenance: {
+          ...concept.provenance,
+          checkpoint: "z_image_turbo_bf16.safetensors",
+          partCheckpoint: "animagine-xl-4.0-opt.safetensors",
+        },
+      },
+      { projectId: "split-model-project", createdAt: 2 },
+    );
+    expect(
+      createPartGenerationJobs(splitModelProject).every(
+        (job) => job.checkpoint === "animagine-xl-4.0-opt.safetensors",
+      ),
+    ).toBe(true);
+  });
+
   it("offers only jobs whose accepted dependencies are complete", () => {
     const jobs = createPartGenerationJobs(project());
     let state = emptyPartRevisionState();

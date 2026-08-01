@@ -433,12 +433,26 @@ const approvedControlNets = (import.meta.env.VITE_COMFY_CONTROLNETS ?? "")
   .split(",")
   .map((controlNet) => controlNet.trim())
   .filter(Boolean);
+const compositionControlEnabled =
+  import.meta.env.VITE_COMFY_ENABLE_COMPOSITION_CONTROL === "true";
+const zImageAssets =
+  import.meta.env.VITE_COMFY_Z_IMAGE_DIFFUSION_MODEL &&
+  import.meta.env.VITE_COMFY_Z_IMAGE_TEXT_ENCODER &&
+  import.meta.env.VITE_COMFY_Z_IMAGE_VAE
+    ? {
+        diffusionModel: import.meta.env.VITE_COMFY_Z_IMAGE_DIFFUSION_MODEL,
+        textEncoder: import.meta.env.VITE_COMFY_Z_IMAGE_TEXT_ENCODER,
+        vae: import.meta.env.VITE_COMFY_Z_IMAGE_VAE,
+      }
+    : undefined;
 mountPromptWorkspace(
   promptWorkspace,
   new ComfyGenerationProvider(
     approvedCheckpoints,
     fetch,
     undefined,
-    approvedControlNets,
+    compositionControlEnabled ? approvedControlNets : [],
+    undefined,
+    zImageAssets,
   ),
 );
