@@ -66,6 +66,33 @@ must include a complete face base, rear/front/side hair, independent eye and
 mouth groups, neck, torso, clothing groups, limbs, footwear, headwear, and held
 props when present.
 
+#### Authoring reference pack
+
+The accepted reference is an immutable neutral master. Studio derives a
+technical pack from that master instead of asking independent prompt-only jobs
+to redraw the character:
+
+- `neutral-master`: complete centered front view, open eyes, closed mouth,
+  level shoulders, arms and legs slightly separated, hands and shoes visible,
+  even lighting, minimal perspective, plain background, and safe margins;
+- `semantic-guide`: a non-exported false-color ownership image plus edge,
+  pose, and landmark channels aligned to the neutral master;
+- `expression-candidates`: masked edits for blink, wink, open mouth, smile, and
+  required phonemes; pixels outside the accepted edit mask stay byte-identical;
+- `concealed-candidates`: hidden-only proposals for scalp, face beneath hair,
+  eye contents beneath lids, mouth interior, neck, garment/limb overlaps, and
+  hand/prop intersections; and
+- `reference-manifest`: hashes, transforms, masks, prompts, seeds, model and
+  workflow versions, rights, approvals, and dependency edges for every item.
+
+The prompt planner shows the authoring constraints separately from the user's
+creative prompt. It may request subtle contrasting seams or piping only when
+they are an accepted part of the design. It must not add colored separator
+lines to final art and later erase them. Generated technical guides are
+candidates, not truth: if their edges cannot be registered to the neutral
+master, Studio discards them and obtains the guide from segmentation plus user
+correction.
+
 ### R1 — Semantic mask planning
 
 Request multiple SAM3 candidates for each semantic label using precise aliases.
@@ -88,6 +115,47 @@ Run an exact visible reconstruction test before hidden art is added. The
 ordered isolated layers must reproduce the visible reference within a bounded
 pixel error. This catches holes, duplicated pixels, wrong z-order, and masks
 assigned to the wrong side.
+
+#### Material-specific separation policy
+
+Binary segmentation is only the first candidate. The selected solver and
+fallback depend on the visible material:
+
+| Material/contact                             | Primary treatment                                                                                | Safe fallback                                                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Opaque hair and fur edges                    | semantic core mask, erode/dilate trimap, alpha-matte benchmark, foreground-color decontamination | user-corrected trimap; group unresolved strands with the neighboring hair layer                                        |
+| Lace, nets, and fine cutouts                 | topology-aware mask plus matte; preserve holes and fractional edge coverage                      | keep the detail attached to its receiving garment and restrict independent motion                                      |
+| Veils, glasses, glow, and translucent fabric | native-alpha candidate only after a rights, VRAM, and identity benchmark                         | bake into the receiver or require user-supplied alpha art; do not infer color and opacity from one flattened composite |
+| Black-on-black clothing                      | edge/line map, positive and negative points, bounded components, hierarchy and seam topology     | user-correct the non-exported false-color guide; retain accepted subtle piping rather than erasing it                  |
+| Cast and contact shadows                     | classify caster and receiver; use a dedicated opacity/multiply shadow layer when separable       | bake the shadow into the receiver and prohibit relative motion across it                                               |
+| Hand holding a prop                          | pose landmarks and three-way occlusion graph: rear fingers, prop, front fingers                  | keep hand and prop as one rigid group or reduce motion; never hallucinate independent fingers without review           |
+| Hair under hats and clothing crossings       | local visible ownership, depth graph, and minimal motion-swept concealed band                    | merge ambiguous parts or reduce motion until the boundary no longer opens                                              |
+
+The alpha equation for a flattened translucent pixel is underdetermined: one
+RGB observation cannot uniquely recover foreground color and opacity. No
+confidence score can convert that missing information into ground truth.
+
+Research candidates are evidence, not approved dependencies:
+
+- [ControlNet](https://arxiv.org/abs/2302.05543) supports spatial edge, pose,
+  depth, and segmentation conditioning; the exact ControlNet weights and
+  preprocessors must match the selected checkpoint and pass rights review.
+- [SAM 2](https://arxiv.org/abs/2408.00714) supports interactive point, box, and
+  mask prompting, but promptable segmentation still needs domain-specific
+  plausibility gates and correction for layered anime art.
+- [ZIM](https://github.com/naver-ai/ZIM) demonstrates fine-grained promptable
+  matting, but its released CC BY-NC 4.0 license excludes it from a commercial
+  product path.
+- [BiRefNet](https://github.com/zhengpeng7/birefnet) is an MIT-code matting and
+  high-resolution segmentation candidate; approve code, each weight file,
+  training-data implications, quality, and VRAM separately.
+- [LayerDiffuse](https://github.com/lllyasviel/LayerDiffuse) demonstrates native
+  transparent-layer generation under Apache-2.0 code; model-weight terms,
+  checkpoint compatibility, identity preservation, and local performance still
+  require evidence.
+- [IP-Adapter](https://github.com/tencent-ailab/IP-Adapter) demonstrates compact
+  image conditioning and ComfyUI compatibility; code, weights, face-analysis
+  dependencies, output rights, and anime identity quality need separate review.
 
 ### R3 — Occlusion graph and hidden-area masks
 
@@ -225,64 +293,211 @@ ledger before any reference becomes a runtime or training dependency.
   temporary canvas for every layer on every frame. FPS and memory gates run
   before it becomes an acceptance tool.
 
-## Remaining problem register
+## Risk-closure specification
 
-1. The semantic-selection helpers are unit-tested but not connected to SAM3 or
-   the review UI.
-2. Studio currently hides concept acceptance, project review, and Layer Lab in
-   the default flow; the mandatory review state machine is not implemented.
-3. SAM3 is promptable segmentation, not a trained 30-class anime material
-   separator. Black-on-black garments, hands gripping props, hair under hats,
-   layered ruffles, and left/right pairing remain high risk.
-4. Hair, lace, veils, glasses, translucent fabric, and cast shadows need matting
-   and ownership rules beyond binary masks.
-5. One front view cannot determine exact concealed anatomy, rear design,
-   garment construction, crossing depth, motifs, or large-turn side views.
-6. Anime proportions intentionally violate realistic anatomy; priors must be
-   soft constraints or they will erase the accepted style.
-7. The installed SD 1.5 inpainting model may not preserve Animagine XL identity,
-   palette, or line quality. IP-Adapter/stronger inpainting remains uninstalled
-   and unapproved.
-8. Existing automatic bounded fallbacks can still enter generated projects and
-   must be changed to blocking diagnostics.
-9. Motion Lab currently covers canvas-level gaze, combined blink, mouth, and
-   breath only. It lacks head/body deformation, hair/clothing physics, separate
-   eye/brow controls, seam views, automatic sweeps, and mesh validation.
-10. A texture atlas, PSD, or Open Avatar project is not a finished Cubism model.
-11. Base64 full-canvas layers can exceed current project/session limits, and
-    current per-frame canvas allocation will not scale to full review.
-12. Training/reference licenses can propagate attribution, share-alike, or
-    noncommercial restrictions; no new dataset enters the product without a
-    legal and provenance gate.
+"Closed in design" means a prevention, recovery path, measurable gate, and
+honest stop condition are defined. It does not mean the behavior is implemented
+or physically approved. Runtime acceptance remains blocked until the scheduled
+evidence exists.
+
+All recoverable failures use the same escalation ladder: retry the narrow
+deterministic operation, try the approved material-specific solver, present the
+candidate and diagnostics for correction, generate only reviewed concealed
+pixels when information is actually hidden, then merge parts or reduce motion.
+Studio never converts a failed gate into an automatic approval.
+
+1. **Reference framing and authoring pose — closed in design.** The prompt
+   planner adds visible head/hair/hands/shoes, front-facing neutral posture,
+   separated limbs, plain background, even lighting, safe-margin, and
+   single-character constraints. Pose and edge-contact diagnostics run before
+   acceptance. Any crop, major occlusion, extra subject, or unrequested scene
+   blocks the reference; repeated failure offers a simpler pose or manual
+   reference upload.
+2. **Identity drift across guides and expressions — closed in design.** The
+   neutral master is immutable. Guides must register to it; expression jobs are
+   local masked edits conditioned on the master, landmarks, palette, and seed
+   family. Pixels outside the edit mask must be byte-identical and facial
+   landmarks must remain within the approved tolerance. Otherwise discard the
+   variant; never combine independent full-frame redraws.
+3. **Guide-line contamination — closed in design.** False colors and boundary
+   lines live only in a separate technical guide. They are not painted into and
+   deleted from final art. Alignment is checked against source edges and
+   landmarks. Misregistered generated guides are rejected and rebuilt from
+   segmentation plus user correction.
+4. **Semantic selection and left/right errors — closed in design.** Wire the
+   existing selector to provider candidates, then add positive/negative points,
+   connected components, anchor distance, area/aspect, edge contact, overlap,
+   topology, hierarchy, and character-relative side checks. A rectangle or
+   low-plausibility candidate remains pending. The reviewer corrects it, merges
+   it, replaces it, or removes the unsupported part from the motion plan.
+5. **Hair, fur, and lace — closed in design.** Convert the accepted semantic
+   mask to a trimap and benchmark a commercially usable soft-matte method.
+   Evaluate opaque-interior fidelity, fractional boundary coverage, colored
+   fringe, holes, and reconstruction error. If no approved model passes, use a
+   corrected trimap or attach the boundary detail to its neighbor and constrain
+   motion. ZIM is research evidence only because its released license is
+   noncommercial; BiRefNet code/weights and every derivative still require a
+   separate license and hardware review.
+6. **Translucent fabric, glass, veils, and glow — closed by scope control.** A
+   single composite cannot uniquely recover foreground RGB and alpha. Benchmark
+   a rights-reviewed native-alpha route such as LayerDiffuse on the actual anime
+   checkpoint and RTX 3050. If identity, alpha, VRAM, or rights fail, bake the
+   material into its receiver, request user-provided layered art, or prohibit
+   relative motion. Never fabricate a supposedly exact matte.
+7. **Black-on-black and same-color contacts — closed in design.** Combine edge
+   maps, seam topology, landmarks, hierarchy, and positive/negative prompts;
+   use the false-color guide only for review. If the boundary remains ambiguous,
+   require correction, keep accepted visible piping, merge the touching parts,
+   or reduce motion. Color contrast alone is never the ownership test.
+8. **Shadows and lighting — closed in design.** Classify each shadow as baked,
+   receiver-owned, or an independent opacity/multiply layer. Test it at neutral
+   and motion extremes. If separating it changes the accepted appearance, bake
+   it into the receiver and constrain the caster/receiver relationship.
+9. **Hands, props, and crossing fingers — closed in design.** Use hand
+   landmarks, prop bounds, and an explicit rear-finger/prop/front-finger
+   occlusion graph. Review visible ownership and hidden overlap. If independent
+   motion cannot pass, keep the hand/prop rigid, reduce motion, or require
+   replacement art rather than inventing fingers automatically.
+10. **Hidden anatomy and garment construction — closed by bounded uncertainty.**
+    Fit neutral clothed envelopes and joint landmarks to accepted visible
+    boundaries, apply independently authored anime proportion presets and
+    garment clearance rules, and generate only the motion-swept overlap band.
+    Show it in cyan with source and confidence. One view never authorizes a back
+    design, large yaw, changed pose, nude body, motif, or unseen accessory;
+    those require additional approved art or reduced motion.
+11. **Realistic priors overriding anime style — closed in design.** Priors are
+    range checks, never repaint targets. Visible silhouette and landmarks from
+    the accepted master dominate. Out-of-range cases warn the reviewer but do
+    not auto-normalize proportions; unsafe joint inversions or impossible
+    overlap still block motion.
+12. **Hidden-fill identity and style drift — closed in design.** Inpaint only
+    the concealed mask with identity, pose, palette, neighbor, and seed-family
+    conditioning, then restore protected visible pixels. Compare seams, color,
+    line width, landmarks, and perceptual identity. Retry an approved stronger
+    inpaint/identity adapter only after rights and VRAM review. Otherwise reduce
+    motion or require replacement art.
+13. **Visible reconstruction errors — closed in design.** Use alpha-aware
+    ownership, an opaque-interior exactness check, coverage/duplicate heatmaps,
+    edge-weighted difference, source wipe, and z-order review. Unexplained
+    interior holes, double-opaque ownership, background leakage, or changed
+    protected pixels are zero-tolerance blockers.
+14. **Coordinate and revision corruption — closed in design.** Record a single
+    reference-to-canonical affine transform and inverse, reject unrecorded
+    resampling, hash every accepted artifact, and use immutable revisions.
+    Round-trip landmarks, masks, and pixels through save/load. Any accepted edit
+    invalidates dependent guides, hidden fills, expressions, occlusion, meshes,
+    motion checks, and export sign-off.
+15. **Review fatigue and false confidence — closed in design.** Present an
+    exception-first contact sheet, but require explicit front-reference,
+    reconstruction, concealed-art, and final-motion sign-offs. Per-part metrics
+    rank work; they never approve creative or anatomical truth. Project files
+    persist pending decisions and resume at the first invalid gate.
+16. **Motion tears, leaks, and unsupported range — closed in design.** Generate
+    motion-swept concealed masks from the declared range, cache layer surfaces,
+    test each parameter and combined corners at min/neutral/max, verify reset,
+    triangle orientation, seams, bounds, FPS, and memory. Reduce ranges until
+    every enabled control passes; large yaw, back view, and major limb poses
+    require additional art.
+17. **Storage, performance, cancellation, and recovery — closed in design.**
+    Store image payloads as bounded IndexedDB blobs with content hashes and
+    quotas, keep lightweight metadata in project JSON, decode/cache ImageBitmap
+    or equivalent surfaces, and checkpoint per part. Cancel must stop or ignore
+    the provider result without mutating accepted state. A 40-layer round trip,
+    restart/resume, corrupted blob, quota failure, cancellation, 60-second
+    motion soak, target FPS, and peak-memory suite blocks release until it passes
+    on the reference machine.
+18. **Rights and hostile inputs — closed in design.** Keep allowlisted workflows
+    and checkpoints, treat prompts/projects/bundles as data, enforce file,
+    archive, canvas, node, URL, time, and resource limits, and record source,
+    model, weights, version, hash, license, attribution, and output terms. Unknown,
+    noncommercial, incompatible share-alike, or unverifiable dependencies block
+    product use and export.
+19. **Open Avatar versus Cubism claims — closed in design.** The automated result
+    is an Open Avatar project. A named PSD/atlas is only a handoff. Only a
+    project imported, rigged, verified, and exported by supported Live2D Cubism
+    tooling may be called a Cubism model.
+20. **No automatic solution passes — closed by graceful degradation.** Preserve
+    the accepted master and completed decisions, explain the exact failing
+    boundary, and offer correction, replacement upload, merged rigid layers, or
+    reduced motion. Export remains blocked only for enabled unsupported
+    features; the product never substitutes generic rectangles or claims a
+    guessed hidden design is true.
 
 ## Implementation order
 
-1. Reconcile the reference-first policy, full-canvas semantic-layer wording,
-   canonical canvas transform, and Open Avatar/Cubism labels across plans.
-2. Restore the front-reference accept/reject/regenerate UI with immutable
-   revisions and restart persistence.
-3. Connect SAM3 candidate selection for five hard groups: face/hair, one eye,
-   coat/dress, leg/boot, and hand/cane. Add character-relative side labels,
-   connected components, area/aspect/edge gates, and blocking diagnostics.
-4. Implement alpha-aware pixel ownership and visible reconstruction review.
-   Stop the project if the five-group benchmark cannot pass.
-5. Implement per-part review, correction, replacement, dependency invalidation,
-   and large-project IndexedDB blob storage.
-6. Add the anatomy/garment prior ledger and conservative occlusion masks tied to
-   approved motion ranges.
-7. Restrict inpainting to concealed regions and prove protected visible pixels
-   remain unchanged.
-8. Cache Motion Lab layers and add reference toggle, seam views, automated
-   motion-extreme snapshots, reset verification, and reviewer sign-off.
-9. Expand to the full manifest only after the five-group visible reconstruction
-   and concealed-overlap gates pass.
-10. Benchmark matting and identity-conditioning candidates separately before
-    adding any new model, dataset, or custom-node dependency.
+1. Freeze the reference-first contracts, canonical/inverse transform,
+   character-relative orientation, immutable revision graph, and truthful Open
+   Avatar/Cubism labels.
+2. Restore the front-reference accept/reject/regenerate UI and persist pending
+   and accepted revisions across restart.
+3. Add the authoring prompt planner and front-pose/framing gate. Produce an
+   immutable neutral master before any guide or expression job.
+4. Create the non-exported technical guide record: false-color ownership, edge,
+   pose, landmarks, registration metrics, provenance, and user corrections.
+5. Connect provider candidates to the semantic selector for five hard groups:
+   face/hair, one eye, coat/dress, leg/boot, and hand/cane. Add positive/negative
+   prompts, side, component, area/aspect/edge, overlap, topology, and hierarchy
+   gates; remove all automatic rectangle acceptance.
+6. Implement alpha-aware ownership and visible reconstruction review. Stop the
+   expansion if the five-group exact-interior, coverage, duplicate, fringe, and
+   z-order benchmark cannot pass.
+7. Benchmark material solvers independently: opaque hair/lace matting,
+   same-color contacts, shadows, and native transparency. Record license, VRAM,
+   latency, identity, alpha, and reconstruction evidence; use the specified
+   merge/bake/motion-reduction fallback when a solver fails.
+8. Implement per-part correction/replacement, dependency invalidation,
+   checkpoint/resume, and content-addressed IndexedDB blob storage.
+9. Add the anatomy/garment prior ledger, clothed-envelope fit, occlusion graph,
+   and motion-swept concealed masks. Require the cyan pre-generation review.
+10. Restrict inpainting to accepted concealed masks, restore protected visible
+    pixels, and gate seam, palette, line, identity, and overlap quality.
+11. Generate identity-locked expression candidates only as local masked edits;
+    prove all pixels outside the expression mask remain unchanged.
+12. Cache Motion Lab layers and add reference/reconstruction toggles, seam and
+    ownership views, automated individual/combined parameter sweeps, reset,
+    FPS/memory soak, and reviewer sign-off.
+13. Run rights, hostile-input, corrupt-storage, quota, cancellation, restart,
+    rollback, and deterministic export suites.
+14. Expand from five hard groups to the complete manifest only after every
+    preceding gate has physical evidence on the reference hardware.
 
 ## Acceptance benchmark
 
-The Gothic Aristocrat case passes only when one prompt produces a coherent
-reference, all enabled semantic masks, full-canvas RGBA layers, zero unexplained
-missing parts, a neutral reconstruction visually matching the reference, and
-motion-boundary previews without holes. Structural counts alone do not pass the
-gate. Generated artifacts remain outside the repository.
+The labelled suite includes a simple opaque baseline plus the Gothic
+Aristocrat case, black-on-black coat/dress, long hair under a hat, layered
+ruffles and lace, veil or glasses, hand/cane crossing, cast shadow, and a petite
+clothed silhouette. Rights-approved fixtures contain reviewer-authored masks,
+ownership, z-order, landmarks, and expected fallback decisions; generated
+artifacts remain outside the repository.
+
+Production acceptance requires:
+
+- 20/20 reference jobs contain exactly one complete front-facing character,
+  with head, hair, both hands where required, legs, and shoes inside the safe
+  margins and no unrequested scene or severe anatomy failure;
+- every technical guide is registered to its neutral master and every required
+  semantic role has an explicit accepted, merged, baked, replaced, or disabled
+  decision—never a rectangle fallback;
+- protected visible pixels and expression pixels outside accepted edit masks
+  have zero byte differences;
+- opaque interiors reconstruct exactly, with zero unexplained holes,
+  double-opaque ownership, background leakage, or incorrect character side;
+- boundary-IoU/F-score, fringe, and alpha reconstruction thresholds are frozen
+  against the reviewer-authored fixtures before the benchmark and cannot be
+  relaxed after seeing a failing result;
+- every enabled motion-swept concealed region is covered at individual and
+  combined parameter extremes, with zero visible holes, inverted triangles,
+  or unapproved seams;
+- a 40-layer project survives cancellation, restart/resume, immutable retry,
+  quota/corrupt-blob handling, export/import, and clean-session round-trip with
+  accepted content hashes unchanged;
+- Motion Lab maintains at least 30 FPS during the 60-second reference-hardware
+  soak without monotonic memory growth, then reset returns every parameter and
+  layer transform to its recorded neutral state; and
+- reference, visible reconstruction, concealed candidates, final motion,
+  provenance, and rights all have persisted human sign-off.
+
+The pipeline passes only the features it can prove. A character may pass with
+translucent fabric baked into its receiver or a hand/prop kept rigid, provided
+the limitation is explicit and no disabled motion is advertised. Structural
+counts or a visually plausible neutral thumbnail alone never pass the gate.

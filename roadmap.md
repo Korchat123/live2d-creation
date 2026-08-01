@@ -12,17 +12,20 @@ The default is a guided reference-first workflow:
 
 1. enter one character prompt and generate coherent front-reference variants;
 2. accept, reject, or regenerate the front reference;
-3. confirm the prompt-aware part manifest, hierarchy, character-relative
+3. create a registered non-exported authoring pack from the accepted neutral
+   master: false-color ownership, edges, pose, landmarks, and local masked
+   expression candidates;
+4. confirm the prompt-aware part manifest, hierarchy, character-relative
    left/right, and supported motion envelope;
-4. review every semantic mask and visible extracted part on checkerboard,
+5. review every semantic mask and visible extracted part on checkerboard,
    source overlay, and assembled context;
-5. accept the visible reconstruction after coverage, duplicate, edge, and
+6. accept the visible reconstruction after coverage, duplicate, edge, and
    difference review;
-6. review proposed concealed regions, then accept, retry, correct, replace, or
+7. review proposed concealed regions, then accept, retry, correct, replace, or
    reduce motion for every generated hidden overlap;
-7. inspect the final assembly and min/neutral/max Motion Lab controls;
-8. sign off and download the generated project or optional handoff; and
-9. upload a previously generated project to continue its immutable revisions.
+8. inspect the final assembly and min/neutral/max Motion Lab controls;
+9. sign off and download the generated project or optional handoff; and
+10. upload a previously generated project to continue its immutable revisions.
 
 Review is part of the product, not a hidden recovery tool. Automation may
 prioritize exceptions and preselect candidates, but it cannot approve the
@@ -58,24 +61,26 @@ are prohibited.
 
 ## Risk-resolution matrix
 
-| Risk                                             | Resolution                                                                                                                                                                                                                                                               | Gate                                                                                                                                                                                                                       |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Poor SD 1.5 character quality                    | Benchmark Animagine XL 4.0 through a reviewed ComfyUI template. Translate natural-language descriptions into the model's required tag structure. Keep SD 1.5 only as technical fallback evidence.                                                                        | At least 80% of the test set has exactly one character, 90% preserves the entire head, hair, neck, and shoulders, no accepted image contains a watermark or unrelated object, and no run fails from GPU memory exhaustion. |
-| RTX 3050 has only 6 GB VRAM                      | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears. | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                                                                       |
-| Natural-language prompts are inconsistent        | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                                                                                   |
-| Identity changes between parts                   | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                                                                        |
-| Multiple characters or incorrect poses           | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                    | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                                                                                 |
-| Diffusion does not reliably produce transparency | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                         | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                                                                                |
-| Missing concealed artwork                        | Explicitly generate scalp, full face beneath hair, eye contents beneath lids, mouth cavity, neck beneath the head, and torso beneath clothing.                                                                                                                           | Motion-extreme overlays reveal no holes, duplicated outlines, or crop edges.                                                                                                                                               |
-| Part alignment drift                             | Freeze normalized face/body landmarks and canonical 2048 by 2048 coordinates. Reject artifacts outside anchor tolerances.                                                                                                                                                | The neutral composite matches the accepted concept at viewing resolution and every anchor is within approved tolerance.                                                                                                    |
-| Hands and large turns are unreliable             | Keep v1 conservative: modest head X/Y, gaze, blink, brows, mouth, breathing, hair, and clothing physics. Treat hands and large turns as optional additional-art sets.                                                                                                    | Unsupported motion is disabled with a clear limitation instead of being approximated badly.                                                                                                                                |
-| Automatic rigging tears or leaks                 | Use conservative landmark-driven mesh templates, bounded parameter ranges, and manual correction for pivots, masks, mesh density, and deformation.                                                                                                                       | Individual and combined parameter sweeps, reset, reduced motion, and a 60-second run pass without tears, leaks, drift, or inverted triangles.                                                                              |
-| Prompt edits damage unrelated parts              | Classify edits by impact. Recolor replaces textures; hairstyle regenerates hair, occlusion, meshes, and physics; silhouette changes trigger all dependent validation.                                                                                                    | Unaffected hashes remain unchanged and rejecting a candidate leaves the active revision byte-for-byte unchanged.                                                                                                           |
-| Browser session storage is too small             | Store accepted working projects in bounded IndexedDB and provide deterministic project export/import. Keep immutable revisions, hashes, provenance, and rights state.                                                                                                    | A large project survives browser restart and clean-session round-trip without losing accepted art or metadata.                                                                                                             |
-| Cubism output is mislabeled                      | Export a named and grouped Cubism-ready PSD. Import and rig or verify it in Cubism Editor. Only Editor-exported `.moc3` and `.model3.json` are called a Cubism model.                                                                                                    | The PSD imports correctly and a reviewer can export and run the genuine Cubism artifact.                                                                                                                                   |
-| Model or output rights are uncertain             | Record every checkpoint, LoRA, control model, workflow, source reference, terms, version, and hash. Require human third-party-content review.                                                                                                                            | Unknown or incompatible rights block acceptance and export.                                                                                                                                                                |
-| Workflows or projects are hostile                | Use application-owned workflow templates, checkpoint allowlists, file/resource limits, archive validation, cancellation, and fixed provider endpoints.                                                                                                                   | Hostile prompt, workflow, project, path, archive, oversized-artifact, cancellation, and cleanup tests pass.                                                                                                                |
-| Local quality remains insufficient               | Preserve local ComfyUI as the default. Add a cloud adapter only after privacy, credentials, retention, cost, and consent approval.                                                                                                                                       | Cloud use is opt-in and returns the same provider-neutral validated artifacts without changing public runtime contracts.                                                                                                   |
+| Risk                                                                     | Resolution                                                                                                                                                                                                                                                               | Gate                                                                                                                                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Poor SD 1.5 character quality                                            | Benchmark Animagine XL 4.0 through a reviewed ComfyUI template. Translate natural-language descriptions into the model's required tag structure. Keep SD 1.5 only as technical fallback evidence.                                                                        | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
+| RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears. | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
+| Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
+| Identity changes between parts                                           | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                   |
+| Multiple characters or incorrect poses                                   | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                    | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                            |
+| Diffusion does not reliably produce transparency                         | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                         | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                           |
+| Temporary guide colors contaminate final art                             | Keep false colors and boundary lines in a separately hashed, non-exported guide registered to the immutable neutral master. Never paint and erase them in accepted art.                                                                                                  | Export contains no guide pixels; misregistered guides are discarded and rebuilt from segmentation plus correction.                                                    |
+| Hair, lace, translucency, shadows, and same-color contacts are ambiguous | Route each boundary through its material-specific solver. If native alpha or ownership cannot be proved, merge/bake the detail, keep it rigid, request replacement art, or reduce motion.                                                                                | No uncertain flattened translucent matte or ambiguous contact is advertised as independently movable.                                                                 |
+| Missing concealed artwork                                                | Explicitly generate scalp, full face beneath hair, eye contents beneath lids, mouth cavity, neck beneath the head, and torso beneath clothing.                                                                                                                           | Motion-extreme overlays reveal no holes, duplicated outlines, or crop edges.                                                                                          |
+| Part alignment drift                                                     | Freeze normalized face/body landmarks and canonical 2048 by 2048 coordinates. Reject artifacts outside anchor tolerances.                                                                                                                                                | The neutral composite matches the accepted concept at viewing resolution and every anchor is within approved tolerance.                                               |
+| Hands and large turns are unreliable                                     | Keep v1 conservative: modest head X/Y, gaze, blink, brows, mouth, breathing, hair, and clothing physics. Treat hands and large turns as optional additional-art sets.                                                                                                    | Unsupported motion is disabled with a clear limitation instead of being approximated badly.                                                                           |
+| Automatic rigging tears or leaks                                         | Use conservative landmark-driven mesh templates, bounded parameter ranges, and manual correction for pivots, masks, mesh density, and deformation.                                                                                                                       | Individual and combined parameter sweeps, reset, reduced motion, and a 60-second run pass without tears, leaks, drift, or inverted triangles.                         |
+| Prompt edits damage unrelated parts                                      | Classify edits by impact. Recolor replaces textures; hairstyle regenerates hair, occlusion, meshes, and physics; silhouette changes trigger all dependent validation.                                                                                                    | Unaffected hashes remain unchanged and rejecting a candidate leaves the active revision byte-for-byte unchanged.                                                      |
+| Browser session storage is too small                                     | Store accepted working projects in bounded IndexedDB and provide deterministic project export/import. Keep immutable revisions, hashes, provenance, and rights state.                                                                                                    | A large project survives browser restart and clean-session round-trip without losing accepted art or metadata.                                                        |
+| Cubism output is mislabeled                                              | Export a named and grouped Cubism-ready PSD. Import and rig or verify it in Cubism Editor. Only Editor-exported `.moc3` and `.model3.json` are called a Cubism model.                                                                                                    | The PSD imports correctly and a reviewer can export and run the genuine Cubism artifact.                                                                              |
+| Model or output rights are uncertain                                     | Record every checkpoint, LoRA, control model, workflow, source reference, terms, version, and hash. Require human third-party-content review.                                                                                                                            | Unknown or incompatible rights block acceptance and export.                                                                                                           |
+| Workflows or projects are hostile                                        | Use application-owned workflow templates, checkpoint allowlists, file/resource limits, archive validation, cancellation, and fixed provider endpoints.                                                                                                                   | Hostile prompt, workflow, project, path, archive, oversized-artifact, cancellation, and cleanup tests pass.                                                           |
+| Local quality remains insufficient                                       | Preserve local ComfyUI as the default. Add a cloud adapter only after privacy, credentials, retention, cost, and consent approval.                                                                                                                                       | Cloud use is opt-in and returns the same provider-neutral validated artifacts without changing public runtime contracts.                                              |
 
 ## Delivery order
 
@@ -167,12 +172,23 @@ concealed artwork, reconstruct the reference from completed layers, and then
 rig or pack derived outputs. See
 `docs/authoring/reference-first-material-separation-plan.md`.
 
-The immediate implementation order is front-reference review and persistence,
-then a five-group semantic-mask/reconstruction benchmark, per-part review and
-dependency invalidation, conservative anatomy/garment overlap planning,
-hidden-area-only inpainting, and final motion-extreme sign-off. The existing
-strict parts-first code remains an experimental path until it can be safely
-retired after the replacement has physical evidence.
+The immediate implementation order is front-reference review and persistence;
+an immutable neutral-master/reference-pack record; a separate registered
+false-color, edge, pose, and landmark guide; then the five-group semantic-mask
+and visible-reconstruction benchmark. Material-specific hair/lace,
+black-on-black, shadow, transparency, and hand/prop gates run before per-part
+expansion. Per-part review, dependency invalidation, conservative
+anatomy/garment overlap, hidden-only inpainting, identity-locked local
+expressions, and final motion/storage/performance sign-off follow in that order.
+The existing strict parts-first code remains experimental until the replacement
+has physical evidence.
+
+No plan can make missing information objectively true. The resolved fallback
+for an underdetermined boundary is to merge or bake the material, keep connected
+parts rigid, reduce motion, or require additional user-approved art. Studio must
+never erase temporary guide lines from accepted pixels, infer an exact
+transparent matte from one flattened composite, or label guessed hidden anatomy
+as recovered source art.
 
 Anatomy sources constrain plausibility but cannot recover the true unseen
 design. Use licensed geometry/ontology sources such as CC0 MakeHuman exports,
@@ -190,8 +206,9 @@ and one faint panel/background treatment, so the strict scene gate remains
 failed and the workflow is not production-approved. P3 artifact validation and
 dependency-ordered orchestration are implemented, but P3 art acceptance remains
 blocked for production-quality release pending a passing subject/background
-check and a separately rights-reviewed identity-reference experiment. These
-review gates do not interrupt the one-click local draft workflow.
+check and a separately rights-reviewed identity-reference experiment. The
+former one-click draft is historical evidence only; in the revised default,
+pending required reviews block hidden generation, rigging, and export.
 See `docs/authoring/controlled-composition-benchmark.md` and
 `docs/phase-status/phase-p3.md`. The local one-click draft pipeline now passes
 physically: one prompt and one action produced a downloadable 24-layer project
@@ -209,14 +226,14 @@ head, hair, legs, and shoes were visible with clear top and bottom margins. The
 The artifact remains outside the repository. This single run validates the
 reported overflow fix but does not replace the earlier fixed-seed suite.
 
-The default implementation must now retire the portrait segmentation/repair
-controller from the happy path and wire the private dependency-ordered jobs in
-`part-generation.ts` to a bounded ComfyUI part provider. The legacy layer lab
-remains only as a hidden recovery tool. A user-provided Gemini reference review
-confirmed why this gate is necessary: its apparent checkerboard was fully
-opaque, parts were packed at unrelated atlas coordinates, and several riggable
-components remained combined. Those reference images remain outside the
-repository.
+The previous instruction to retire portrait segmentation and make independent
+part jobs the default is superseded. The current implementation must expose the
+reference-review and material-separation path, keep the strict part generator
+as experimental evidence, and retain bounded correction tools for reviewed
+recovery. A user-provided Gemini reference review confirmed why these gates are
+necessary: its apparent checkerboard was fully opaque, parts were packed at
+unrelated atlas coordinates, and several riggable components remained combined.
+Those reference images remain outside the repository.
 
 The first dependency-driven physical build now passes the structural gate: 25
 separate transparent artworks, 25 masks, four expressions, a fully transparent
@@ -241,24 +258,24 @@ conditioning and recognizes color words between "long" and "hair" when
 planning side-hair jobs. See
 `docs/authoring/expanded-part-first-physical-smoke.md`.
 
-The default one-click implementation now follows the strict part-first
-contract. It no longer submits the complete-character concept workflow. Studio
-creates a transparent 896 by 1152 canvas and prompt-derived manifest locally,
-generates each isolated part against only the already-created dependency
-composite, isolates that newly generated part with part-specific SAM cleanup
-(bounded image difference is the fallback), and assembles the full character
-only after the part queue. The old portrait
-segmentation/inpainting path remains available solely for imported portrait
-recovery and legacy projects. This new path still needs a labelled physical
-ComfyUI reconstruction before its art-quality gate can pass. A startup smoke
-verified that no concept artifact was created and that the queue advanced
-directly from back hair to torso; see
-`docs/authoring/parts-first-startup-smoke.md`.
+The historical strict part-first implementation skipped the complete-character
+concept, created a transparent 896 by 1152 canvas and manifest, generated parts
+against dependency composites, and used part-specific SAM cleanup with bounded
+image-difference fallback. A startup smoke verified queue mechanics, but the
+art-quality gate failed: independent jobs did not preserve one coherent face,
+direction, silhouette, lighting, or clothing construction, and bounded
+fallbacks could hide semantic failure. The path is not the production default;
+see `docs/authoring/parts-first-startup-smoke.md`.
 
 ## Primary references
 
 - [Animagine XL 4.0 model card](https://huggingface.co/cagliostrolab/animagine-xl-4.0)
 - [Stable Diffusion XL license](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/76d28af79639c28a79fa5c6c6468febd3490a37e/LICENSE.md)
 - [ComfyUI low-VRAM guidance](https://docs.comfy.org/troubleshooting/overview)
+- [ControlNet spatial conditioning](https://arxiv.org/abs/2302.05543)
+- [ZIM fine-grained matting, CC BY-NC 4.0 release](https://github.com/naver-ai/ZIM)
+- [BiRefNet high-resolution segmentation and matting](https://github.com/zhengpeng7/birefnet)
+- [LayerDiffuse native transparent layers](https://github.com/lllyasviel/LayerDiffuse)
+- [IP-Adapter image conditioning](https://github.com/tencent-ailab/IP-Adapter)
 - [Live2D Cubism PSD import](https://docs.live2d.com/en/cubism-editor-manual/psd-import/)
 - [Live2D Cubism model files](https://docs.live2d.com/en/cubism-sdk-manual/model-web/)

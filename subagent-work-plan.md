@@ -342,16 +342,24 @@ Write scope:
 
 Deliverables:
 
+- immutable neutral-master and non-exported authoring-reference-pack jobs;
+- separate false-color ownership, edge, pose, landmark, expression-candidate,
+  and concealed-candidate records with registration and provenance;
 - dependency-ordered part jobs conditioned on the character bible;
 - full-canvas alpha artifacts, stable IDs, anchors, overlap targets, variants,
   retry, and cancellation;
-- result validation and provenance.
+- material-specific solver selection plus merge, bake, rigid-group, replacement,
+  and reduced-motion fallbacks;
+- result validation, checkpoint/resume, and provenance.
 
 Acceptance:
 
 - accepted parts are full-canvas semantic layers, not rectangular source
   crops; their visible portion may preserve exact accepted-reference pixels,
   while concealed overlap is separately generated and validated;
+- expression variants cannot modify pixels outside their accepted local masks;
+- a failed generated guide cannot replace a guide registered to the neutral
+  master, and no temporary guide color enters exported artwork;
 - retries cannot mutate accepted parts;
 - all required roles and concealed overlaps are measurable.
 
@@ -364,11 +372,14 @@ Write scope: `apps/studio/` and its tests
 Deliverables:
 
 - explicit front-reference accept/reject/regenerate gate;
+- authoring-constraint preview and immutable neutral-master/reference-pack
+  status;
 - part list, solo/visibility/opacity/draw-order controls;
-- checkerboard, source/mask overlay, isolated visible RGBA, assembled context,
+- registered false-color/edge/pose/landmark guide views, checkerboard,
+  source/mask overlay, isolated visible RGBA, assembled context,
   reconstruction wipe, coverage/duplicate/seam heatmaps, and neutral composite;
 - per-part confidence/diagnostics plus compare, accept, reject, retry, replace,
-  motion-reduction, and bounded correction tools;
+  merge, bake, rigid-group, motion-reduction, and bounded correction tools;
 - visible-only, generated-hidden-only, and completed-part review;
 - accessible undo/redo.
 
@@ -389,7 +400,12 @@ Depends on: `P3-A`, `P3-B`
 Deliverables:
 
 - neutral and overlap visual baselines;
-- required-part, alignment, alpha, duplicate, and hidden-art CI checks;
+- labelled opaque, black-on-black, hair/hat, lace/ruffle, translucent, shadow,
+  and hand/prop fixtures with expected fallback decisions;
+- required-part, guide-registration, protected-pixel, alignment, matting, alpha,
+  duplicate, z-order, hidden-art, expression-isolation, and motion-sweep checks;
+- 40-layer storage round-trip, cancellation/recovery, corrupt/quota, 60-second
+  FPS/memory soak, and deterministic export/import evidence;
 - human art-quality decision record.
 
 Acceptance:
