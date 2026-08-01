@@ -203,6 +203,34 @@ it("expands complex prompts into specific riggable groups", () => {
   ] as const)
     expect(enabled.has(part)).toBe(true);
   expect(enabled.has("accessory")).toBe(false);
+  expect(enabled.has("tongue")).toBe(false);
+  expect(enabled.has("teeth")).toBe(false);
+});
+
+it("keeps mouth micro-parts optional until an open-mouth capability is requested", () => {
+  const neutral = new Set(
+    createPromptPartPlan("calm closed-mouth VTuber portrait")
+      .filter((entry) => entry.enabled)
+      .map((entry) => entry.id),
+  );
+  expect(neutral.has("tongue")).toBe(false);
+  expect(neutral.has("teeth")).toBe(false);
+
+  const expressive = new Set(
+    createPromptPartPlan("smiling cat girl with visible fangs")
+      .filter((entry) => entry.enabled)
+      .map((entry) => entry.id),
+  );
+  expect(expressive.has("tongue")).toBe(false);
+  expect(expressive.has("teeth")).toBe(true);
+
+  const openMouth = new Set(
+    createPromptPartPlan("cheerful open mouth expression")
+      .filter((entry) => entry.enabled)
+      .map((entry) => entry.id),
+  );
+  expect(openMouth.has("tongue")).toBe(true);
+  expect(openMouth.has("teeth")).toBe(true);
 });
 
 it("migrates a saved plan created before prompt-aware groups were added", () => {

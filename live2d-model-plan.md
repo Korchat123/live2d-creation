@@ -191,16 +191,23 @@ The accepted concept freezes:
 All later generation is conditioned on this record. A change that intentionally
 alters an identity-locked field must say so and trigger broader review.
 
-### Required generated parts
+### Required avatar sets and internal generated parts
 
-The v1 inventory includes:
+The user-visible v1 minimum is six compatible sets: body/proportion, face,
+paired eyes, mouth, hair, and outfit. Studio selects defaults automatically;
+the user may choose a reviewed shape, recolor it, or prompt only that set when
+the automatic result is poor. These are canonical registered assemblies, not
+independent unconditioned images.
+
+The sets may expand internally into:
 
 - back, side, and front hair groups with scalp overlap;
 - ears, neck, face base, and optional separated face shading;
 - independent left/right sclera, iris/pupil, highlight, upper lid/lashes, lower
   lid, and brows;
 - nose when the approved style needs it separated;
-- upper/lower lips, mouth cavity, tongue, and upper/lower teeth as applicable;
+- closed lips and a grouped open-mouth state, with cavity, tongue, and teeth
+  separated only as applicable and only after expression-local validation;
 - torso, rear/front garment pieces, collar pieces, and accessories;
 - optional upper arm, forearm, and hand groups only when requested; and
 - alternate art required for approved expressions that deformation alone
@@ -210,6 +217,14 @@ Each result uses the same full canvas, transparent background, stable layer ID,
 declared draw order, anchors, and adequate hidden overlap. Generation can use a
 full-frame reference and mask internally, but the accepted layer is not a crop
 cut from the original flattened portrait.
+
+Optional sets include animal ears, tails, wings, headwear, held props,
+jewelry, extra hair locks, detailed garment panels, hands with independent
+motion, and additional expressions. Their absence cannot block the basic
+Open Avatar build. Likewise, an art style with no catchlight, no visible lower
+lid line, or no visible teeth/tongue is valid. Basic completion is judged at the
+set/capability level rather than by forcing nonexistent pixels into every
+possible semantic slot.
 
 ### ComfyUI adapter
 
@@ -349,17 +364,23 @@ provider metadata, and rights state. No separate Phase P2 screen blocks users.
 
 ### Phase P3 - Purpose-generated part artwork
 
-- [ ] Generate the required parts in dependency order using the accepted design
-      as conditioning.
+- [ ] Add the six-set avatar-kit chooser with prompt-selected compatible
+      defaults, per-set shape/palette controls, and a bounded per-set prompt.
+- [ ] Expand accepted sets into required internal rig roles; keep teeth,
+      tongue, catchlights, sparse lower lids, animal features, props, and other
+      details capability-conditional.
+- [ ] Generate/adapt required sets in dependency order using shared anchors and
+      the accepted design as conditioning.
 - [ ] Produce full-canvas transparent layers with hidden overlap.
-- [ ] Add automatic per-part variants, retry, selection, and bounded recovery.
+- [ ] Add automatic per-set variants, retry, selection, compatible-preset
+      substitution, and bounded hidden-art inpainting.
 - [ ] Add alpha, bounds, alignment, duplicate-content, and missing-part checks.
 - [ ] Add a layer inspector with draw-order, solo, opacity, checkerboard,
       composite, and reference overlay views.
 
-Gate: accepted layers reconstruct the approved neutral character without using
-cropped source patches, and every required moving boundary has validated hidden
-art.
+Gate: all six minimum sets reconstruct the approved neutral character without
+using rectangular source patches, every enabled moving boundary has validated
+hidden art, and absence of an optional micro-part does not block Motion Lab.
 
 ### Phase P4 - Assembly, correction, and exportable source
 

@@ -348,10 +348,16 @@ Write scope:
 
 Deliverables:
 
+- private canonical avatar-kit catalog for body, face, paired-eye, mouth, hair,
+  and outfit sets, including compatibility, anchors, palettes, internal roles,
+  and optional capabilities;
+- prompt-to-set planning plus per-set bounded prompting and reviewed-preset
+  substitution when generation cannot satisfy geometry or style gates;
 - immutable neutral-master and non-exported authoring-reference-pack jobs;
 - separate false-color ownership, edge, pose, landmark, expression-candidate,
   and concealed-candidate records with registration and provenance;
-- dependency-ordered part jobs conditioned on the character bible;
+- dependency-ordered set and internal-part jobs conditioned on the character
+  bible and shared anchors;
 - full-canvas alpha artifacts, stable IDs, anchors, overlap targets, variants,
   retry, and cancellation;
 - material-specific solver selection plus merge, bake, rigid-group, replacement,
@@ -360,6 +366,10 @@ Deliverables:
 
 Acceptance:
 
+- the six minimum sets always have compatible defaults and expand into the
+  conservative basic-motion inventory;
+- teeth, tongue, absent catchlights/lower-lid strokes, animal features, props,
+  and other optional capabilities cannot block a basic avatar;
 - accepted parts are full-canvas semantic layers, not rectangular source
   crops; their visible portion may preserve exact accepted-reference pixels,
   while concealed overlap is separately generated and validated;

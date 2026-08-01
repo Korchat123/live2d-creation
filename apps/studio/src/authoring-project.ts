@@ -115,12 +115,7 @@ export const createPromptPartPlan = (
   prompt: string,
 ): readonly PartPlanEntry[] => {
   const value = prompt.toLowerCase();
-  const enabled = new Set<PartId>([
-    "tongue",
-    "teeth",
-    "left arm and hand",
-    "right arm and hand",
-  ]);
+  const enabled = new Set<PartId>(["left arm and hand", "right arm and hand"]);
   const enableWhen = (pattern: RegExp, ...parts: PartId[]) => {
     if (pattern.test(value)) parts.forEach((part) => enabled.add(part));
   };
@@ -147,6 +142,12 @@ export const createPromptPartPlan = (
     /glasses|choker|necklace|earring|ribbon|brooch|jewelry|accessory/u,
     "accessory",
   );
+  // A neutral closed-mouth reference contains no trustworthy tongue or teeth
+  // pixels. Only request these optional capabilities when the prompt explicitly
+  // calls for a visible open-mouth treatment; the expression pass must still
+  // verify them before enabling their independent motion layers.
+  enableWhen(/open mouth|tongue/u, "tongue");
+  enableWhen(/open mouth|visible teeth|fangs?/u, "teeth");
   return defaultPartPlan.map((entry) => ({
     ...entry,
     enabled: entry.required || enabled.has(entry.id),

@@ -1,14 +1,15 @@
 # Prompt-to-Live2D risk-resolution roadmap
 
 Status: approved execution roadmap  
-Updated: 2026-08-01
+Updated: 2026-08-02
 
 Open Avatar remains the default automated rig, preview, and export. A
 Cubism-ready layered PSD is the optional handoff to Live2D Cubism Editor.
 
 ## Default product flow
 
-The default is a one-click-after-approval reference-first workflow:
+The default is a one-click-after-approval reference-first workflow backed by a
+canonical avatar-part kit:
 
 1. enter one character prompt, choose a VTuber or anime art-style preset, and
    generate coherent front-reference variants;
@@ -16,13 +17,14 @@ The default is a one-click-after-approval reference-first workflow:
 3. after acceptance, automatically create a registered non-exported authoring
    pack from the neutral master: false-color ownership, edges, pose, landmarks,
    and local masked expression candidates;
-4. automatically derive the prompt-aware manifest, hierarchy,
-   character-relative left/right, and conservative motion envelope;
-5. generate a safe adult base-body foundation in an opaque fitted base suit,
-   then facial identity, hair, clothing, and accessories as separate registered
-   stages; validate semantic layers, visible reconstruction, concealed
-   overlaps, expressions, and rigging, retrying or reducing unsupported motion
-   when a blocking gate fails;
+4. automatically choose compatible defaults for the six minimum sets: body,
+   face, paired eyes, mouth, hair, and outfit; each set expands to registered
+   internal rig layers and may be replaced, recolored, or prompted separately;
+5. generate or adapt those sets against shared anchors and the accepted design,
+   then inpaint only concealed overlap and expression-only artwork; validate
+   reconstruction, concealed overlaps, expressions, and rigging, retrying,
+   substituting a compatible preset, or reducing unsupported motion when a
+   blocking gate fails;
 6. save the project and automatically open Motion Lab;
 7. let the user test the final assembly and min/neutral/max controls, then
    download or return to exception-focused correction; and
@@ -32,9 +34,45 @@ The user approves the coherent front reference and performs the final Motion
 Lab test. Intermediate manifest, segmentation, hidden-fill, reconstruction,
 and rig checks are blocking automated validators rather than user marking
 steps. Uncertain anatomy is never declared recovered truth: the pipeline
-merges, bakes, keeps rigid, reduces motion, or stops with a precise recovery
-option. The optional Cubism route remains an Editor handoff; automatic output
+uses a compatible part-set preset, merges, bakes, keeps rigid, reduces motion,
+or stops with a precise recovery option. The optional Cubism route remains an Editor handoff; automatic output
 is labelled Open Avatar rather than an Editor-exported Cubism model.
+
+## Minimum avatar-kit decision
+
+The product no longer requires every possible semantic micro-part to be found
+in one generated neutral portrait. A build requires six user-visible sets:
+
+1. body/proportion foundation;
+2. face shape and skin palette;
+3. a paired-eye assembly with shape and iris color;
+4. a mouth assembly with closed and open states;
+5. a registered hairstyle assembly; and
+6. an outfit assembly fitted to the selected body.
+
+Studio preselects compatible defaults from the prompt, so the normal path still
+continues with one click. If prompt generation or extraction fails, the user can
+open the affected set, choose a reviewed shape, change its palette, or prompt
+only that set. Set templates share canonical anchors, character-relative
+left/right, canvas size, draw order, and concealed-overlap requirements; a
+random independently generated part is not accepted merely because it is
+transparent.
+
+Each visible set expands internally into the layers needed by the approved
+motion envelope. For example, the eye set owns sclera, iris/pupil, optional
+catchlight, and blink artwork; the mouth set owns closed lips and a grouped
+open-mouth state. Teeth and tongue are separated only when the open-mouth art
+contains them and the local partition passes. Missing catchlights, sparse lower
+lid lines, teeth, or tongue are valid style choices and never block the basic
+avatar. Cat ears, animal ears, tails, wings, hats, props, jewelry, extra hair
+locks, detailed garment panels, and additional expressions are optional sets.
+
+Hidden-art inpainting remains a recovery tool, not the source of every part.
+It runs after a set is selected and registered, inside bounded masks, for such
+content as scalp beneath bangs, face beneath hair, continuous sclera beneath an
+iris/lid, neck beneath clothing, garment overlap, and the reviewed open-mouth
+cavity. If hidden art cannot be validated, Studio reduces that motion or uses a
+compatible preset instead of inventing anatomy and claiming success.
 
 ## Reference-first material-separation contract
 
@@ -46,8 +84,9 @@ generated during review, and limited to the accepted motion envelope. A
 generated atlas or contact sheet is only a derived review/export preview and is
 never split to create project art.
 
-Every character requires a clean face base beneath hair and facial features,
-independent eye and mouth components, front and rear hair groups, neck, torso,
+Every character requires the six minimum compatible sets. Their internal
+expansion provides a clean face base beneath hair and facial features, paired
+eye and mouth motion artwork, registered hair groups, neck/body foundation,
 and front outfit artwork. Prompt-dependent groups such as side hair, hats,
 coat tails, sleeves, cuffs, corsets, layered skirts, stockings, boots, hands,
 canes, and other accessories are added to the private manifest before their
@@ -70,27 +109,29 @@ are prohibited.
 
 ## Risk-resolution matrix
 
-| Risk                                                                     | Resolution                                                                                                                                                                                                                                                               | Gate                                                                                                                                                                  |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Poor SD 1.5 character quality                                            | Keep Animagine XL 4.0 as the reviewed SDXL/inpainting checkpoint and evaluate Z-Image Turbo as a separate split-model reference generator. Never treat its Qwen3 text encoder as the diffusion model.                                                                    | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
-| RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears. | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
-| Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
-| Body, hair, and clothing colors bleed together                           | Build in registered stages: opaque adult base suit and anatomy envelope, facial identity, hair, clothing, then accessories. Freeze anchors and protected pixels between stages; garment jobs cannot repaint skin, face, or hair.                                         | The final composite matches the accepted dressed reference while each garment/accessory remains an independent aligned layer and skin tone stays consistent.          |
-| Identity changes between parts                                           | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                   |
-| Multiple characters or incorrect poses                                   | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                    | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                            |
-| Diffusion does not reliably produce transparency                         | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                         | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                           |
-| Temporary guide colors contaminate final art                             | Keep false colors and boundary lines in a separately hashed, non-exported guide registered to the immutable neutral master. Never paint and erase them in accepted art.                                                                                                  | Export contains no guide pixels; misregistered guides are discarded and rebuilt from segmentation plus correction.                                                    |
-| Hair, lace, translucency, shadows, and same-color contacts are ambiguous | Route each boundary through its material-specific solver. If native alpha or ownership cannot be proved, merge/bake the detail, keep it rigid, request replacement art, or reduce motion.                                                                                | No uncertain flattened translucent matte or ambiguous contact is advertised as independently movable.                                                                 |
-| Missing concealed artwork                                                | Explicitly generate scalp, full face beneath hair, eye contents beneath lids, mouth cavity, neck beneath the head, and torso beneath clothing.                                                                                                                           | Motion-extreme overlays reveal no holes, duplicated outlines, or crop edges.                                                                                          |
-| Part alignment drift                                                     | Freeze normalized face/body landmarks and canonical 2048 by 2048 coordinates. Reject artifacts outside anchor tolerances.                                                                                                                                                | The neutral composite matches the accepted concept at viewing resolution and every anchor is within approved tolerance.                                               |
-| Hands and large turns are unreliable                                     | Keep v1 conservative: modest head X/Y, gaze, blink, brows, mouth, breathing, hair, and clothing physics. Treat hands and large turns as optional additional-art sets.                                                                                                    | Unsupported motion is disabled with a clear limitation instead of being approximated badly.                                                                           |
-| Automatic rigging tears or leaks                                         | Use conservative landmark-driven mesh templates, bounded parameter ranges, and manual correction for pivots, masks, mesh density, and deformation.                                                                                                                       | Individual and combined parameter sweeps, reset, reduced motion, and a 60-second run pass without tears, leaks, drift, or inverted triangles.                         |
-| Prompt edits damage unrelated parts                                      | Classify edits by impact. Recolor replaces textures; hairstyle regenerates hair, occlusion, meshes, and physics; silhouette changes trigger all dependent validation.                                                                                                    | Unaffected hashes remain unchanged and rejecting a candidate leaves the active revision byte-for-byte unchanged.                                                      |
-| Browser session storage is too small                                     | Store accepted working projects in bounded IndexedDB and provide deterministic project export/import. Keep immutable revisions, hashes, provenance, and rights state.                                                                                                    | A large project survives browser restart and clean-session round-trip without losing accepted art or metadata.                                                        |
-| Cubism output is mislabeled                                              | Export a named and grouped Cubism-ready PSD. Import and rig or verify it in Cubism Editor. Only Editor-exported `.moc3` and `.model3.json` are called a Cubism model.                                                                                                    | The PSD imports correctly and a reviewer can export and run the genuine Cubism artifact.                                                                              |
-| Model or output rights are uncertain                                     | Record every checkpoint, LoRA, control model, workflow, source reference, terms, version, and hash. Require human third-party-content review.                                                                                                                            | Unknown or incompatible rights block acceptance and export.                                                                                                           |
-| Workflows or projects are hostile                                        | Use application-owned workflow templates, checkpoint allowlists, file/resource limits, archive validation, cancellation, and fixed provider endpoints.                                                                                                                   | Hostile prompt, workflow, project, path, archive, oversized-artifact, cancellation, and cleanup tests pass.                                                           |
-| Local quality remains insufficient                                       | Preserve local ComfyUI as the default. Add a cloud adapter only after privacy, credentials, retention, cost, and consent approval.                                                                                                                                       | Cloud use is opt-in and returns the same provider-neutral validated artifacts without changing public runtime contracts.                                              |
+| Risk                                                                     | Resolution                                                                                                                                                                                                                                                                                    | Gate                                                                                                                                                                  |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Poor SD 1.5 character quality                                            | Keep Animagine XL 4.0 as the reviewed SDXL/inpainting checkpoint and evaluate Z-Image Turbo as a separate split-model reference generator. Never treat its Qwen3 text encoder as the diffusion model.                                                                                         | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
+| RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears.                      | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
+| Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                                              | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
+| A tiny or neutral-hidden facial part cannot be segmented                 | Route macro regions to semantic segmentation, visible facial features to landmark/local analysis, and mouth internals to the generated open-mouth state. Substitute compatible eye or mouth set artwork when confidence fails; do not ask a text segmenter to find invisible tongue or teeth. | The six minimum sets complete; optional micro-parts may be absent, while every enabled layer has source-phase evidence and passes containment/reconstruction checks.  |
+| Separately prompted parts drift in direction or style                    | Generate or adapt each part set against frozen anchors, palette, line treatment, accepted-reference context, and neighboring-set silhouettes. Reject incompatible standalone output and offer reviewed canonical shapes.                                                                      | Neutral assembly preserves one front direction, identity, scale, palette, and attachment geometry.                                                                    |
+| Body, hair, and clothing colors bleed together                           | Build in registered stages: opaque adult base suit and anatomy envelope, facial identity, hair, clothing, then accessories. Freeze anchors and protected pixels between stages; garment jobs cannot repaint skin, face, or hair.                                                              | The final composite matches the accepted dressed reference while each garment/accessory remains an independent aligned layer and skin tone stays consistent.          |
+| Identity changes between parts                                           | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                                     | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                   |
+| Multiple characters or incorrect poses                                   | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                                         | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                            |
+| Diffusion does not reliably produce transparency                         | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                                              | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                           |
+| Temporary guide colors contaminate final art                             | Keep false colors and boundary lines in a separately hashed, non-exported guide registered to the immutable neutral master. Never paint and erase them in accepted art.                                                                                                                       | Export contains no guide pixels; misregistered guides are discarded and rebuilt from segmentation plus correction.                                                    |
+| Hair, lace, translucency, shadows, and same-color contacts are ambiguous | Route each boundary through its material-specific solver. If native alpha or ownership cannot be proved, merge/bake the detail, keep it rigid, request replacement art, or reduce motion.                                                                                                     | No uncertain flattened translucent matte or ambiguous contact is advertised as independently movable.                                                                 |
+| Missing concealed artwork                                                | Inpaint only the bounded hidden regions required by selected sets: scalp, face beneath hair, continuous sclera, reviewed mouth cavity, neck, and garment overlap. Substitute a preset or reduce motion when validation fails.                                                                 | Motion-extreme overlays reveal no holes, duplicated outlines, or crop edges.                                                                                          |
+| Part alignment drift                                                     | Freeze normalized face/body landmarks and canonical 2048 by 2048 coordinates. Reject artifacts outside anchor tolerances.                                                                                                                                                                     | The neutral composite matches the accepted concept at viewing resolution and every anchor is within approved tolerance.                                               |
+| Hands and large turns are unreliable                                     | Keep v1 conservative: modest head X/Y, gaze, blink, brows, mouth, breathing, hair, and clothing physics. Treat hands and large turns as optional additional-art sets.                                                                                                                         | Unsupported motion is disabled with a clear limitation instead of being approximated badly.                                                                           |
+| Automatic rigging tears or leaks                                         | Use conservative landmark-driven mesh templates, bounded parameter ranges, and manual correction for pivots, masks, mesh density, and deformation.                                                                                                                                            | Individual and combined parameter sweeps, reset, reduced motion, and a 60-second run pass without tears, leaks, drift, or inverted triangles.                         |
+| Prompt edits damage unrelated parts                                      | Classify edits by impact. Recolor replaces textures; hairstyle regenerates hair, occlusion, meshes, and physics; silhouette changes trigger all dependent validation.                                                                                                                         | Unaffected hashes remain unchanged and rejecting a candidate leaves the active revision byte-for-byte unchanged.                                                      |
+| Browser session storage is too small                                     | Store accepted working projects in bounded IndexedDB and provide deterministic project export/import. Keep immutable revisions, hashes, provenance, and rights state.                                                                                                                         | A large project survives browser restart and clean-session round-trip without losing accepted art or metadata.                                                        |
+| Cubism output is mislabeled                                              | Export a named and grouped Cubism-ready PSD. Import and rig or verify it in Cubism Editor. Only Editor-exported `.moc3` and `.model3.json` are called a Cubism model.                                                                                                                         | The PSD imports correctly and a reviewer can export and run the genuine Cubism artifact.                                                                              |
+| Model or output rights are uncertain                                     | Record every checkpoint, LoRA, control model, workflow, source reference, terms, version, and hash. Require human third-party-content review.                                                                                                                                                 | Unknown or incompatible rights block acceptance and export.                                                                                                           |
+| Workflows or projects are hostile                                        | Use application-owned workflow templates, checkpoint allowlists, file/resource limits, archive validation, cancellation, and fixed provider endpoints.                                                                                                                                        | Hostile prompt, workflow, project, path, archive, oversized-artifact, cancellation, and cleanup tests pass.                                                           |
+| Local quality remains insufficient                                       | Preserve local ComfyUI as the default. Add a cloud adapter only after privacy, credentials, retention, cost, and consent approval.                                                                                                                                                            | Cloud use is opt-in and returns the same provider-neutral validated artifacts without changing public runtime contracts.                                              |
 
 ## Delivery order
 
