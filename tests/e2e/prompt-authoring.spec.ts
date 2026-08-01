@@ -69,6 +69,12 @@ test("presents one-click generation and restores a generated project", async ({
   await expect(
     page.getByRole("button", { name: "Generate Open Avatar" }),
   ).toBeVisible();
+  await expect(page.locator('[data-stage="concept"]')).toHaveText(
+    "Generate and lock one coherent character reference",
+  );
+  await expect(page.locator('[data-stage="parts"]')).toHaveText(
+    "Separate visible parts and complete hidden artwork",
+  );
   await expect(page.locator("#project-review")).toBeHidden();
   await expect(page.locator("#layer-lab")).toBeHidden();
   await expect(page.locator("#concept-checkpoint")).toBeHidden();

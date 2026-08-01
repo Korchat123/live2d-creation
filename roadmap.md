@@ -151,6 +151,22 @@ gates.
 
 ## Current next action
 
+The strict independent-parts experiment is superseded. Its startup smoke proved
+that Studio could skip the concept workflow, but the first raw part immediately
+showed the fundamental problem: independent diffusion calls do not reliably
+share one face, direction, silhouette, lighting, or clothing construction.
+The production direction is now reference-first material separation: generate
+one coherent character, isolate its visible semantic layers, inpaint only
+concealed artwork, reconstruct the reference from completed layers, and then
+rig or pack derived outputs. See
+`docs/authoring/reference-first-material-separation-plan.md`.
+
+The immediate implementation order is coherent-reference restoration, semantic
+mask records and left/right disambiguation, visible-layer reconstruction, then
+hidden-area-only inpainting. The existing strict parts-first code remains an
+experimental path until it can be safely retired after the replacement has
+physical evidence.
+
 P2 is accepted. The Animagine XL 4.0 Opt prompt-only run framed 17/20 samples.
 The verified OpenPose SDXL control improved the first controlled run to 18/20
 and the final tuned run to 19/20, with 40/40 controlled jobs completing without

@@ -3,6 +3,13 @@
 Status: one-click local draft passed; production art gate blocked  
 Reviewed: 2026-08-01
 
+The strict independent-parts default described later in this document is now a
+superseded experiment. Independent diffusion jobs did not preserve a coherent
+character direction. The revised production plan restores one coherent
+reference, separates visible semantic layers, and generates only concealed
+overlap pixels. See
+`docs/authoring/reference-first-material-separation-plan.md`.
+
 ## Implemented
 
 - Private purpose-generated part jobs are locked to the accepted concept hash,

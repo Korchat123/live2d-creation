@@ -230,7 +230,7 @@ const heroDescription =
   document.querySelector<HTMLElement>(".hero p:last-child");
 if (heroDescription)
   heroDescription.textContent =
-    "Describe the character. Studio generates independent transparent parts first, then assembles and animates the Open Avatar on this computer.";
+    "Describe the character. Studio locks one coherent design, separates its visible parts, completes hidden artwork, and assembles the Open Avatar on this computer.";
 document.querySelector<HTMLElement>("#prompt-workspace-title")!.textContent =
   "Generate your avatar";
 const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
@@ -238,7 +238,7 @@ const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
 );
 if (workspaceDescription)
   workspaceDescription.textContent =
-    "No complete portrait is cropped. Every motion part is generated independently and checked locally before the first full composite is assembled.";
+    "One coherent reference keeps the face, direction, outfit, and lighting consistent. Visible pixels are separated and only concealed motion artwork is generated.";
 generate.textContent = "Generate Open Avatar";
 check.hidden = true;
 accept.hidden = true;
@@ -254,8 +254,8 @@ automaticPanel.className = "automatic-avatar";
 automaticPanel.innerHTML = `
   <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
   <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
-    <li data-stage="concept">Create character specification and part manifest</li>
-    <li data-stage="parts">Generate independent transparent parts</li>
+    <li data-stage="concept">Generate and lock one coherent character reference</li>
+    <li data-stage="parts">Separate visible parts and complete hidden artwork</li>
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
@@ -334,7 +334,7 @@ promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
     stage("concept", "complete");
     stage("parts", "active");
     automaticStatus.textContent =
-      "Generating independent transparent layers before assembly. Keep ComfyUI open…";
+      "Separating visible layers and completing concealed artwork. Keep ComfyUI open…";
     try {
       let authoringProject = createAuthoringProject(concept, {
         projectId: crypto.randomUUID(),
@@ -428,5 +428,5 @@ mountPromptWorkspace(
     undefined,
     approvedControlNets,
   ),
-  { automaticBuild: true },
+  { automaticBuild: "reference-first" },
 );

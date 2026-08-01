@@ -732,7 +732,9 @@ const createTransparentPartsCanvas = async (): Promise<Blob> => {
 export const mountPromptWorkspace = (
   host: HTMLElement,
   provider: GenerationProvider,
-  options: Readonly<{ automaticBuild?: boolean }> = {},
+  options: Readonly<{
+    automaticBuild?: "reference-first" | "parts-first";
+  }> = {},
 ): void => {
   const prompt = host.querySelector<HTMLTextAreaElement>("#character-prompt");
   const checkpoint = host.querySelector<HTMLSelectElement>(
@@ -914,7 +916,7 @@ export const mountPromptWorkspace = (
       try {
         const submittedPrompt = prompt.value.trim();
         const seed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
-        if (options.automaticBuild) {
+        if (options.automaticBuild === "parts-first") {
           validateConceptRequest(
             {
               prompt: submittedPrompt,
