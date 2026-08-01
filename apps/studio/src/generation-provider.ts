@@ -1,3 +1,14 @@
+import {
+  acceptReferenceCandidate,
+  addReferenceCandidate,
+  createReferenceReviewState,
+  IndexedDbReferenceReviewStore,
+  rejectReferenceCandidate,
+  selectReferenceCandidate,
+  type ReferenceReviewState,
+  type ReferenceReviewStore,
+} from "./reference-review.js";
+
 const MAX_PROMPT_BYTES = 16 * 1024;
 const MAX_ARTIFACT_BYTES = 4 * 1024 * 1024;
 const MAX_ARTIFACT_EDGE = 1152;
@@ -212,12 +223,12 @@ export const createConceptPromptPlan = (
   const clothing = "clothing and accessories exactly as described";
   const palette = "consistent color palette";
   const pose =
-    "looking at viewer, front view, full body, standing, zoomed out, centered composition, neutral pose, face fully visible and evenly lit, unobscured facial features, both eyes visible, hair and headwear do not cover the eyes or face, entire character silhouette fully inside frame, character occupies about 75 percent of canvas height, complete head, complete hair, generous margin above hair, proportionate wearable headwear, held props close to the body, both legs fully visible, complete shoes, generous margin below shoes, no body part touching the image edge, visible neck, visible shoulders, isolated on a blank pure white background, no scenery";
+    "looking at viewer, orthographic-looking front view, full body, standing, zoomed out, centered composition, neutral pose, level eyes, level shoulders, level hips, face fully visible and evenly lit, neutral closed mouth, both eyes open and visible, unobscured facial features, hair and headwear do not cover the eyes or face, entire character silhouette fully inside frame, character occupies about 75 percent of canvas height, complete head, complete hair, 5 to 10 percent safe margin around the silhouette, generous margin above hair, proportionate wearable headwear, arms slightly separated from the torso, legs slightly separated, held prop positioned beside one side with the hand silhouette visible, prop does not cross the face, hair, or central torso, both hands visible when present, both legs fully visible, complete shoes, generous margin below shoes, no body part touching the image edge, visible neck, visible shoulders, even lighting, isolated on a blank pure white background, no scenery";
   const quality = animagine
     ? "masterpiece, high score, great score, absurdres"
     : "high quality";
   const negative = animagine
-    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, hidden face, obscured face, shadowed face, black face, hair covering eyes, hat covering face, oversized hat, giant hat, floating prop, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
+    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, crossed limbs, hidden hand, hidden face, obscured face, shadowed face, black face, hair covering eyes, hat covering face, oversized hat, giant hat, floating prop, prop crossing face, prop crossing torso, dramatic perspective, tilted head, wind-blown hair, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
     : "cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic";
   return {
     profile: animagine ? "animagine-xl-4" : "generic",
@@ -733,7 +744,8 @@ export const mountPromptWorkspace = (
   host: HTMLElement,
   provider: GenerationProvider,
   options: Readonly<{
-    automaticBuild?: "reference-first" | "parts-first";
+    automaticBuild?: "parts-first";
+    referenceReviewStore?: ReferenceReviewStore;
   }> = {},
 ): void => {
   const prompt = host.querySelector<HTMLTextAreaElement>("#character-prompt");
@@ -747,6 +759,10 @@ export const mountPromptWorkspace = (
   const output = host.querySelector<HTMLImageElement>("#concept-output");
   const provenance = host.querySelector<HTMLElement>("#concept-provenance");
   const accept = host.querySelector<HTMLButtonElement>("#accept-concept");
+  const reject = host.querySelector<HTMLButtonElement>("#reject-concept");
+  const rejectionReason = host.querySelector<HTMLInputElement>(
+    "#reference-rejection-reason",
+  );
   const variants = host.querySelector<HTMLElement>("#concept-variants");
   const promptPlan = host.querySelector<HTMLElement>("#concept-prompt-plan");
   if (
@@ -759,6 +775,8 @@ export const mountPromptWorkspace = (
     !output ||
     !provenance ||
     !accept ||
+    !reject ||
+    !rejectionReason ||
     !variants ||
     !promptPlan
   )
@@ -767,24 +785,24 @@ export const mountPromptWorkspace = (
   let controller: AbortController | undefined;
   let providerReady = false;
   let providerCheckpoints: readonly string[] = [];
+  const reviewStore =
+    options.referenceReviewStore ?? new IndexedDbReferenceReviewStore();
+  let reviewState: ReferenceReviewState = createReferenceReviewState();
+  let saveQueue = Promise.resolve();
   type CandidateVariant = Readonly<{
-    candidate: ConceptCandidate;
-    decoded: DecodedImage;
-    prompt: string;
+    detail: AcceptedConceptDetail;
     url: string;
   }>;
-  const candidates: CandidateVariant[] = [];
+  let candidates: CandidateVariant[] = [];
   let acceptedCandidate: CandidateVariant | undefined;
 
-  const candidateDetail = async (
-    variant: CandidateVariant,
-  ): Promise<AcceptedConceptDetail> => ({
-    image: await blobAsDataUrl(variant.candidate.image),
-    width: variant.decoded.width,
-    height: variant.decoded.height,
-    prompt: variant.prompt,
-    provenance: variant.candidate.provenance,
-  });
+  const persistReview = (): Promise<void> => {
+    const snapshot = reviewState;
+    saveQueue = saveQueue
+      .catch(() => undefined)
+      .then(() => reviewStore.save(snapshot));
+    return saveQueue;
+  };
 
   const renderPromptPlan = (): void => {
     const plan = createConceptPromptPlan(prompt.value, checkpoint.value);
@@ -813,37 +831,74 @@ export const mountPromptWorkspace = (
 
   const selectCandidate = (variant: CandidateVariant): void => {
     acceptedCandidate = variant;
+    const id = variant.detail.provenance.artifactSha256;
+    if (reviewState.selectedId !== id) {
+      const previous = reviewState;
+      const previousCandidate = candidates.find(
+        ({ detail }) =>
+          detail.provenance.artifactSha256 === previous.selectedId,
+      );
+      reviewState = selectReferenceCandidate(reviewState, id, Date.now());
+      void persistReview().catch((error: unknown) => {
+        reviewState = previous;
+        if (previousCandidate) {
+          acceptedCandidate = previousCandidate;
+          renderVariants();
+        }
+        status.textContent =
+          error instanceof Error
+            ? error.message
+            : "Could not save the selected reference.";
+      });
+    }
+    const decision = reviewState.candidates.find(
+      (candidate) => candidate.id === id,
+    )?.decision;
     output.src = variant.url;
     output.hidden = false;
-    accept.disabled = false;
-    provenance.textContent = `${variant.decoded.width}×${variant.decoded.height} · seed ${variant.candidate.provenance.seed} · SHA-256 ${variant.candidate.provenance.artifactSha256.slice(0, 12)}…`;
+    provenance.dataset.hash = id;
+    provenance.textContent = `${variant.detail.width}×${variant.detail.height} · seed ${variant.detail.provenance.seed} · SHA-256 ${id.slice(0, 12)}… · ${decision ?? "pending"}`;
+    accept.textContent = reviewState.acceptedId
+      ? "Resume accepted reference"
+      : "Accept neutral master";
+    accept.disabled =
+      decision === "rejected" ||
+      (Boolean(reviewState.acceptedId) && reviewState.acceptedId !== id);
+    reject.disabled = decision !== "pending" || Boolean(reviewState.acceptedId);
+    rejectionReason.disabled = reject.disabled;
     variants
       .querySelectorAll<HTMLButtonElement>("button")
       .forEach((button) =>
-        button.classList.toggle(
-          "selected",
-          button.dataset.hash === variant.candidate.provenance.artifactSha256,
-        ),
+        button.classList.toggle("selected", button.dataset.hash === id),
       );
   };
 
   const renderVariants = (): void => {
     variants.replaceChildren(
       ...candidates.map((variant, index) => {
+        const id = variant.detail.provenance.artifactSha256;
+        const decision = reviewState.candidates.find(
+          (candidate) => candidate.id === id,
+        )?.decision;
         const button = document.createElement("button");
         button.type = "button";
         button.className = "concept-variant quiet";
-        button.dataset.hash = variant.candidate.provenance.artifactSha256;
-        button.title = `Candidate ${index + 1}, seed ${variant.candidate.provenance.seed}`;
+        button.dataset.hash = id;
+        button.dataset.decision = decision;
+        button.title = `Candidate ${index + 1}, ${decision ?? "pending"}, seed ${variant.detail.provenance.seed}`;
         const image = document.createElement("img");
         image.src = variant.url;
-        image.alt = `Concept candidate ${index + 1}`;
+        image.alt = `Neutral-master candidate ${index + 1}, ${decision ?? "pending"}`;
         button.append(image);
         button.addEventListener("click", () => selectCandidate(variant));
         return button;
       }),
     );
-    if (acceptedCandidate) selectCandidate(acceptedCandidate);
+    const selected = candidates.find(
+      ({ detail }) =>
+        detail.provenance.artifactSha256 === reviewState.selectedId,
+    );
+    if (selected) selectCandidate(selected);
   };
 
   const setHealth = async (): Promise<void> => {
@@ -868,7 +923,8 @@ export const mountPromptWorkspace = (
       status.textContent = checkpoint.value
         ? `${health.message} ${checkpoint.value} selected.`
         : health.message;
-      generate.disabled = !providerReady || !checkpoint.value;
+      generate.disabled =
+        !providerReady || !checkpoint.value || Boolean(reviewState.acceptedId);
     } finally {
       check.disabled = false;
     }
@@ -877,35 +933,82 @@ export const mountPromptWorkspace = (
   check.addEventListener("click", () => void setHealth());
   prompt.addEventListener("input", renderPromptPlan);
   checkpoint.addEventListener("change", () => {
-    generate.disabled = !providerReady || !checkpoint.value;
+    generate.disabled =
+      !providerReady || !checkpoint.value || Boolean(reviewState.acceptedId);
     renderPromptPlan();
   });
   cancel.addEventListener("click", () => controller?.abort());
   accept.addEventListener("click", () => {
     if (!acceptedCandidate) return;
     accept.disabled = true;
-    void candidateDetail(acceptedCandidate)
-      .then((detail) => {
+    void (async () => {
+      try {
+        const detail = acceptedCandidate.detail;
+        const id = detail.provenance.artifactSha256;
+        if (!reviewState.acceptedId) {
+          const previous = reviewState;
+          reviewState = acceptReferenceCandidate(reviewState, id, Date.now());
+          try {
+            await persistReview();
+          } catch (error) {
+            reviewState = previous;
+            throw error;
+          }
+        } else if (reviewState.acceptedId !== id) {
+          throw new Error("The accepted neutral master is immutable.");
+        }
         host.dispatchEvent(
           new CustomEvent<AcceptedConceptDetail>("avatarconceptaccepted", {
             detail,
           }),
         );
         status.textContent =
-          "Design accepted as revision 1. Character-bible review is next.";
+          "Neutral master accepted as revision 1. Character-bible review is next.";
         prompt.disabled = true;
         checkpoint.disabled = true;
         check.disabled = true;
         generate.disabled = true;
+        reject.disabled = true;
+        rejectionReason.disabled = true;
         variants
           .querySelectorAll<HTMLButtonElement>("button")
           .forEach((button) => (button.disabled = true));
-      })
-      .catch((error: unknown) => {
+        renderVariants();
+      } catch (error) {
         status.textContent =
           error instanceof Error ? error.message : "Could not accept concept.";
         accept.disabled = false;
-      });
+      }
+    })();
+  });
+  reject.addEventListener("click", () => {
+    if (!acceptedCandidate) return;
+    void (async () => {
+      try {
+        const id = acceptedCandidate.detail.provenance.artifactSha256;
+        const previous = reviewState;
+        reviewState = rejectReferenceCandidate(
+          reviewState,
+          id,
+          rejectionReason.value,
+          Date.now(),
+        );
+        try {
+          await persistReview();
+        } catch (error) {
+          reviewState = previous;
+          throw error;
+        }
+        rejectionReason.value = "";
+        renderVariants();
+        status.textContent =
+          "Reference rejected and saved. Generate another reference or compare earlier candidates.";
+        generate.textContent = "Regenerate reference";
+      } catch (error) {
+        status.textContent =
+          error instanceof Error ? error.message : "Could not reject concept.";
+      }
+    })();
   });
   generate.addEventListener("click", () => {
     void (async () => {
@@ -969,32 +1072,34 @@ export const mountPromptWorkspace = (
           candidate.image,
           decodeBrowserImage,
         );
-        const variant = {
-          candidate,
-          decoded,
+        const detail: AcceptedConceptDetail = {
+          image: await blobAsDataUrl(candidate.image),
+          width: decoded.width,
+          height: decoded.height,
           prompt: submittedPrompt,
-          url: URL.createObjectURL(candidate.image),
+          provenance: candidate.provenance,
         };
-        candidates.push(variant);
-        if (candidates.length > 4) {
-          const removed = candidates.shift();
-          if (removed) URL.revokeObjectURL(removed.url);
+        const previous = reviewState;
+        reviewState = addReferenceCandidate(reviewState, detail, Date.now());
+        try {
+          await persistReview();
+        } catch (error) {
+          reviewState = previous;
+          throw error;
         }
-        acceptedCandidate = variant;
+        candidates = reviewState.candidates.map(({ concept }) => ({
+          detail: concept,
+          url: concept.image,
+        }));
+        acceptedCandidate = candidates.find(
+          ({ detail: candidateDetail }) =>
+            candidateDetail.provenance.artifactSha256 ===
+            detail.provenance.artifactSha256,
+        );
         renderVariants();
-        if (options.automaticBuild) {
-          const detail = await candidateDetail(variant);
-          host.dataset.pipelineBusy = "true";
-          status.textContent =
-            "Character generated. Preparing transparent avatar parts…";
-          host.dispatchEvent(
-            new CustomEvent<AcceptedConceptDetail>("avatarconceptgenerated", {
-              detail,
-            }),
-          );
-        } else {
-          status.textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"} ready. Compare and accept one design.`;
-        }
+        generate.textContent = "Regenerate reference";
+        status.textContent = `${candidates.length} candidate${candidates.length === 1 ? "" : "s"} saved. Review the full body, face, hands, and shoes before accepting.`;
+        output.focus();
       } catch (error) {
         status.textContent =
           error instanceof DOMException && error.name === "AbortError"
@@ -1007,6 +1112,7 @@ export const mountPromptWorkspace = (
         generate.disabled =
           !providerReady ||
           !checkpoint.value ||
+          Boolean(reviewState.acceptedId) ||
           host.dataset.pipelineBusy === "true";
         check.disabled = false;
         cancel.disabled = true;
@@ -1014,8 +1120,55 @@ export const mountPromptWorkspace = (
     })();
   });
 
+  const restoreReview = async (): Promise<void> => {
+    try {
+      const restored = await reviewStore.load();
+      if (!restored) return;
+      reviewState = restored;
+      candidates = restored.candidates.map(({ concept }) => ({
+        detail: concept,
+        url: concept.image,
+      }));
+      const selected = restored.candidates.find(
+        ({ id }) => id === restored.selectedId,
+      );
+      if (selected) {
+        prompt.value = selected.concept.prompt;
+        if (
+          providerCheckpoints.includes(selected.concept.provenance.checkpoint)
+        )
+          checkpoint.value = selected.concept.provenance.checkpoint;
+      }
+      renderPromptPlan();
+      renderVariants();
+      if (restored.acceptedId) {
+        prompt.disabled = true;
+        checkpoint.disabled = true;
+        generate.disabled = true;
+        generate.textContent = "Reference accepted";
+        status.textContent =
+          "Accepted neutral master restored. Choose Resume accepted reference to continue; no generation restarted automatically.";
+      } else {
+        generate.textContent = candidates.length
+          ? "Regenerate reference"
+          : "Generate reference";
+        status.textContent = `${candidates.length} saved reference candidate${candidates.length === 1 ? "" : "s"} restored for review.`;
+      }
+      host.dispatchEvent(
+        new CustomEvent<ReferenceReviewState>("avatarreferencereviewrestored", {
+          detail: restored,
+        }),
+      );
+    } catch (error) {
+      status.textContent =
+        error instanceof Error
+          ? `${error.message} Generate a new reference to recover.`
+          : "Could not restore the reference review.";
+    }
+  };
+
   renderPromptPlan();
-  void setHealth();
+  void setHealth().then(restoreReview);
 };
 import {
   compositionControlVersion,

@@ -1,69 +1,87 @@
-# Phase P3 status: purpose-generated artwork
+# Phase P3 status: reference-first material separation
 
-Status: one-click local draft passed; production art gate blocked  
+Status: neutral-master review gate implemented; production art gate blocked
+
 Reviewed: 2026-08-01
 
-The strict independent-parts default described later in this document is now a
-superseded experiment. Independent diffusion jobs did not preserve a coherent
-character direction. The revised production plan restores one coherent
-reference, separates visible semantic layers, and generates only concealed
-overlap pixels. See
+The strict independent-parts route is a superseded experiment. Independent
+diffusion jobs did not preserve one coherent face, direction, silhouette,
+lighting, or garment construction. The production route accepts one coherent
+neutral master, separates its reviewed visible semantic layers, and generates
+only the concealed overlap required by approved motion. See
 `docs/authoring/reference-first-material-separation-plan.md`.
 
-## Implemented
+## Implemented production gates
 
-- Private purpose-generated part jobs are locked to the accepted concept hash,
-  character bible, canonical 2048 by 2048 canvas, normalized anchors, enabled
-  part plan, dependency order, and concealed-overlap target.
-- Full-canvas RGBA validation measures alpha bounds and rejects empty,
-  edge-clipped, anchor-drifted, or insufficient-overlap artifacts.
-- Accepted-part validation reports missing required parts and duplicate content.
-- Candidate revisions are immutable. Retry adds a pending variant; accept or
-  reject creates a new state and cannot mutate an earlier accepted state.
-- Cancellation and wrong-part/wrong-concept provider output leave the current
-  revision unchanged.
-- The existing Portrait Layer Lab retains layer selection, previews, mask and
-  artwork correction, undo/redo, generated repair comparison, and Motion Lab
-  handoff. Its source-cropped starter masks remain explicitly ineligible for
-  P3 acceptance.
-- The default Studio flow now hides P2 and Portrait Layer Lab, automatically
-  passes the controlled concept into segmentation and generated repair, creates
-  expression states, validates the parts, persists the large project in
-  IndexedDB, and enables project download and Motion Lab preview.
-- A physical one-prompt/one-click run produced 24 layers, 24 generated-artwork
-  entries, four expression states, and zero missing-art entries.
-- The prompt-aware expanded physical run produced 35 separate masks and
-  generated-art entries, four expressions, and zero missing-art entries. It
-  proved separate coat, sleeves, corset, skirt, legs, footwear, hat, prop, and
-  arm jobs, but visual approval remains blocked by an obscured generated face.
-- The default automatic route no longer requests a complete portrait. It starts
-  from a transparent canonical canvas and generates each enabled part inside a
-  bounded region, conditioned only on the text specification and already
-  generated dependency composite. Each purpose-generated part is isolated with
-  part-specific SAM cleanup, with bounded difference as fallback, before the
-  first full-character composite is assembled. Complete-portrait segmentation
-  remains a legacy/import recovery path.
+- Studio visibly presents the interpreted prompt, approved checkpoint,
+  candidate history, provenance/hash, optional rejection note, Accept neutral
+  master, Reject, and Regenerate controls.
+- Generating a reference stops at review. It does not start part generation,
+  hidden fill, expressions, rigging, export, or Motion Lab.
+- The private versioned reference-review state records up to four validated
+  embedded candidates, selection, rejection reason/timestamp, and exactly one
+  immutable accepted candidate keyed by its artifact SHA-256.
+- Pending, rejected, selected, and accepted decisions persist in IndexedDB. An
+  accepted neutral master restores after reload without automatically restarting
+  ComfyUI work; the user explicitly resumes it.
+- Resume opens the persisted character-bible, landmark, orientation, and part
+  manifest review. A concept hash mismatch cannot silently restore an unrelated
+  authoring project.
+- The authoring prompt now requests an orthographic-looking centered front pose,
+  level features and body axes, neutral mouth/open eyes, separated arms/legs,
+  5–10% silhouette margins, visible hands and shoes, even lighting, and props
+  beside rather than across the face or central torso.
+- Corrupt, oversized, remote-image, mismatched-hash, duplicate, invalid-version,
+  and invalid-transition review state fails safely. A storage failure cannot
+  create an accepted downstream project.
+- Existing generated Open Avatar v1 projects remain importable, but they do not
+  gain a new neutral-master approval claim.
 
-## Blocking art evidence
+## Superseded experimental evidence retained
 
-P3 cannot pass until all of the following are true:
+- Private purpose-generated part jobs remain locked to the concept hash,
+  character bible, canonical canvas, anchors, dependency order, and overlap
+  target.
+- Immutable part candidates, cancellation, alpha bounds, missing/duplicate
+  checks, and prompt-aware manifests remain useful implementation evidence.
+- Earlier 24-layer and 35-layer one-click runs proved queue, storage, and
+  structural packaging mechanics but failed visual identity and/or framing
+  gates. Bounded rectangles and image-difference fallbacks are not eligible for
+  production acceptance.
 
-1. the composition workflow passes its fixed quality gate;
-2. the automatic build derives stable internal identity metadata and anchors
-   without requiring a separate user-facing P2 screen;
-3. a separately rights-reviewed identity-conditioning workflow proves that
-   purpose-generated parts preserve the accepted character;
-4. every enabled required part is generated, reviewed, and accepted with
-   transparent full-canvas artwork and measured hidden overlap; and
-5. the accepted neutral composite receives a human art-quality decision.
+## Blocking art and engineering evidence
 
-The one-click workflow may package a local draft without a separate concept
-acceptance screen, but it must retain provenance and limitations. Production
-approval and release remain dependency-blocked by the P3 art gate, even where
-legacy prototypes already demonstrate portions of later behavior.
+P3 remains blocked until all of the following pass in order:
+
+1. define and round-trip the 896 by 1152 reference to 2048 by 2048 canonical
+   transform, character-relative orientation, and immutable invalidation graph;
+2. persist a registered, non-exported technical pack containing false-color
+   ownership, edges, pose, landmarks, constraints, and provenance;
+3. connect provider masks to the semantic selector and pass the five-case
+   visible benchmark: face/hair, eye/blink, coat/ruffle, leg/boot, hand/prop;
+4. prove protected visible pixels and expression pixels outside accepted masks
+   remain byte-identical;
+5. implement alpha-aware reconstruction and material-specific hair/lace,
+   same-color contact, shadow, and transparency decisions;
+6. review the cyan motion-swept concealed masks before hidden-only inpainting;
+7. implement per-part decisions, dependency invalidation, checkpoint/resume,
+   blob storage, and explicit merge/bake/rigid/reduced-motion fallbacks; and
+8. pass final motion, storage, cancellation, rights, hostile-input, FPS, memory,
+   and human art-quality gates.
+
+Current operational risks are bounded but unresolved: candidate images still
+use embedded data URLs until the scheduled Blob-store migration; legacy
+authoring projects need explicit reference confirmation; automated framing and
+anatomy diagnostics are not yet implemented; and part-build cancellation is
+not yet resumable.
 
 ## Verification
 
-Focused Studio typecheck and seven P3 artifact/orchestration tests pass. The
-repository-wide `pnpm run ci` result is recorded at handoff after all current
-changes are complete.
+- Studio typecheck passes.
+- Studio unit tests pass, including the new four-test reference-review state
+  suite.
+- Chromium acceptance tests pass reference persistence, explicit resume, hidden
+  downstream stages, existing project import, and safe unconfigured-provider
+  behavior.
+- The repository-wide `pnpm run ci` result is recorded at handoff after all
+  current changes are complete.

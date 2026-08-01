@@ -207,7 +207,7 @@ const boundedText = (
   return value;
 };
 
-const validateConcept = (concept: AcceptedConcept): void => {
+export const validateAcceptedConcept = (concept: AcceptedConcept): void => {
   if (
     !concept.image.startsWith("data:image/png;base64,") &&
     !concept.image.startsWith("data:image/webp;base64,")
@@ -342,7 +342,7 @@ export const createAuthoringProject = (
   concept: AcceptedConcept,
   identity: Readonly<{ projectId: string; createdAt: number }>,
 ): AuthoringProject => {
-  validateConcept(concept);
+  validateAcceptedConcept(concept);
   const projectId = boundedText(identity.projectId, "project id", 128);
   if (!/^[a-zA-Z0-9-]+$/u.test(projectId))
     throw new Error("Invalid project id.");

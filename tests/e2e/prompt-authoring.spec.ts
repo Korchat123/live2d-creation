@@ -57,28 +57,105 @@ test("keeps a portrait concept preview inside its safe stage", async ({
   );
 });
 
-test("presents one-click generation and restores a generated project", async ({
+test("restores an accepted neutral master without starting downstream work", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(
+    async ({ embeddedImage }) => {
+      const modulePath = "/src/reference-review.ts";
+      const review = await import(modulePath);
+      const hash = "a".repeat(64);
+      let state = review.createReferenceReviewState(1);
+      state = review.addReferenceCandidate(
+        state,
+        {
+          image: embeddedImage,
+          width: 896,
+          height: 1152,
+          prompt: "front-facing anime librarian",
+          provenance: {
+            provider: "fake",
+            templateId: "open-avatar-concept-v1",
+            checkpoint: "fake-approved.safetensors",
+            seed: 7,
+            artifactSha256: hash,
+          },
+        },
+        2,
+      );
+      state = review.acceptReferenceCandidate(state, hash, 3);
+      await new review.IndexedDbReferenceReviewStore().save(state);
+    },
+    { embeddedImage: image },
+  );
+
+  await page.reload();
+  await expect(page.locator("#concept-output")).toBeVisible();
+  await expect(page.locator("#concept-provenance")).toHaveAttribute(
+    "data-hash",
+    "a".repeat(64),
+  );
+  await expect(page.locator("#generation-status")).toContainText(
+    "Accepted neutral master restored",
+  );
+  await expect(page.locator("#accept-concept")).toHaveText(
+    "Resume accepted reference",
+  );
+  await expect(page.locator('[data-stage="concept"]')).toHaveAttribute(
+    "data-state",
+    "complete",
+  );
+  await expect(page.locator('[data-stage="parts"]')).not.toHaveAttribute(
+    "data-state",
+    "active",
+  );
+  await expect(page.locator("#project-review")).toBeHidden();
+
+  await page.locator("#accept-concept").click();
+  await expect(page.locator("#project-review")).toBeVisible();
+  await expect(page.locator("#automatic-state")).toHaveText(
+    "Reference accepted",
+  );
+  await expect(page.locator("#automatic-status")).toContainText(
+    "Parts remain blocked",
+  );
+  await expect(page.locator('[data-stage="parts"]')).not.toHaveAttribute(
+    "data-state",
+    "active",
+  );
+});
+
+test("presents gated reference review and restores a generated project", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Prompt once. Get a ready-to-use 2D avatar.",
+      name: "Prompt, review, then build your 2D avatar.",
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Generate Open Avatar" }),
+    page.getByRole("button", { name: "Generate reference" }),
   ).toBeVisible();
   await expect(page.locator('[data-stage="concept"]')).toHaveText(
-    "Generate and lock one coherent character reference",
+    "Generate and approve one coherent neutral master",
   );
   await expect(page.locator('[data-stage="parts"]')).toHaveText(
     "Separate visible parts and complete hidden artwork",
   );
   await expect(page.locator("#project-review")).toBeHidden();
   await expect(page.locator("#layer-lab")).toBeHidden();
-  await expect(page.locator("#concept-checkpoint")).toBeHidden();
-  await expect(page.locator("#accept-concept")).toBeHidden();
+  await expect(page.locator("#concept-checkpoint")).toBeVisible();
+  await expect(page.locator("#accept-concept")).toBeVisible();
+  await expect(page.locator("#accept-concept")).toBeDisabled();
+  await expect(page.locator("#reject-concept")).toBeVisible();
+  await expect(page.locator("#reject-concept")).toBeDisabled();
+  await expect(page.locator(".prompt-plan")).toBeVisible();
+  await expect(page.locator('[data-stage="parts"]')).not.toHaveAttribute(
+    "data-state",
+    "active",
+  );
 
   await page
     .getByLabel("Character description")

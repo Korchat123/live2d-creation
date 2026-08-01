@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-test("renders the automatic Builder without exposing manual phase tools", async ({
+test("renders the Builder with reference review before manual part tools", async ({
   page,
 }) => {
   await page.goto("/");
 
   await expect(
     page.getByRole("heading", {
-      name: "Prompt once. Get a ready-to-use 2D avatar.",
+      name: "Prompt, review, then build your 2D avatar.",
     }),
   ).toBeVisible();
   await expect(page.locator("#automatic-progress li")).toHaveCount(4);

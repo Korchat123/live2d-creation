@@ -132,7 +132,7 @@ const downloadProject = (project: AuthoringProject): void => {
 
 type ReviewController = {
   acceptConcept(concept: AcceptedConcept): AuthoringProject;
-  restore(): Promise<AuthoringProject | undefined>;
+  restore(expectedConceptHash?: string): Promise<AuthoringProject | undefined>;
 };
 
 export const mountProjectReview = (
@@ -432,8 +432,16 @@ export const mountProjectReview = (
       render();
       return project;
     },
-    async restore() {
-      project = await store.load();
+    async restore(expectedConceptHash) {
+      const restored = await store.load();
+      if (
+        restored &&
+        expectedConceptHash !== undefined &&
+        restored.acceptedConcept.provenance.artifactSha256 !==
+          expectedConceptHash
+      )
+        return undefined;
+      project = restored;
       if (project) render();
       return project;
     },

@@ -425,6 +425,16 @@ Studio never converts a failed gate into an automatic approval.
 
 ## Implementation order
 
+Implementation status on 2026-08-01:
+
+- Steps 1 and 2 are complete for the private Studio flow: the contracts are
+  reconciled, and explicit neutral-master accept/reject/regenerate decisions
+  persist and restore without downstream auto-generation.
+- Step 3 is partial: the immutable master and stronger authoring prompt are
+  implemented, while measured framing/face/hand diagnostics remain pending.
+- The next active gate is the canonical transform and registered technical guide
+  record before any semantic-provider integration.
+
 1. Freeze the reference-first contracts, canonical/inverse transform,
    character-relative orientation, immutable revision graph, and truthful Open
    Avatar/Cubism labels.

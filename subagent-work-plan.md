@@ -367,6 +367,12 @@ Acceptance:
 
 Owner role: authoring UX agent
 
+Progress on 2026-08-01: the explicit persisted front-reference
+accept/reject/regenerate gate is complete, including immutable acceptance,
+rejection notes, candidate history, reload/resume, and downstream blocking.
+Authoring-constraint diagnostics, technical-pack status, and per-part review
+remain pending.
+
 Write scope: `apps/studio/` and its tests
 
 Deliverables:

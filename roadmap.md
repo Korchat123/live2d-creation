@@ -172,8 +172,15 @@ concealed artwork, reconstruct the reference from completed layers, and then
 rig or pack derived outputs. See
 `docs/authoring/reference-first-material-separation-plan.md`.
 
-The immediate implementation order is front-reference review and persistence;
-an immutable neutral-master/reference-pack record; a separate registered
+Front-reference review and persistence are now implemented. Generation stops at
+the visible neutral-master gate; accept/reject/regenerate decisions, rejection
+notes, candidate history, provenance, immutable acceptance, and explicit
+reload/resume survive in IndexedDB without restarting ComfyUI or downstream
+work. The authoring pose also keeps props beside rather than across the central
+silhouette.
+
+The immediate implementation order is now the canonical/inverse canvas
+transform and immutable invalidation graph; then the registered non-exported
 false-color, edge, pose, and landmark guide; then the five-group semantic-mask
 and visible-reconstruction benchmark. Material-specific hair/lace,
 black-on-black, shadow, transparency, and hand/prop gates run before per-part

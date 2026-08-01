@@ -17,6 +17,7 @@ import {
   type AcceptedConceptDetail,
 } from "./generation-provider.js";
 import { createPartGenerationJobs } from "./part-generation.js";
+import { mountProjectReview } from "./project-review.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -29,7 +30,7 @@ root.innerHTML = `
   </header>
   <main>
     <section id="builder" class="page active" aria-labelledby="builder-title">
-      <div class="hero"><div><p class="eyebrow">Local-first avatar authoring</p><h1 id="builder-title">Prompt once. Get a ready-to-use 2D avatar.</h1><p>Describe the character. Studio generates the design, transparent parts, motion states, and Open Avatar project automatically on this computer.</p></div><img src="${portraitUrl}" alt="Example source portrait for avatar authoring"></div>
+      <div class="hero"><div><p class="eyebrow">Local-first avatar authoring</p><h1 id="builder-title">Prompt, review, then build your 2D avatar.</h1><p>Describe the character, approve one coherent neutral master, then review its parts and motion on this computer.</p></div><img src="${portraitUrl}" alt="Example source portrait for avatar authoring"></div>
       <section id="prompt-workspace" class="prompt-workspace" aria-labelledby="prompt-workspace-title">
         <div>
           <p class="eyebrow">Default workflow</p>
@@ -38,16 +39,18 @@ root.innerHTML = `
         </div>
         <div class="prompt-controls">
           <label>Character description<textarea id="character-prompt" rows="5" maxlength="16384" placeholder="Original anime librarian with shoulder-length blue hair, round glasses, navy jacket, warm expression, neutral front pose"></textarea></label>
-          <label hidden>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
-          <details class="prompt-plan" hidden><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
-          <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate Open Avatar</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
+          <label>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
+          <details class="prompt-plan"><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
+          <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate reference</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
           <p id="generation-status" class="note" aria-live="polite">Checking the local generation provider…</p>
         </div>
         <figure class="concept-candidate">
-          <div class="concept-image-stage"><img id="concept-output" alt="Generated character concept candidate" hidden><div id="landmark-overlay" aria-hidden="true"></div></div>
+          <div class="concept-image-stage"><img id="concept-output" tabindex="-1" alt="Generated neutral-master candidate" hidden><div id="landmark-overlay" aria-hidden="true"></div></div>
           <figcaption><span id="concept-provenance">No candidate generated.</span></figcaption>
-          <div id="concept-variants" class="concept-variants" aria-label="Generated concept candidates" hidden></div>
-          <button id="accept-concept" type="button" disabled hidden>Accept design</button>
+          <div id="concept-variants" class="concept-variants" aria-label="Generated neutral-master candidates"></div>
+          <label>Optional rejection note<input id="reference-rejection-reason" maxlength="500" placeholder="Example: shoes are cropped or the cane covers the torso"></label>
+          <div class="buttons"><button id="accept-concept" type="button" disabled>Accept neutral master</button><button id="reject-concept" type="button" class="quiet" disabled>Reject selected reference</button></div>
+          <p class="note">No parts, hidden anatomy, expressions, rigging, or export begin until the selected neutral master is accepted and saved.</p>
         </figure>
       </section>
       <section id="project-review" class="project-review" aria-labelledby="project-review-title" hidden>
@@ -225,7 +228,7 @@ if (
   throw new Error("Missing automatic avatar controls");
 
 document.querySelector<HTMLElement>("#builder-title")!.textContent =
-  "Prompt once. Get a ready-to-use 2D avatar.";
+  "Prompt, review, then build your 2D avatar.";
 const heroDescription =
   document.querySelector<HTMLElement>(".hero p:last-child");
 if (heroDescription)
@@ -239,12 +242,8 @@ const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
 if (workspaceDescription)
   workspaceDescription.textContent =
     "One coherent reference keeps the face, direction, outfit, and lighting consistent. Visible pixels are separated and only concealed motion artwork is generated.";
-generate.textContent = "Generate Open Avatar";
+generate.textContent = "Generate reference";
 check.hidden = true;
-accept.hidden = true;
-variants.hidden = true;
-plan.hidden = true;
-checkpoint.hidden = true;
 projectReview.hidden = true;
 lab.hidden = true;
 
@@ -254,7 +253,7 @@ automaticPanel.className = "automatic-avatar";
 automaticPanel.innerHTML = `
   <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
   <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
-    <li data-stage="concept">Generate and lock one coherent character reference</li>
+    <li data-stage="concept">Generate and approve one coherent neutral master</li>
     <li data-stage="parts">Separate visible parts and complete hidden artwork</li>
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
@@ -293,6 +292,13 @@ const resetStages = () =>
 
 let activeProject: ExportedProject | undefined;
 const labController = mountLayerLab(lab, portraitUrl);
+const conceptOutput =
+  document.querySelector<HTMLImageElement>("#concept-output");
+if (!conceptOutput) throw new Error("Missing neutral-master preview");
+const projectReviewController = mountProjectReview(
+  projectReview,
+  conceptOutput,
+);
 const internalAnnouncement = document.querySelector<HTMLElement>("#announce");
 if (internalAnnouncement)
   new MutationObserver(() => {
@@ -323,6 +329,41 @@ const download = (): void => {
   link.click();
   URL.revokeObjectURL(url);
 };
+
+promptWorkspace.addEventListener("avatarreferencereviewrestored", (event) => {
+  const review = (
+    event as CustomEvent<Readonly<{ acceptedId?: string; updatedAt: number }>>
+  ).detail;
+  if (!review.acceptedId) return;
+  resetStages();
+  stage("concept", "complete");
+  automaticState.textContent = "Reference review saved";
+  automaticStatus.textContent = `Accepted neutral master restored from ${new Date(review.updatedAt).toLocaleString()}. Resume it to continue; no ComfyUI work restarted automatically.`;
+});
+
+promptWorkspace.addEventListener("avatarconceptaccepted", (event) => {
+  const concept = (event as CustomEvent<AcceptedConceptDetail>).detail;
+  void (async () => {
+    resetStages();
+    stage("concept", "complete");
+    downloadProject.disabled = true;
+    openAvatar.disabled = true;
+    automaticState.textContent = "Reference accepted";
+    automaticStatus.textContent =
+      "Neutral master saved. Review its character bible, landmarks, orientation, and part manifest. Parts remain blocked.";
+    const restored = await projectReviewController.restore(
+      concept.provenance.artifactSha256,
+    );
+    if (!restored) projectReviewController.acceptConcept(concept);
+    projectReview.scrollIntoView({ behavior: "smooth", block: "start" });
+  })().catch((error: unknown) => {
+    automaticState.textContent = "Review save failed";
+    automaticStatus.textContent =
+      error instanceof Error
+        ? error.message
+        : "Could not open the character-bible review.";
+  });
+});
 
 promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
   const concept = (event as CustomEvent<AcceptedConceptDetail>).detail;
@@ -428,5 +469,4 @@ mountPromptWorkspace(
     undefined,
     approvedControlNets,
   ),
-  { automaticBuild: "reference-first" },
 );
