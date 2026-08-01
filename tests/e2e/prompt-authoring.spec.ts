@@ -137,7 +137,7 @@ test("presents gated reference review and restores a generated project", async (
     "Generate and approve one coherent neutral master",
   );
   await expect(page.locator('[data-stage="parts"]')).toHaveText(
-    "Separate visible parts and complete hidden artwork",
+    "Build base body, face, hair, clothing, and accessories",
   );
   await expect(page.locator("#project-review")).toHaveCount(0);
   await expect(page.locator("#layer-lab")).toBeHidden();

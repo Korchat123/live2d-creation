@@ -17,6 +17,24 @@ const POLL_LIMIT = 180;
 export const conceptTemplateId = "open-avatar-concept-v1";
 export const partsFirstTemplateId = "open-avatar-parts-first-v1";
 
+export const avatarStyleIds = ["vtuber", "anime", "soft-anime"] as const;
+export type AvatarStyleId = (typeof avatarStyleIds)[number];
+
+const avatarStylePrompts: Readonly<Record<AvatarStyleId, string>> = {
+  vtuber:
+    "professional VTuber model art, crisp variable-width anime line art, clean flat cel shading, high color separation, rig-friendly readable shapes",
+  anime:
+    "Japanese TV anime character design, precise clean line art, two-tone cel shading, balanced natural anime colors, readable silhouette",
+  "soft-anime":
+    "soft modern anime illustration, delicate clean line art, restrained pastel palette, soft cel shading, clearly separated material boundaries",
+};
+
+export const describeAvatarStyle = (
+  description: string,
+  style: AvatarStyleId,
+): string =>
+  `${normalizePrompt(description)}, art direction: ${avatarStylePrompts[style]}`;
+
 export const conceptNodeAllowlist = [
   "CheckpointLoaderSimple",
   "CLIPTextEncode",
@@ -45,11 +63,13 @@ export type ConceptRequest = {
   readonly prompt: string;
   readonly checkpoint: string;
   readonly seed: number;
+  readonly style?: AvatarStyleId;
 };
 
 export type ConceptPromptPlan = {
   readonly profile: "animagine-xl-4" | "generic";
   readonly identity: string;
+  readonly style: string;
   readonly appearance: string;
   readonly clothing: string;
   readonly palette: string;
@@ -190,8 +210,15 @@ export const validateConceptRequest = (
 ): void => {
   const prompt = request.prompt.trim();
   if (!prompt) throw new Error("Describe the character before generating.");
-  if (utf8Size(prompt) > MAX_PROMPT_BYTES)
-    throw new Error("The character prompt is larger than 16 KiB.");
+  if (request.style !== undefined && !avatarStyleIds.includes(request.style))
+    throw new Error("Select a supported avatar art style.");
+  if (
+    utf8Size(describeAvatarStyle(prompt, request.style ?? "vtuber")) >
+    MAX_PROMPT_BYTES
+  )
+    throw new Error(
+      "The character prompt and art style are larger than 16 KiB.",
+    );
   if (!approvedCheckpoints.has(request.checkpoint))
     throw new Error("Select an approved local checkpoint.");
   if (
@@ -214,25 +241,28 @@ const subjectTag = (description: string): "1girl" | "1boy" | "1other" => {
 export const createConceptPromptPlan = (
   description: string,
   checkpoint: string,
+  style: AvatarStyleId = "vtuber",
 ): ConceptPromptPlan => {
   const identity = normalizePrompt(description);
   const animagine = /animagine-xl-4\.0/iu.test(checkpoint);
   const appearance = animagine
-    ? `${subjectTag(identity)}, original character, solo, anime style, clean line art`
-    : "original 2D avatar character, solo, clean silhouette, consistent lighting";
+    ? `${subjectTag(identity)}, adult original character, solo, ${avatarStylePrompts[style]}`
+    : `adult original 2D avatar character, solo, ${avatarStylePrompts[style]}, clean silhouette`;
   const clothing = "clothing and accessories exactly as described";
-  const palette = "consistent color palette";
+  const palette =
+    "consistent color palette, natural consistent skin tone, neutral white lighting, no colored light cast on skin";
   const pose =
     "looking at viewer, orthographic-looking front view, full body, standing, zoomed out, centered composition, neutral pose, level eyes, level shoulders, level hips, face fully visible and evenly lit, neutral closed mouth, both eyes open and visible, unobscured facial features, hair and headwear do not cover the eyes or face, entire character silhouette fully inside frame, character occupies about 75 percent of canvas height, complete head, complete hair, 5 to 10 percent safe margin around the silhouette, generous margin above hair, proportionate wearable headwear, arms slightly separated from the torso, legs slightly separated, held prop positioned beside one side with the hand silhouette visible, prop does not cross the face, hair, or central torso, both hands visible when present, both legs fully visible, complete shoes, generous margin below shoes, no body part touching the image edge, visible neck, visible shoulders, even lighting, isolated on a blank pure white background, no scenery";
   const quality = animagine
     ? "masterpiece, high score, great score, absurdres"
     : "high quality";
   const negative = animagine
-    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, crossed limbs, hidden hand, hidden face, obscured face, shadowed face, black face, hair covering eyes, hat covering face, oversized hat, giant hat, floating prop, prop crossing face, prop crossing torso, dramatic perspective, tilted head, wind-blown hair, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
-    : "cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic";
+    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, crossed limbs, hidden hand, hidden face, obscured face, shadowed face, black face, unnatural skin color, gray skin, orange skin, blue skin, green skin, color cast, multicolored skin, hair covering eyes, hat covering face, oversized hat, giant hat, floating prop, prop crossing face, prop crossing torso, dramatic perspective, tilted head, wind-blown hair, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
+    : "cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic, unnatural skin color, gray skin, orange skin, blue skin, green skin, color cast, multicolored skin";
   return {
     profile: animagine ? "animagine-xl-4" : "generic",
     identity,
+    style: avatarStylePrompts[style],
     appearance,
     clothing,
     palette,
@@ -249,7 +279,11 @@ export const createConceptWorkflow = (
   request: ConceptRequest,
   control?: Readonly<{ controlNet: string; image: string }>,
 ): Readonly<Record<string, ComfyNode>> => {
-  const plan = createConceptPromptPlan(request.prompt, request.checkpoint);
+  const plan = createConceptPromptPlan(
+    request.prompt,
+    request.checkpoint,
+    request.style,
+  );
   const animagine = plan.profile === "animagine-xl-4";
   const workflow: Record<string, ComfyNode> = {
     "1": {
@@ -749,6 +783,7 @@ export const mountPromptWorkspace = (
   }> = {},
 ): void => {
   const prompt = host.querySelector<HTMLTextAreaElement>("#character-prompt");
+  const style = host.querySelector<HTMLSelectElement>("#avatar-style");
   const checkpoint = host.querySelector<HTMLSelectElement>(
     "#concept-checkpoint",
   );
@@ -767,6 +802,7 @@ export const mountPromptWorkspace = (
   const promptPlan = host.querySelector<HTMLElement>("#concept-prompt-plan");
   if (
     !prompt ||
+    !style ||
     !checkpoint ||
     !check ||
     !generate ||
@@ -805,10 +841,15 @@ export const mountPromptWorkspace = (
   };
 
   const renderPromptPlan = (): void => {
-    const plan = createConceptPromptPlan(prompt.value, checkpoint.value);
+    const plan = createConceptPromptPlan(
+      prompt.value,
+      checkpoint.value,
+      style.value as AvatarStyleId,
+    );
     const fields: ReadonlyArray<readonly [string, string]> = [
       ["Profile", plan.profile],
       ["Identity", plan.identity || "Enter a character description."],
+      ["Art style", plan.style],
       ["Appearance", plan.appearance],
       ["Clothing", plan.clothing],
       ["Palette", plan.palette],
@@ -932,6 +973,7 @@ export const mountPromptWorkspace = (
 
   check.addEventListener("click", () => void setHealth());
   prompt.addEventListener("input", renderPromptPlan);
+  style.addEventListener("change", renderPromptPlan);
   checkpoint.addEventListener("change", () => {
     generate.disabled =
       !providerReady || !checkpoint.value || Boolean(reviewState.acceptedId);
@@ -965,6 +1007,7 @@ export const mountPromptWorkspace = (
         status.textContent =
           "Neutral master accepted. Studio is building the avatar automatically.";
         prompt.disabled = true;
+        style.disabled = true;
         checkpoint.disabled = true;
         check.disabled = true;
         generate.disabled = true;
@@ -1015,9 +1058,15 @@ export const mountPromptWorkspace = (
       controller = new AbortController();
       generate.disabled = true;
       check.disabled = true;
+      style.disabled = true;
       cancel.disabled = false;
       try {
         const submittedPrompt = prompt.value.trim();
+        const selectedStyle = style.value as AvatarStyleId;
+        const persistedPrompt = describeAvatarStyle(
+          submittedPrompt,
+          selectedStyle,
+        );
         const seed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
         if (options.automaticBuild === "parts-first") {
           validateConceptRequest(
@@ -1025,6 +1074,7 @@ export const mountPromptWorkspace = (
               prompt: submittedPrompt,
               checkpoint: checkpoint.value,
               seed,
+              style: selectedStyle,
             },
             new Set(providerCheckpoints),
           );
@@ -1033,7 +1083,7 @@ export const mountPromptWorkspace = (
             image: await blobAsDataUrl(blank),
             width: 896,
             height: 1152,
-            prompt: submittedPrompt,
+            prompt: persistedPrompt,
             provenance: {
               provider: "comfyui",
               templateId: partsFirstTemplateId,
@@ -1060,6 +1110,7 @@ export const mountPromptWorkspace = (
             prompt: submittedPrompt,
             checkpoint: checkpoint.value,
             seed,
+            style: selectedStyle,
           },
           {
             signal: controller.signal,
@@ -1076,7 +1127,7 @@ export const mountPromptWorkspace = (
           image: await blobAsDataUrl(candidate.image),
           width: decoded.width,
           height: decoded.height,
-          prompt: submittedPrompt,
+          prompt: persistedPrompt,
           provenance: candidate.provenance,
         };
         const previous = reviewState;
@@ -1115,6 +1166,7 @@ export const mountPromptWorkspace = (
           Boolean(reviewState.acceptedId) ||
           host.dataset.pipelineBusy === "true";
         check.disabled = false;
+        style.disabled = Boolean(reviewState.acceptedId);
         cancel.disabled = true;
       }
     })();
@@ -1143,6 +1195,7 @@ export const mountPromptWorkspace = (
       renderVariants();
       if (restored.acceptedId) {
         prompt.disabled = true;
+        style.disabled = true;
         checkpoint.disabled = true;
         generate.disabled = true;
         generate.textContent = "Reference accepted";

@@ -83,7 +83,7 @@ not yet resumable.
 ## Verification
 
 - Studio typecheck passes.
-- All 120 repository unit tests pass, including the four-test reference-review
+- All 121 repository unit tests pass, including the four-test reference-review
   state suite.
 - All 18 focused Chromium, Firefox, and WebKit acceptance tests pass reference
   persistence, explicit automatic-build resume, removal of the Phase P2 UI,

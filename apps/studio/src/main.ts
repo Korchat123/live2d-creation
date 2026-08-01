@@ -38,6 +38,7 @@ root.innerHTML = `
         </div>
         <div class="prompt-controls">
           <label>Character description<textarea id="character-prompt" rows="5" maxlength="16384" placeholder="Original anime librarian with shoulder-length blue hair, round glasses, navy jacket, warm expression, neutral front pose"></textarea></label>
+          <label>Art style<select id="avatar-style"><option value="vtuber">VTuber model — crisp and rig-friendly</option><option value="anime">Anime cel — TV animation style</option><option value="soft-anime">Soft anime — pastel and lightly shaded</option></select></label>
           <label>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
           <details class="prompt-plan"><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
           <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate reference</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
@@ -235,7 +236,7 @@ automaticPanel.innerHTML = `
   <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
   <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
     <li data-stage="concept">Generate and approve one coherent neutral master</li>
-    <li data-stage="parts">Separate visible parts and complete hidden artwork</li>
+    <li data-stage="parts">Build base body, face, hair, clothing, and accessories</li>
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
@@ -337,7 +338,7 @@ const buildAcceptedAvatar = async (
     });
     authoringProject = updateCharacterBible(authoringProject, {
       displayName: "Generated avatar",
-      style: "clean Japanese anime line art with consistent cel shading",
+      style: concept.prompt,
       palette: concept.prompt,
       outfit: concept.prompt,
       identityNotes: concept.prompt,

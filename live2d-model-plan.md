@@ -59,13 +59,15 @@ image or Open Avatar bundle as a Cubism model.
 
 ### Create a model from a prompt
 
-1. Enter character, style, outfit, palette, and motion requirements.
+1. Enter character, outfit, palette, and motion requirements, then choose a
+   bounded VTuber or anime art-style preset.
 2. Choose local ComfyUI or another approved generation provider.
 3. Generate several neutral full-character concepts.
 4. Accept one concept. Studio derives the private identity lock, landmarks,
    orientation, and prompt-aware part inventory automatically.
-5. Generate each part on the same full canvas with transparency, concealed
-   overlap, stable landmarks, and reference conditioning.
+5. Generate a safe opaque adult base-body foundation, then face, hair,
+   clothing, and accessories on the same full canvas with transparency,
+   concealed overlap, stable landmarks, and reference conditioning.
 6. Run blocking reconstruction, concealed-art, and motion validators; retry or
    reduce unsupported motion automatically when a gate fails.
 7. Save the editable project and open Motion Lab for the user's final test.

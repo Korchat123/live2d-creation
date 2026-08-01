@@ -78,11 +78,19 @@ describe("purpose-generated part orchestration", () => {
         seed: expect.any(Number),
         canvas: { width: 2048, height: 2048 },
         dependencies: ["neck"],
+        stage: "base-body",
       }),
     );
     expect(face?.prompt).toContain("Mira");
     expect(face?.prompt).toContain("purpose-generated face base");
     expect(face?.prompt).toContain("transparent background");
+    expect(face?.negative).toContain("underwear");
+    const torso = jobs.find(({ partId }) => partId === "torso");
+    const outfit = jobs.find(({ partId }) => partId === "outfit front");
+    expect(torso?.prompt).toContain("opaque full-coverage fitted base suit");
+    expect(outfit).toMatchObject({ stage: "clothing" });
+    expect(outfit?.prompt).toContain("do not repaint skin, face, or hair");
+    expect(jobs.indexOf(torso!)).toBeLessThan(jobs.indexOf(outfit!));
   });
 
   it("offers only jobs whose accepted dependencies are complete", () => {
@@ -90,7 +98,7 @@ describe("purpose-generated part orchestration", () => {
     let state = emptyPartRevisionState();
     expect(
       nextGeneratableJobs(jobs, state).map(({ partId }) => partId),
-    ).toEqual(["back hair", "torso"]);
+    ).toEqual(["torso", "back hair"]);
     state = addPartCandidate(state, artifact("torso"));
     state = acceptPartCandidate(state, "torso", "torso-1");
     expect(
@@ -112,7 +120,7 @@ describe("purpose-generated part orchestration", () => {
     expect(state).toEqual(emptyPartRevisionState());
 
     const wrongProvider: PartGenerationProvider = {
-      generatePart: async () => artifact("torso"),
+      generatePart: async () => artifact("back hair"),
     };
     await expect(
       generatePartVariant(

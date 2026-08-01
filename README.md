@@ -40,12 +40,14 @@ Useful individual commands are `pnpm format:check`, `pnpm lint`,
 ## Local concept-generation spike
 
 The default Studio experience is one click after reference approval: enter a
-character prompt, generate a coherent neutral master, and accept it. Studio
+character prompt, choose VTuber, Anime Cel, or Soft Anime style, generate a
+coherent neutral master, and accept it. Studio
 then derives its private specification, extracts and repairs transparent motion
-parts through local ComfyUI, creates blink and mouth states, validates and saves
-the result, and opens Motion Lab. Generated project files can be uploaded from
-the same screen. Portrait Layer Lab controls are exception-only recovery tools
-and are not part of the default user flow.
+parts through local ComfyUI in safe base-body, face, hair, clothing, and
+accessory stages, creates blink and mouth states, validates and saves the
+result, and opens Motion Lab. Generated project files can be uploaded from the
+same screen. Portrait Layer Lab controls are exception-only recovery tools and
+are not part of the default user flow.
 
 Phase P1 can connect the Studio development server to a local ComfyUI instance
 at `127.0.0.1:8188`. Checkpoint discovery never authorizes a model

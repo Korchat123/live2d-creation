@@ -6,6 +6,7 @@ import {
   conceptTemplateId,
   createConceptPromptPlan,
   createConceptWorkflow,
+  describeAvatarStyle,
   defaultApprovedCheckpoint,
   validateConceptRequest,
   validateImageArtifact,
@@ -77,7 +78,9 @@ describe("prompt generation policy", () => {
       identity: "blue-haired woman with a navy jacket",
       quality: "masterpiece, high score, great score, absurdres",
     });
-    expect(plan.positive).toContain("1girl, original character, solo");
+    expect(plan.positive).toContain("1girl, adult original character, solo");
+    expect(plan.style).toContain("VTuber model art");
+    expect(plan.palette).toContain("natural consistent skin tone");
     expect(plan.pose).toContain("margin above hair");
     expect(plan.pose).toContain("complete shoes");
     expect(plan.pose).toContain("75 percent");
@@ -91,6 +94,7 @@ describe("prompt generation policy", () => {
     expect(plan.negative).toContain("hat covering face");
     expect(plan.negative).toContain("prop crossing torso");
     expect(plan.negative).toContain("multiple people");
+    expect(plan.negative).toContain("unnatural skin color");
     expect(plan.negative).toContain("close-up");
     const workflow = createConceptWorkflow(request);
     expect(workflow["2"]?.inputs.text).toBe(plan.positive);
@@ -129,6 +133,19 @@ describe("prompt generation policy", () => {
     });
   });
 
+  it("applies bounded anime style presets and persists their art direction", () => {
+    const plan = createConceptPromptPlan(
+      "adult librarian in a navy jacket",
+      "animagine-xl-4.0-opt.safetensors",
+      "anime",
+    );
+    expect(plan.style).toContain("Japanese TV anime character design");
+    expect(plan.positive).toContain("two-tone cel shading");
+    expect(describeAvatarStyle(" adult librarian ", "soft-anime")).toContain(
+      "soft modern anime illustration",
+    );
+  });
+
   it("rejects blank, excessive, unapproved, and invalid-seed requests", () => {
     const approved = new Set(["approved.safetensors"]);
     expect(() =>
@@ -159,6 +176,17 @@ describe("prompt generation policy", () => {
         approved,
       ),
     ).toThrow("32-bit");
+    expect(() =>
+      validateConceptRequest(
+        {
+          prompt: "avatar",
+          checkpoint: "approved.safetensors",
+          seed: 1,
+          style: "oil-paint" as never,
+        },
+        approved,
+      ),
+    ).toThrow("supported avatar art style");
   });
 
   it("validates signature, MIME, dimensions, bytes, and alpha", async () => {

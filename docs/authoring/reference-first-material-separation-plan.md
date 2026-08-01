@@ -66,6 +66,24 @@ must include a complete face base, rear/front/side hair, independent eye and
 mouth groups, neck, torso, clothing groups, limbs, footwear, headwear, and held
 props when present.
 
+#### Safe base-body and wardrobe staging
+
+After reference acceptance, generate and validate parts in this internal order:
+
+1. adult body foundation covered by an opaque, full-coverage fitted base suit;
+2. face and expression components;
+3. rear, front, and side hair;
+4. clothing, sleeves, skirts, corsets, stockings, and footwear; and
+5. headwear, jewelry, held props, and other accessories.
+
+The base foundation is not nude or underwear art and does not invent detailed
+hidden anatomy. It provides only the neutral clothed envelope, joints, anchors,
+and minimum concealed coverage required for supported motion. Wardrobe jobs are
+conditioned on the accepted dressed reference and registered base-body anchors,
+but are forbidden from repainting protected skin, face, or hair pixels. Every
+stage must preserve the canonical pose and pass reconstruction against the
+accepted dressed reference.
+
 #### Authoring reference pack
 
 The accepted reference is an immutable neutral master. Studio derives a
@@ -85,8 +103,10 @@ to redraw the character:
 - `reference-manifest`: hashes, transforms, masks, prompts, seeds, model and
   workflow versions, rights, approvals, and dependency edges for every item.
 
-The prompt planner shows the authoring constraints separately from the user's
-creative prompt. It may request subtle contrasting seams or piping only when
+The prompt planner offers bounded VTuber, anime-cel, and soft-anime style
+presets and shows the chosen art direction separately from the user's creative
+prompt. Every preset requires neutral white lighting and consistent natural
+skin color. It may request subtle contrasting seams or piping only when
 they are an accepted part of the design. It must not add colored separator
 lines to final art and later erase them. Generated technical guides are
 candidates, not truth: if their edges cannot be registered to the neutral

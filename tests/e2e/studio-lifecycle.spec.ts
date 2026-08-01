@@ -13,6 +13,7 @@ test("renders the Builder without the retired Phase P2 controls", async ({
   await expect(page.locator("#automatic-progress li")).toHaveCount(4);
   await expect(page.locator("#layer-lab")).toBeHidden();
   await expect(page.locator("#project-review")).toHaveCount(0);
+  await expect(page.getByLabel("Art style")).toHaveValue("vtuber");
 });
 
 test("keeps the prompt workspace usable when ComfyUI is not configured", async ({
@@ -25,6 +26,10 @@ test("keeps the prompt workspace usable when ComfyUI is not configured", async (
   await page.locator("#character-prompt").fill("blue-haired librarian");
   await expect(page.locator("#concept-prompt-plan")).toContainText(
     "blue-haired librarian",
+  );
+  await page.getByLabel("Art style").selectOption("anime");
+  await expect(page.locator("#concept-prompt-plan")).toContainText(
+    "Japanese TV anime character design",
   );
   await expect(page.locator("#generate-concept")).toBeDisabled();
 });

@@ -13,9 +13,17 @@ import {
 
 export const partGenerationTemplateId = "open-avatar-purpose-part-v1";
 
+export type PartGenerationStage =
+  | "base-body"
+  | "face"
+  | "hair"
+  | "clothing"
+  | "accessory";
+
 export type PartGenerationJob = Readonly<{
   templateId: typeof partGenerationTemplateId;
   partId: PartId;
+  stage: PartGenerationStage;
   dependencies: readonly PartId[];
   sourceConceptSha256: string;
   checkpoint: string;
@@ -36,8 +44,9 @@ export interface PartGenerationProvider {
 
 const partPurpose: Readonly<Record<PartId, string>> = {
   "back hair": "complete rear hair mass including scalp beneath front hair",
-  torso: "complete torso beneath neck, outfit, and arm boundaries",
-  neck: "complete neck continuing beneath head and clothing",
+  torso:
+    "adult neutral anatomy foundation covered by an opaque full-coverage fitted base suit, complete torso beneath neck, outfit, and arm boundaries",
+  neck: "complete neck continuing beneath head and clothing, natural skin tone under neutral white light",
   "face base":
     "complete face and ears without eyes, brows, mouth, or front hair",
   "left eye white": "complete left sclera extending beneath both eyelids",
@@ -67,17 +76,68 @@ const partPurpose: Readonly<Record<PartId, string>> = {
   "right sleeve": "complete right sleeve and cuff with shoulder overlap",
   corset: "separate fitted corset or waistcoat front with concealed edges",
   "skirt layers": "complete layered skirt and ruffles beneath the bodice",
-  "left leg": "complete left leg or stocking from hip to ankle",
-  "right leg": "complete right leg or stocking from hip to ankle",
+  "left leg":
+    "complete adult left leg from hip to ankle covered by the opaque neutral base suit, before stockings or clothing",
+  "right leg":
+    "complete adult right leg from hip to ankle covered by the opaque neutral base suit, before stockings or clothing",
   "left footwear": "separate complete left shoe or boot with ankle overlap",
   "right footwear": "separate complete right shoe or boot with ankle overlap",
   headwear: "complete separate hat or headpiece without hair or face",
   "held prop": "complete separate held prop with clean hand attachment area",
   accessory: "complete separate accessory with attachment area concealed",
   "left arm and hand":
-    "complete left arm and hand extending beneath torso clothing",
+    "complete adult left arm and hand extending beneath torso clothing, with upper arm covered by the opaque neutral base suit",
   "right arm and hand":
-    "complete right arm and hand extending beneath torso clothing",
+    "complete adult right arm and hand extending beneath torso clothing, with upper arm covered by the opaque neutral base suit",
+};
+
+const partStage: Readonly<Record<PartId, PartGenerationStage>> = {
+  torso: "base-body",
+  neck: "base-body",
+  "face base": "base-body",
+  "left leg": "base-body",
+  "right leg": "base-body",
+  "left arm and hand": "base-body",
+  "right arm and hand": "base-body",
+  "left eye white": "face",
+  "right eye white": "face",
+  "left pupil iris": "face",
+  "right pupil iris": "face",
+  "left eye highlight": "face",
+  "right eye highlight": "face",
+  "left upper eyelid": "face",
+  "right upper eyelid": "face",
+  "left lower eyelid": "face",
+  "right lower eyelid": "face",
+  "left eyebrow": "face",
+  "right eyebrow": "face",
+  "mouth interior": "face",
+  tongue: "face",
+  teeth: "face",
+  "mouth closed lips": "face",
+  "back hair": "hair",
+  "front hair": "hair",
+  "left side hair": "hair",
+  "right side hair": "hair",
+  "outfit front": "clothing",
+  "coat tails": "clothing",
+  "left sleeve": "clothing",
+  "right sleeve": "clothing",
+  corset: "clothing",
+  "skirt layers": "clothing",
+  "left footwear": "clothing",
+  "right footwear": "clothing",
+  headwear: "accessory",
+  "held prop": "accessory",
+  accessory: "accessory",
+};
+
+const stageOrder: Readonly<Record<PartGenerationStage, number>> = {
+  "base-body": 0,
+  face: 1,
+  hair: 2,
+  clothing: 3,
+  accessory: 4,
 };
 
 const fallbackAnchors: Readonly<Record<PartId, NormalizedPoint>> = {
@@ -153,9 +213,13 @@ export const createPartGenerationJobs = (
 ): readonly PartGenerationJob[] => {
   const sourceConceptSha256 = project.acceptedConcept.provenance.artifactSha256;
   const identity = biblePrompt(project.characterBible);
-  return dependencyOrderedParts(project.partPlan).map((partId, index) => ({
+  const orderedParts = [...dependencyOrderedParts(project.partPlan)].sort(
+    (left, right) => stageOrder[partStage[left]] - stageOrder[partStage[right]],
+  );
+  return orderedParts.map((partId, index) => ({
     templateId: partGenerationTemplateId,
     partId,
+    stage: partStage[partId],
     dependencies:
       project.partPlan.find((entry) => entry.id === partId)?.dependencies ?? [],
     sourceConceptSha256,
@@ -163,9 +227,9 @@ export const createPartGenerationJobs = (
     seed: (project.acceptedConcept.provenance.seed + index + 1) >>> 0,
     canvas: { width: 2048, height: 2048 },
     anchor: landmarkAnchor(project, partId),
-    prompt: `same approved character, ${identity}, purpose-generated ${partId}, ${partPurpose[partId]}, full-canvas aligned RGBA layer, transparent background, clean anime line art`,
+    prompt: `same approved adult character, ${identity}, ${partStage[partId]} generation stage, purpose-generated ${partId}, ${partPurpose[partId]}, preserve the registered pose and body anchors, full-canvas aligned RGBA layer, transparent background, clean anime line art${partStage[partId] === "clothing" || partStage[partId] === "accessory" ? ", separate wearable layer fitted over the approved base body, do not repaint skin, face, or hair" : ""}`,
     negative:
-      "different character, identity drift, crop, opaque background, duplicate part, flattened character, watermark, text, signature, unrelated object",
+      "different character, identity drift, crop, opaque background, duplicate part, flattened character, watermark, text, signature, unrelated object, nudity, underwear, lingerie, exposed intimate anatomy, child body, colored skin cast",
     minimumConcealedOverlapPixels: 24,
   }));
 };

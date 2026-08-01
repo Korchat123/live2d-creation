@@ -10,14 +10,17 @@ Cubism-ready layered PSD is the optional handoff to Live2D Cubism Editor.
 
 The default is a one-click-after-approval reference-first workflow:
 
-1. enter one character prompt and generate coherent front-reference variants;
+1. enter one character prompt, choose a VTuber or anime art-style preset, and
+   generate coherent front-reference variants;
 2. accept, reject, or regenerate the front reference;
 3. after acceptance, automatically create a registered non-exported authoring
    pack from the neutral master: false-color ownership, edges, pose, landmarks,
    and local masked expression candidates;
 4. automatically derive the prompt-aware manifest, hierarchy,
    character-relative left/right, and conservative motion envelope;
-5. generate and validate semantic layers, visible reconstruction, concealed
+5. generate a safe adult base-body foundation in an opaque fitted base suit,
+   then facial identity, hair, clothing, and accessories as separate registered
+   stages; validate semantic layers, visible reconstruction, concealed
    overlaps, expressions, and rigging, retrying or reducing unsupported motion
    when a blocking gate fails;
 6. save the project and automatically open Motion Lab;
@@ -51,6 +54,12 @@ canes, and other accessories are added to the private manifest before their
 jobs run. Each artifact keeps the canonical canvas coordinates, transparent
 background, stable ID, draw order, anchor, concealed overlap, and provenance.
 
+The internal body foundation is never nude or underwear artwork. It uses an
+explicitly adult, opaque, full-coverage fitted base suit and neutral lighting.
+Clothing and accessories are generated afterward against frozen body anchors
+and may not repaint skin, face, or hair. The accepted dressed reference remains
+the visual identity and reconstruction target.
+
 Reject an output when it contains a painted checkerboard, label text, alignment
 guides in the art, a missing face base, combined eye components, duplicated
 assembled clothing, unrelated coordinates, opaque background, or a flattened
@@ -66,6 +75,7 @@ are prohibited.
 | Poor SD 1.5 character quality                                            | Benchmark Animagine XL 4.0 through a reviewed ComfyUI template. Translate natural-language descriptions into the model's required tag structure. Keep SD 1.5 only as technical fallback evidence.                                                                        | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
 | RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears. | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
 | Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
+| Body, hair, and clothing colors bleed together                           | Build in registered stages: opaque adult base suit and anatomy envelope, facial identity, hair, clothing, then accessories. Freeze anchors and protected pixels between stages; garment jobs cannot repaint skin, face, or hair.                                         | The final composite matches the accepted dressed reference while each garment/accessory remains an independent aligned layer and skin tone stays consistent.          |
 | Identity changes between parts                                           | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                   |
 | Multiple characters or incorrect poses                                   | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                    | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                            |
 | Diffusion does not reliably produce transparency                         | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                         | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                           |
@@ -181,6 +191,13 @@ IndexedDB. Accept or explicit reload/resume creates the private character lock
 and starts downstream work automatically. A successful build saves the project
 and opens Motion Lab. The authoring pose also keeps props beside rather than
 across the central silhouette.
+
+The prompt planner now exposes VTuber, anime-cel, and soft-anime presets with
+neutral-lighting and skin-color constraints. Automatic part jobs are staged as
+safe opaque adult base body, facial identity, hair, clothing, then accessories;
+garment prompts cannot repaint protected skin, face, or hair. This ordering is
+implemented and covered by CI, but still requires a labelled physical ComfyUI
+comparison before its visual-quality gate can pass.
 
 The immediate implementation order is now the canonical/inverse canvas
 transform and immutable invalidation graph; then the registered non-exported
