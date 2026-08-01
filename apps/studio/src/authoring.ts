@@ -15,6 +15,17 @@ export type EyeGuide = {
   readonly bottom: Readonly<{ x: number; y: number }>;
 };
 
+export const assertNoUnverifiedAutomaticMasks = (
+  expectedLayers: readonly string[],
+  unverifiedLayers: ReadonlySet<string>,
+): void => {
+  const blocked = expectedLayers.filter((name) => unverifiedLayers.has(name));
+  if (blocked.length)
+    throw new Error(
+      `Automatic semantic separation could not verify: ${blocked.join(", ")}. Retry with a clearer reference or a stronger semantic model.`,
+    );
+};
+
 type ComfyNode = {
   readonly class_type: string;
   readonly inputs: Readonly<Record<string, unknown>>;
@@ -492,6 +503,7 @@ export const mountLayerLab = (
   const masks = new Map<string, HTMLCanvasElement>();
   const artworkCanvases = new Map<string, HTMLCanvasElement>();
   const generatedArtwork = new Map<string, string>();
+  const unverifiedAutomaticMasks = new Set<string>();
   const expressionArtwork = new Map<ExpressionName, string>();
   const history = new Map<string, string[]>();
   const future = new Map<string, string[]>();
@@ -816,6 +828,7 @@ export const mountLayerLab = (
           masks.clear();
           artworkCanvases.clear();
           generatedArtwork.clear();
+          unverifiedAutomaticMasks.clear();
           expressionArtwork.clear();
           history.clear();
           future.clear();
@@ -1637,10 +1650,11 @@ export const mountLayerLab = (
         selectedLayer.includes("eyelid")
       ) {
         paintSuggestion(selectedLayer);
+        unverifiedAutomaticMasks.add(selectedLayer);
         renderLayers();
         draw();
         announce(
-          `Used pixel-aware ${selectedLayer} detection. Refine its edge with the manual tools.`,
+          `Used the bounded pixel-aware candidate for ${selectedLayer}.`,
         );
         return;
       }
@@ -1654,21 +1668,18 @@ export const mountLayerLab = (
         : undefined;
       if (!sam3) {
         paintSuggestion(selectedLayer);
+        unverifiedAutomaticMasks.add(selectedLayer);
         renderLayers();
         draw();
         announce(
-          "SAM3 is not available. Used the local pixel suggestion; refine it with the brush.",
+          "SAM3 is not available. Used an unverified local pixel candidate.",
         );
         return;
       }
-      const sourceCanvas = generatedArtwork.size
-        ? composeGeneratedParts("white")
-        : document.createElement("canvas");
-      if (!generatedArtwork.size) {
-        sourceCanvas.width = canvas.width;
-        sourceCanvas.height = canvas.height;
-        sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
-      }
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = canvas.width;
+      sourceCanvas.height = canvas.height;
+      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
       const sourceName = await uploadToComfy(
         sourceCanvas.toDataURL("image/png"),
         "open-avatar-segment-source.png",
@@ -1691,11 +1702,12 @@ export const mountLayerLab = (
         throw new Error("ComfyUI did not return a SAM3 job id.");
       announce(`SAM3 is segmenting ${selectedLayer} locally…`);
       await applySegmentMask(await waitForComfyOutput(queued.prompt_id));
+      const applied = Boolean(maskBounds(selectedLayer));
+      if (applied) unverifiedAutomaticMasks.delete(selectedLayer);
+      else unverifiedAutomaticMasks.add(selectedLayer);
       renderLayers();
       draw();
-      announce(
-        `SAM3 suggested ${selectedLayer}. Review it, then refine its edge with the manual tools.`,
-      );
+      announce(`SAM3 produced a semantic candidate for ${selectedLayer}.`);
     } catch (error) {
       announce(
         error instanceof Error ? error.message : "SAM3 part suggestion failed.",
@@ -2068,6 +2080,7 @@ export const mountLayerLab = (
           );
         if (!hasMask && context) {
           paintSuggestion(name);
+          unverifiedAutomaticMasks.add(name);
           hasMask = cropBoundsFromAlpha(
             context.getImageData(0, 0, mask.width, mask.height).data,
             mask.width,
@@ -2079,6 +2092,7 @@ export const mountLayerLab = (
             );
         }
         if (!hasMask && paintBoundedFallback(name)) {
+          unverifiedAutomaticMasks.add(name);
           hasMask = maskBounds(name);
           announce(`Added a deterministic bounded fallback for ${name}.`);
         }
@@ -2530,6 +2544,10 @@ export const mountLayerLab = (
     },
     buildAutomatically: async (jobs) => {
       await completeAllMissing(jobs);
+      assertNoUnverifiedAutomaticMasks(
+        jobs?.map(({ partId }) => partId) ?? layerNames,
+        unverifiedAutomaticMasks,
+      );
       await makeAvatarMotionReady();
       const project = buildProject(jobs?.map(({ partId }) => partId));
       const missingRequired = findMissingRequiredMotionLayers(project.layers);

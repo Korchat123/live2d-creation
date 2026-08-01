@@ -338,10 +338,12 @@ const buildAcceptedAvatar = async (
     });
     authoringProject = updateCharacterBible(authoringProject, {
       displayName: "Generated avatar",
-      style: concept.prompt,
-      palette: concept.prompt,
+      style: "preserve the accepted reference line art and shading",
+      palette:
+        "preserve the accepted reference palette and natural consistent skin tone",
       outfit: concept.prompt,
-      identityNotes: concept.prompt,
+      identityNotes:
+        "preserve the accepted face shape, hair, proportions, pose, and body anchors",
     });
     authoringProject = {
       ...authoringProject,

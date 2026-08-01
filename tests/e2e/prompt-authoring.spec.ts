@@ -176,4 +176,6 @@ test("presents gated reference review and restores a generated project", async (
   await expect(page.locator("#motion-status")).toContainText(
     "Motion preview is live",
   );
+  await expect(page.locator("#readiness li")).toHaveCount(1);
+  await expect(page.locator("#readiness li strong")).toHaveText("review");
 });

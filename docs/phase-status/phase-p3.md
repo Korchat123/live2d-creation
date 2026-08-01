@@ -80,10 +80,17 @@ authoring projects need explicit reference confirmation; automated framing and
 anatomy diagnostics are not yet implemented; and part-build cancellation is
 not yet resumable.
 
+The first staged base-body/wardrobe physical run is a structural pass and visual
+failure. It proved the ordering and Motion Lab handoff but exposed rectangular
+fallback masks, fragmented reconstruction, and a legacy-session precedence bug.
+Unverified semantic fallbacks now block the automatic handoff, segmentation
+uses the immutable neutral master, and validated IndexedDB projects take
+precedence in Motion Lab. See `docs/authoring/staged-body-wardrobe-smoke.md`.
+
 ## Verification
 
 - Studio typecheck passes.
-- All 121 repository unit tests pass, including the four-test reference-review
+- All 122 repository unit tests pass, including the four-test reference-review
   state suite.
 - All 18 focused Chromium, Firefox, and WebKit acceptance tests pass reference
   persistence, explicit automatic-build resume, removal of the Phase P2 UI,

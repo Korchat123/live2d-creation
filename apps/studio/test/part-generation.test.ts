@@ -88,7 +88,10 @@ describe("purpose-generated part orchestration", () => {
     const torso = jobs.find(({ partId }) => partId === "torso");
     const outfit = jobs.find(({ partId }) => partId === "outfit front");
     expect(torso?.prompt).toContain("opaque full-coverage fitted base suit");
+    expect(torso?.prompt).not.toContain("cardigan and pleated skirt");
+    expect(torso?.prompt).toContain("no clothing or accessory instructions");
     expect(outfit).toMatchObject({ stage: "clothing" });
+    expect(outfit?.prompt).toContain("cardigan and pleated skirt");
     expect(outfit?.prompt).toContain("do not repaint skin, face, or hair");
     expect(jobs.indexOf(torso!)).toBeLessThan(jobs.indexOf(outfit!));
   });

@@ -199,6 +199,16 @@ garment prompts cannot repaint protected skin, face, or hair. This ordering is
 implemented and covered by CI, but still requires a labelled physical ComfyUI
 comparison before its visual-quality gate can pass.
 
+The first labelled staged-body physical run completed structurally in about 36
+minutes 41 seconds with 28 masks, 28 generated artworks, four expressions, and
+no recorded missing entries, but failed visual inspection: rectangular body
+blocks, broken facial assembly, and incomplete wardrobe reached Motion Lab.
+Count-only validation is therefore rejected. Studio now blocks unverified
+bounded/pixel masks, segments against the immutable neutral master, separates
+base prompts from wardrobe prompts, and prefers the validated IndexedDB project
+over a legacy session draft. See
+`docs/authoring/staged-body-wardrobe-smoke.md`.
+
 The immediate implementation order is now the canonical/inverse canvas
 transform and immutable invalidation graph; then the registered non-exported
 false-color, edge, pose, and landmark guide; then the five-group semantic-mask

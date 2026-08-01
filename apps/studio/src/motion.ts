@@ -70,8 +70,8 @@ const parseProject = (raw: string | null): ExportedProject | undefined => {
 };
 
 const project =
-  parseProject(sessionStorage.getItem("open-avatar-project")) ??
-  (await loadAutomaticAvatarProject().catch(() => undefined));
+  (await loadAutomaticAvatarProject().catch(() => undefined)) ??
+  parseProject(sessionStorage.getItem("open-avatar-project"));
 window.addEventListener("pageshow", (event) => {
   if (event.persisted) window.location.reload();
 });

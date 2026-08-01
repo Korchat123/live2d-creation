@@ -196,12 +196,12 @@ const landmarkAnchor = (
   return fallbackAnchors[partId];
 };
 
-const biblePrompt = (bible: CharacterBible): string =>
+const biblePrompt = (bible: CharacterBible, includeWardrobe: boolean): string =>
   [
     bible.displayName,
     bible.style,
     bible.palette,
-    bible.outfit,
+    includeWardrobe ? bible.outfit : "",
     bible.identityNotes,
   ]
     .map((value) => value.trim())
@@ -212,7 +212,6 @@ export const createPartGenerationJobs = (
   project: AuthoringProject,
 ): readonly PartGenerationJob[] => {
   const sourceConceptSha256 = project.acceptedConcept.provenance.artifactSha256;
-  const identity = biblePrompt(project.characterBible);
   const orderedParts = [...dependencyOrderedParts(project.partPlan)].sort(
     (left, right) => stageOrder[partStage[left]] - stageOrder[partStage[right]],
   );
@@ -227,7 +226,7 @@ export const createPartGenerationJobs = (
     seed: (project.acceptedConcept.provenance.seed + index + 1) >>> 0,
     canvas: { width: 2048, height: 2048 },
     anchor: landmarkAnchor(project, partId),
-    prompt: `same approved adult character, ${identity}, ${partStage[partId]} generation stage, purpose-generated ${partId}, ${partPurpose[partId]}, preserve the registered pose and body anchors, full-canvas aligned RGBA layer, transparent background, clean anime line art${partStage[partId] === "clothing" || partStage[partId] === "accessory" ? ", separate wearable layer fitted over the approved base body, do not repaint skin, face, or hair" : ""}`,
+    prompt: `same approved adult character, ${biblePrompt(project.characterBible, partStage[partId] === "clothing" || partStage[partId] === "accessory")}, ${partStage[partId]} generation stage, purpose-generated ${partId}, ${partPurpose[partId]}, preserve the registered pose and body anchors, full-canvas aligned RGBA layer, transparent background, clean anime line art${partStage[partId] === "clothing" || partStage[partId] === "accessory" ? ", separate wearable layer fitted over the approved base body, do not repaint skin, face, or hair" : ", no clothing or accessory instructions"}`,
     negative:
       "different character, identity drift, crop, opaque background, duplicate part, flattened character, watermark, text, signature, unrelated object, nudity, underwear, lingerie, exposed intimate anatomy, child body, colored skin cast",
     minimumConcealedOverlapPixels: 24,

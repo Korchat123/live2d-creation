@@ -3,6 +3,7 @@ import { partDefinitions } from "../src/authoring-project.js";
 import {
   automaticLayerRegions,
   automaticallySuggestedLayers,
+  assertNoUnverifiedAutomaticMasks,
   createInpaintWorkflow,
   createPartsFirstWorkflow,
   createSegmentWorkflow,
@@ -15,6 +16,18 @@ import {
   motionMouthLayerOrder,
   requiredMotionLayers,
 } from "../src/authoring.js";
+
+it("blocks automatic builds that used unverified semantic fallback masks", () => {
+  expect(() =>
+    assertNoUnverifiedAutomaticMasks(
+      ["torso", "left eye white"],
+      new Set(["left eye white"]),
+    ),
+  ).toThrow("could not verify: left eye white");
+  expect(() =>
+    assertNoUnverifiedAutomaticMasks(["torso"], new Set()),
+  ).not.toThrow();
+});
 
 it("keeps expression generation constrained to the relevant editable layers", () => {
   expect(expressionLayers["open mouth"]).toEqual([
