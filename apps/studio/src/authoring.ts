@@ -5,13 +5,204 @@ export type CropBounds = {
   readonly height: number;
 };
 
+export type EyeGuide = {
+  readonly outer: Readonly<{ x: number; y: number }>;
+  readonly inner: Readonly<{ x: number; y: number }>;
+  readonly top: Readonly<{ x: number; y: number }>;
+  readonly bottom: Readonly<{ x: number; y: number }>;
+};
+
+type ComfyNode = {
+  readonly class_type: string;
+  readonly inputs: Readonly<Record<string, unknown>>;
+};
+
+export const createInpaintWorkflow = (
+  checkpoint: string,
+  sourceName: string,
+  maskName: string,
+  prompt: string,
+  seed: number,
+): Readonly<Record<string, ComfyNode>> => ({
+  "1": {
+    class_type: "CheckpointLoaderSimple",
+    inputs: { ckpt_name: checkpoint },
+  },
+  "2": { class_type: "LoadImage", inputs: { image: sourceName } },
+  "3": {
+    class_type: "LoadImageMask",
+    inputs: { image: maskName, channel: "alpha" },
+  },
+  "4": {
+    class_type: "VAEEncodeForInpaint",
+    inputs: {
+      pixels: ["2", 0],
+      vae: ["1", 2],
+      mask: ["3", 0],
+      grow_mask_by: 6,
+    },
+  },
+  "5": {
+    class_type: "CLIPTextEncode",
+    inputs: { text: prompt, clip: ["1", 1] },
+  },
+  "6": {
+    class_type: "CLIPTextEncode",
+    inputs: {
+      text: "blurry, distorted face, extra eyes, duplicate pupils, text, watermark",
+      clip: ["1", 1],
+    },
+  },
+  "7": {
+    class_type: "KSampler",
+    inputs: {
+      seed,
+      steps: 22,
+      cfg: 6,
+      sampler_name: "euler",
+      scheduler: "normal",
+      denoise: 0.72,
+      model: ["1", 0],
+      positive: ["5", 0],
+      negative: ["6", 0],
+      latent_image: ["4", 0],
+    },
+  },
+  "8": {
+    class_type: "VAEDecode",
+    inputs: { samples: ["7", 0], vae: ["1", 2] },
+  },
+  "9": {
+    class_type: "SaveImage",
+    inputs: { filename_prefix: "open-avatar-repair", images: ["8", 0] },
+  },
+});
+
+export const createSegmentWorkflow = (
+  checkpoint: string,
+  sourceName: string,
+  prompt: string,
+): Readonly<Record<string, ComfyNode>> => ({
+  "1": { class_type: "LoadImage", inputs: { image: sourceName } },
+  "2": {
+    class_type: "CheckpointLoaderSimple",
+    inputs: { ckpt_name: checkpoint },
+  },
+  "3": {
+    class_type: "CLIPTextEncode",
+    inputs: { text: prompt, clip: ["2", 1] },
+  },
+  "4": {
+    class_type: "SAM3_Detect",
+    inputs: {
+      threshold: 0.5,
+      refine_iterations: 2,
+      individual_masks: false,
+      model: ["2", 0],
+      image: ["1", 0],
+      conditioning: ["3", 0],
+    },
+  },
+  "5": { class_type: "MaskToImage", inputs: { mask: ["4", 0] } },
+  "6": {
+    class_type: "SaveImage",
+    inputs: { filename_prefix: "open-avatar-segment", images: ["5", 0] },
+  },
+});
+
+type Region = [number, number, number, number];
+
+export const eyeRegionsFromGuide = (
+  guide: EyeGuide,
+  canvasWidth: number,
+  canvasHeight: number,
+): Readonly<
+  Record<"white" | "pupil" | "highlight" | "upperLid" | "lowerLid", Region>
+> => {
+  const left = Math.min(guide.outer.x, guide.inner.x) / canvasWidth;
+  const right = Math.max(guide.outer.x, guide.inner.x) / canvasWidth;
+  const top = Math.min(guide.top.y, guide.bottom.y) / canvasHeight;
+  const bottom = Math.max(guide.top.y, guide.bottom.y) / canvasHeight;
+  const width = Math.max(0.002, right - left);
+  const height = Math.max(0.002, bottom - top);
+  const centerX = (left + right) / 2;
+  const centerY = (top + bottom) / 2;
+  return {
+    white: [left, top, width, height],
+    pupil: [
+      centerX - width * 0.22,
+      centerY - height * 0.42,
+      width * 0.44,
+      height * 0.84,
+    ],
+    highlight: [
+      centerX - width * 0.08,
+      centerY - height * 0.28,
+      width * 0.18,
+      height * 0.22,
+    ],
+    upperLid: [left, top - height * 0.12, width, height * 0.38],
+    lowerLid: [left, bottom - height * 0.22, width, height * 0.34],
+  };
+};
+
 export type ExportedProject = {
   readonly version: 1;
+  readonly updatedAt: number;
   readonly source: string;
   readonly layers: Readonly<Record<string, string>>;
+  readonly generatedArtwork: Readonly<Record<string, string>>;
+  /** Full-frame ComfyUI variants, composited through the matching part masks. */
+  readonly expressionArtwork: Readonly<Partial<Record<ExpressionName, string>>>;
   readonly missingArtwork: readonly string[];
   readonly limitations: readonly string[];
 };
+
+export type ExpressionName =
+  | "open mouth"
+  | "blink"
+  | "left wink"
+  | "right wink";
+
+export const expressionLayers: Readonly<
+  Record<ExpressionName, readonly string[]>
+> = {
+  "open mouth": ["mouth closed lips", "mouth interior", "teeth", "tongue"],
+  blink: [
+    "left eye white",
+    "right eye white",
+    "left pupil iris",
+    "right pupil iris",
+    "left eye highlight",
+    "right eye highlight",
+    "left upper eyelid",
+    "right upper eyelid",
+    "left lower eyelid",
+    "right lower eyelid",
+  ],
+  "left wink": [
+    "left eye white",
+    "left pupil iris",
+    "left eye highlight",
+    "left upper eyelid",
+    "left lower eyelid",
+  ],
+  "right wink": [
+    "right eye white",
+    "right pupil iris",
+    "right eye highlight",
+    "right upper eyelid",
+    "right lower eyelid",
+  ],
+};
+
+/** Back-to-front artwork order used while opening the mouth in Motion Lab. */
+export const motionMouthLayerOrder = [
+  "mouth interior",
+  "tongue",
+  "teeth",
+  "mouth closed lips",
+] as const;
 
 const requiredLayers = [
   "face base",
@@ -28,20 +219,45 @@ const requiredLayers = [
   "torso",
 ];
 const layerNames = [
-  ...requiredLayers,
-  "left eye highlight",
-  "right eye highlight",
+  "front hair",
+  "accessory",
+  "left upper eyelid",
+  "right upper eyelid",
+  "left lower eyelid",
+  "right lower eyelid",
   "left eyebrow",
   "right eyebrow",
+  "face base",
+  "left pupil iris",
+  "right pupil iris",
+  "left eye highlight",
+  "right eye highlight",
+  "left eye white",
+  "right eye white",
+  "mouth closed lips",
   "teeth",
   "tongue",
+  "mouth interior",
   "neck",
-  "front hair",
-  "back hair",
-  "accessory",
   "left hand arm",
   "right hand arm",
+  "torso",
+  "back hair",
 ];
+
+export const automaticallySuggestedLayers = [
+  "face base",
+  "left eye white",
+  "right eye white",
+  "left pupil iris",
+  "right pupil iris",
+  "left eye highlight",
+  "right eye highlight",
+  "left upper eyelid",
+  "right upper eyelid",
+  "left lower eyelid",
+  "right lower eyelid",
+] as const;
 
 export const cropBoundsFromAlpha = (
   alpha: Uint8ClampedArray,
@@ -102,6 +318,8 @@ export const mountLayerLab = (
   const size = host.querySelector<HTMLInputElement>("#brush-size");
   const layerName = host.querySelector<HTMLElement>("#active-layer");
   const layersOutput = host.querySelector<HTMLElement>("#layer-output");
+  const partCanvas = host.querySelector<HTMLCanvasElement>("#part-canvas");
+  const partEditorName = host.querySelector<HTMLElement>("#part-editor-name");
   const clear = host.querySelector<HTMLButtonElement>("#clear-selection");
   const undo = host.querySelector<HTMLButtonElement>("#undo-selection");
   const redo = host.querySelector<HTMLButtonElement>("#redo-selection");
@@ -113,6 +331,45 @@ export const mountLayerLab = (
     "#suggest-all-layers",
   );
   const compare = host.querySelector<HTMLButtonElement>("#show-source");
+  const guideLeft = host.querySelector<HTMLButtonElement>("#guide-left-eye");
+  const guideRight = host.querySelector<HTMLButtonElement>("#guide-right-eye");
+  const createGuidedEyes = host.querySelector<HTMLButtonElement>(
+    "#create-guided-eyes",
+  );
+  const clearGuides =
+    host.querySelector<HTMLButtonElement>("#clear-eye-guides");
+  const guideStatus = host.querySelector<HTMLElement>("#eye-guide-status");
+  const repair = host.querySelector<HTMLButtonElement>("#generate-repair");
+  const repairPrompt =
+    host.querySelector<HTMLTextAreaElement>("#repair-prompt");
+  const repairStatus = host.querySelector<HTMLElement>("#repair-status");
+  const repairOutput = host.querySelector<HTMLImageElement>("#repair-output");
+  const applyRepair = host.querySelector<HTMLButtonElement>("#apply-repair");
+  const completeAll = host.querySelector<HTMLButtonElement>("#complete-all");
+  const makeMotionReady =
+    host.querySelector<HTMLButtonElement>("#make-motion-ready");
+  const expressionStatus =
+    host.querySelector<HTMLElement>("#expression-status");
+  const expressionButtons = new Map<ExpressionName, HTMLButtonElement>([
+    [
+      "open mouth",
+      host.querySelector<HTMLButtonElement>("#expression-open-mouth")!,
+    ],
+    ["blink", host.querySelector<HTMLButtonElement>("#expression-blink")!],
+    [
+      "left wink",
+      host.querySelector<HTMLButtonElement>("#expression-left-wink")!,
+    ],
+    [
+      "right wink",
+      host.querySelector<HTMLButtonElement>("#expression-right-wink")!,
+    ],
+  ]);
+  const artColor = host.querySelector<HTMLInputElement>("#art-color");
+  const paintArt = host.querySelector<HTMLButtonElement>("#paint-art");
+  const paintMask = host.querySelector<HTMLButtonElement>("#paint-mask");
+  const fillArt = host.querySelector<HTMLButtonElement>("#fill-art");
+  const clearArt = host.querySelector<HTMLButtonElement>("#clear-art");
   const validate = host.querySelector<HTMLButtonElement>("#validate-project");
   const exportProject =
     host.querySelector<HTMLButtonElement>("#export-project");
@@ -124,6 +381,8 @@ export const mountLayerLab = (
     !size ||
     !layerName ||
     !layersOutput ||
+    !partCanvas ||
+    !partEditorName ||
     !clear ||
     !undo ||
     !redo ||
@@ -133,6 +392,25 @@ export const mountLayerLab = (
     !suggest ||
     !suggestAll ||
     !compare ||
+    !guideLeft ||
+    !guideRight ||
+    !createGuidedEyes ||
+    !clearGuides ||
+    !guideStatus ||
+    !repair ||
+    !repairPrompt ||
+    !repairStatus ||
+    !repairOutput ||
+    !applyRepair ||
+    !completeAll ||
+    !makeMotionReady ||
+    !expressionStatus ||
+    [...expressionButtons.values()].some((button) => !button) ||
+    !artColor ||
+    !paintArt ||
+    !paintMask ||
+    !fillArt ||
+    !clearArt ||
     !validate ||
     !exportProject ||
     !openMotion ||
@@ -143,6 +421,9 @@ export const mountLayerLab = (
   const context = canvas.getContext("2d");
   if (!context) return;
   const masks = new Map<string, HTMLCanvasElement>();
+  const artworkCanvases = new Map<string, HTMLCanvasElement>();
+  const generatedArtwork = new Map<string, string>();
+  const expressionArtwork = new Map<ExpressionName, string>();
   const history = new Map<string, string[]>();
   const future = new Map<string, string[]>();
   let image: HTMLImageElement | undefined;
@@ -150,7 +431,12 @@ export const mountLayerLab = (
   let selectedLayer = "face base";
   let drawing = false;
   let mode: "add" | "erase" = "add";
+  let editing: "mask" | "art" = "mask";
   let showingSource = false;
+  let zoom = 1;
+  const eyeGuides = new Map<"left" | "right", EyeGuide>();
+  let guidingEye: "left" | "right" | undefined;
+  let guidePoints: Array<{ x: number; y: number }> = [];
 
   const announce = (message: string) => {
     status.textContent = message;
@@ -166,15 +452,149 @@ export const mountLayerLab = (
     }
     return mask;
   };
+  const getArtwork = (name = selectedLayer): HTMLCanvasElement => {
+    let artwork = artworkCanvases.get(name);
+    if (!artwork) {
+      artwork = document.createElement("canvas");
+      artwork.width = canvas.width;
+      artwork.height = canvas.height;
+      const artworkContext = artwork.getContext("2d");
+      if (artworkContext && image) {
+        artworkContext.drawImage(image, 0, 0);
+        artworkContext.globalCompositeOperation = "destination-in";
+        artworkContext.drawImage(getMask(name), 0, 0);
+        artworkContext.globalCompositeOperation = "source-over";
+      }
+      artworkCanvases.set(name, artwork);
+    }
+    return artwork;
+  };
+  const selectedBounds = (): CropBounds | undefined => {
+    const mask = masks.get(selectedLayer);
+    const maskContext = mask?.getContext("2d");
+    if (!mask || !maskContext) return undefined;
+    return cropBoundsFromAlpha(
+      maskContext.getImageData(0, 0, mask.width, mask.height).data,
+      mask.width,
+      mask.height,
+    );
+  };
+  const renderPartEditor = () => {
+    if (!image) return;
+    partEditorName.textContent = `Editing: ${selectedLayer}`;
+    const bounds = selectedBounds();
+    const editor = partCanvas.getContext("2d");
+    if (!bounds || !editor) return;
+    partCanvas.width = bounds.width;
+    partCanvas.height = bounds.height;
+    editor.drawImage(
+      artworkCanvases.get(selectedLayer) ?? image,
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      0,
+      0,
+      bounds.width,
+      bounds.height,
+    );
+    const overlay = document.createElement("canvas");
+    overlay.width = bounds.width;
+    overlay.height = bounds.height;
+    const overlayContext = overlay.getContext("2d");
+    if (!overlayContext) return;
+    overlayContext.fillStyle = "#ff315f";
+    overlayContext.fillRect(0, 0, bounds.width, bounds.height);
+    overlayContext.globalCompositeOperation = "destination-in";
+    overlayContext.drawImage(
+      getMask(),
+      bounds.x,
+      bounds.y,
+      bounds.width,
+      bounds.height,
+      0,
+      0,
+      bounds.width,
+      bounds.height,
+    );
+    editor.globalAlpha = 0.38;
+    editor.drawImage(overlay, 0, 0);
+    editor.globalAlpha = 1;
+  };
   const draw = () => {
     if (!image) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     if (showingSource) return;
-    context.save();
-    context.globalAlpha = 0.35;
-    context.drawImage(getMask(), 0, 0);
-    context.restore();
+    const maskOverlay = document.createElement("canvas");
+    maskOverlay.width = canvas.width;
+    maskOverlay.height = canvas.height;
+    const maskOverlayContext = maskOverlay.getContext("2d");
+    if (maskOverlayContext) {
+      maskOverlayContext.fillStyle = "#ff315f";
+      maskOverlayContext.fillRect(0, 0, canvas.width, canvas.height);
+      maskOverlayContext.globalCompositeOperation = "destination-in";
+      maskOverlayContext.drawImage(getMask(), 0, 0);
+      context.save();
+      context.globalAlpha = 0.38;
+      context.drawImage(maskOverlay, 0, 0);
+      context.restore();
+    }
+    const artwork = artworkCanvases.get(selectedLayer);
+    if (artwork) context.drawImage(artwork, 0, 0);
+    const drawGuide = (guide: EyeGuide, color: string) => {
+      context.save();
+      context.strokeStyle = color;
+      context.fillStyle = color;
+      context.lineWidth = Math.max(2, canvas.width * 0.002);
+      context.beginPath();
+      context.moveTo(guide.outer.x, guide.outer.y);
+      context.quadraticCurveTo(
+        guide.top.x,
+        guide.top.y,
+        guide.inner.x,
+        guide.inner.y,
+      );
+      context.quadraticCurveTo(
+        guide.bottom.x,
+        guide.bottom.y,
+        guide.outer.x,
+        guide.outer.y,
+      );
+      context.stroke();
+      [guide.outer, guide.inner, guide.top, guide.bottom].forEach((point) => {
+        context.beginPath();
+        context.arc(
+          point.x,
+          point.y,
+          Math.max(3, canvas.width * 0.005),
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      });
+      context.restore();
+    };
+    eyeGuides.forEach((guide, side) =>
+      drawGuide(guide, side === "left" ? "#72e6c1" : "#ffd479"),
+    );
+    if (guidingEye && guidePoints.length) {
+      context.save();
+      context.fillStyle = "#ffffff";
+      guidePoints.forEach((guidePoint) => {
+        context.beginPath();
+        context.arc(
+          guidePoint.x,
+          guidePoint.y,
+          Math.max(3, canvas.width * 0.005),
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      });
+      context.restore();
+    }
+    renderPartEditor();
   };
   const saveSnapshot = () => {
     const snapshots = history.get(selectedLayer) ?? [];
@@ -193,6 +613,7 @@ export const mountLayerLab = (
       if (!maskContext) return;
       maskContext.clearRect(0, 0, mask.width, mask.height);
       maskContext.drawImage(restored, 0, 0);
+      renderLayers();
       draw();
     };
     restored.src = snapshot;
@@ -205,16 +626,26 @@ export const mountLayerLab = (
     };
   };
   const brush = (event: PointerEvent) => {
-    const maskContext = getMask().getContext("2d");
-    if (!maskContext || !image) return;
+    const target = editing === "art" ? getArtwork() : getMask();
+    const targetContext = target.getContext("2d");
+    if (!targetContext || !image) return;
     const { x, y } = point(event);
-    maskContext.globalCompositeOperation =
-      mode === "add" ? "source-over" : "destination-out";
-    maskContext.fillStyle = "#ffffff";
-    maskContext.beginPath();
-    maskContext.arc(x, y, Number(size.value), 0, Math.PI * 2);
-    maskContext.fill();
-    maskContext.globalCompositeOperation = "source-over";
+    const erasing =
+      mode === "erase" || event.button === 2 || (event.buttons & 2) === 2;
+    targetContext.globalCompositeOperation = erasing
+      ? "destination-out"
+      : "source-over";
+    targetContext.fillStyle = editing === "art" ? artColor.value : "#ffffff";
+    targetContext.beginPath();
+    targetContext.arc(x, y, Number(size.value), 0, Math.PI * 2);
+    targetContext.fill();
+    targetContext.globalCompositeOperation = "source-over";
+    if (editing === "art") {
+      targetContext.globalCompositeOperation = "destination-in";
+      targetContext.drawImage(getMask(), 0, 0);
+      targetContext.globalCompositeOperation = "source-over";
+      generatedArtwork.set(selectedLayer, target.toDataURL("image/png"));
+    }
     draw();
   };
   const renderLayers = () => {
@@ -231,15 +662,39 @@ export const mountLayerLab = (
           canvas.height,
         );
       item.className = "layer-row";
+      item.tabIndex = 0;
+      item.setAttribute("role", "button");
+      item.setAttribute("aria-label", `Edit ${name}`);
       item.innerHTML = `<span>${name}</span><strong>${bounds ? "masked" : "empty"}</strong>`;
+      const selectPart = () => {
+        selectedLayer = name;
+        layerName.textContent = name;
+        host
+          .querySelectorAll("[data-layer]")
+          .forEach((button) =>
+            button.classList.toggle(
+              "selected",
+              (button as HTMLElement).dataset.layer === name,
+            ),
+          );
+        draw();
+      };
+      item.addEventListener("click", selectPart);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectPart();
+        }
+      });
       if (bounds && image) {
         const previewCanvas = document.createElement("canvas");
         previewCanvas.width = bounds.width;
         previewCanvas.height = bounds.height;
         const previewContext = previewCanvas.getContext("2d");
         if (previewContext) {
+          const paintedArtwork = artworkCanvases.get(name);
           previewContext.drawImage(
-            image,
+            paintedArtwork ?? image,
             bounds.x,
             bounds.y,
             bounds.width,
@@ -270,17 +725,47 @@ export const mountLayerLab = (
       }
       layersOutput.append(item);
     });
+    saveDraft();
   };
-  const load = (nextSource: string) => {
+  const load = (nextSource: string, draft?: ExportedProject) => {
     const next = new Image();
-    next.onload = () => {
+    next.onload = async () => {
       image = next;
       source = nextSource;
       canvas.width = next.naturalWidth;
       canvas.height = next.naturalHeight;
       masks.clear();
+      artworkCanvases.clear();
+      generatedArtwork.clear();
+      expressionArtwork.clear();
       history.clear();
       future.clear();
+      if (draft) {
+        await Promise.all(
+          Object.entries(draft.layers).map(
+            ([name, maskSource]) =>
+              new Promise<void>((resolve) => {
+                const restored = new Image();
+                restored.onload = () => {
+                  getMask(name).getContext("2d")?.drawImage(restored, 0, 0);
+                  resolve();
+                };
+                restored.onerror = () => resolve();
+                restored.src = maskSource;
+              }),
+          ),
+        );
+        Object.entries(draft.generatedArtwork).forEach(([name, artwork]) =>
+          generatedArtwork.set(name, artwork),
+        );
+        Object.entries(draft.expressionArtwork).forEach(([name, artwork]) => {
+          if (name in expressionLayers)
+            expressionArtwork.set(name as ExpressionName, artwork);
+        });
+      }
+      eyeGuides.clear();
+      guidingEye = undefined;
+      guidePoints = [];
       detectEyeSuggestions();
       undo.disabled = true;
       redo.disabled = true;
@@ -288,7 +773,11 @@ export const mountLayerLab = (
       exportProject.disabled = true;
       renderLayers();
       draw();
-      announce("Portrait loaded locally. Select a layer and paint its mask.");
+      announce(
+        draft
+          ? "Restored your saved local draft."
+          : "Portrait loaded locally. Select a layer and paint its mask.",
+      );
     };
     next.src = nextSource;
   };
@@ -317,6 +806,14 @@ export const mountLayerLab = (
     accessory: [0.7, 0.12, 0.1, 0.13],
     "left hand arm": [0.15, 0.45, 0.18, 0.4],
     "right hand arm": [0.67, 0.45, 0.18, 0.4],
+  };
+  const applyEyeGuide = (side: "left" | "right", guide: EyeGuide) => {
+    const regions = eyeRegionsFromGuide(guide, canvas.width, canvas.height);
+    suggestedRegions[`${side} eye white`] = regions.white;
+    suggestedRegions[`${side} pupil iris`] = regions.pupil;
+    suggestedRegions[`${side} eye highlight`] = regions.highlight;
+    suggestedRegions[`${side} upper eyelid`] = regions.upperLid;
+    suggestedRegions[`${side} lower eyelid`] = regions.lowerLid;
   };
   const detectEyeSuggestions = () => {
     if (!image) return;
@@ -440,6 +937,125 @@ export const mountLayerLab = (
     if (!region || !maskContext) return;
     const [x, y, width, height] = region;
     maskContext.fillStyle = "#ffffff";
+    const source = document.createElement("canvas");
+    source.width = canvas.width;
+    source.height = canvas.height;
+    const sourceContext = source.getContext("2d", { willReadFrequently: true });
+    if (!sourceContext || !image) return;
+    sourceContext.drawImage(image, 0, 0);
+    const pixels = sourceContext.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    ).data;
+    const left = Math.max(0, Math.floor(x * canvas.width));
+    const top = Math.max(0, Math.floor(y * canvas.height));
+    const right = Math.min(canvas.width, Math.ceil((x + width) * canvas.width));
+    const bottom = Math.min(
+      canvas.height,
+      Math.ceil((y + height) * canvas.height),
+    );
+    const paintPixels = (
+      matches: (
+        red: number,
+        green: number,
+        blue: number,
+        pixelX: number,
+        pixelY: number,
+      ) => boolean,
+    ) => {
+      for (let pixelY = top; pixelY < bottom; pixelY += 1)
+        for (let pixelX = left; pixelX < right; pixelX += 1) {
+          const offset = (pixelY * canvas.width + pixelX) * 4;
+          const red = pixels[offset] ?? 0;
+          const green = pixels[offset + 1] ?? 0;
+          const blue = pixels[offset + 2] ?? 0;
+          if (matches(red, green, blue, pixelX, pixelY))
+            maskContext.fillRect(pixelX, pixelY, 1, 1);
+        }
+    };
+    if (name.includes("eye white")) {
+      const pupil = suggestedRegions[name.replace("eye white", "pupil iris")];
+      if (!pupil) return;
+      const [pupilX, pupilY, pupilWidth, pupilHeight] = pupil;
+      const centerX = (x + width / 2) * canvas.width;
+      const centerY = (y + height / 2) * canvas.height;
+      const leftEdge = x * canvas.width;
+      const rightEdge = (x + width) * canvas.width;
+      const topEdge = y * canvas.height;
+      const bottomEdge = (y + height) * canvas.height;
+      maskContext.beginPath();
+      maskContext.moveTo(leftEdge, centerY);
+      maskContext.quadraticCurveTo(centerX, topEdge, rightEdge, centerY);
+      maskContext.quadraticCurveTo(centerX, bottomEdge, leftEdge, centerY);
+      maskContext.closePath();
+      maskContext.fill();
+      const faceMask = masks.get("face base");
+      const faceContext = faceMask?.getContext("2d");
+      if (faceMask && faceContext) {
+        faceContext.save();
+        faceContext.globalCompositeOperation = "destination-out";
+        // The face must have one complete eye opening. Subtract it before the
+        // white layer removes its pupil hole, otherwise face pixels remain
+        // behind the moving iris.
+        faceContext.drawImage(getMask(name), 0, 0);
+        faceContext.restore();
+      }
+      maskContext.save();
+      maskContext.globalCompositeOperation = "destination-out";
+      maskContext.beginPath();
+      maskContext.ellipse(
+        (pupilX + pupilWidth / 2) * canvas.width,
+        (pupilY + pupilHeight / 2) * canvas.height,
+        (pupilWidth / 2) * canvas.width,
+        (pupilHeight / 2) * canvas.height,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      maskContext.fill();
+      maskContext.restore();
+      return;
+    }
+    if (name.includes("pupil iris")) {
+      paintPixels(
+        (red, green, blue) =>
+          (red > 125 && green > 70 && blue < 125 && red - blue > 90) ||
+          Math.max(red, green, blue) < 120,
+      );
+      return;
+    }
+    if (name.includes("highlight")) {
+      paintPixels(
+        (red, green, blue) =>
+          red > 205 &&
+          green > 190 &&
+          blue > 170 &&
+          Math.max(red, green, blue) - Math.min(red, green, blue) < 75,
+      );
+      return;
+    }
+    if (name.includes("eyelid")) {
+      const upper = name.includes("upper");
+      const centerX = (x + width / 2) * canvas.width;
+      const centerY = (y + height / 2) * canvas.height;
+      const radiusX = (width / 2) * canvas.width;
+      paintPixels((red, green, blue, pixelX, pixelY) => {
+        const curveY =
+          centerY +
+          (upper ? -1 : 1) *
+            ((pixelX - centerX) / radiusX) ** 2 *
+            canvas.height *
+            0.012;
+        return (
+          Math.max(red, green, blue) < 120 &&
+          Math.max(red, green, blue) - Math.min(red, green, blue) < 65 &&
+          (upper ? pixelY <= curveY : pixelY >= curveY)
+        );
+      });
+      return;
+    }
     const curvedPart =
       name === "face base" ||
       name.includes("eye white") ||
@@ -467,6 +1083,38 @@ export const mountLayerLab = (
       );
     }
   };
+  const clearMask = (name: string) => {
+    const mask = getMask(name);
+    mask.getContext("2d")?.clearRect(0, 0, mask.width, mask.height);
+  };
+  const createEyeLayersFromGuides = () => {
+    if (!eyeGuides.has("left") || !eyeGuides.has("right")) {
+      announce(
+        "Set both eye guides first: outer corner, inner corner, top lid, then lower lid.",
+      );
+      return;
+    }
+    const eyeLayers = [
+      "left eye white",
+      "right eye white",
+      "left pupil iris",
+      "right pupil iris",
+      "left eye highlight",
+      "right eye highlight",
+      "left upper eyelid",
+      "right upper eyelid",
+      "left lower eyelid",
+      "right lower eyelid",
+    ];
+    eyeLayers.forEach(clearMask);
+    paintSuggestion("face base");
+    eyeLayers.forEach(paintSuggestion);
+    renderLayers();
+    draw();
+    announce(
+      "Created eye layers from your portrait guides. Inspect each thumbnail, then use the brush for any final edge correction.",
+    );
+  };
   const buildProject = (): ExportedProject => {
     const exported: Record<string, string> = {};
     masks.forEach((mask, name) => {
@@ -479,14 +1127,647 @@ export const mountLayerLab = (
     });
     return {
       version: 1,
+      updatedAt: Date.now(),
       source,
       layers: exported,
+      generatedArtwork: Object.fromEntries(generatedArtwork),
+      expressionArtwork: Object.fromEntries(expressionArtwork) as Partial<
+        Record<ExpressionName, string>
+      >,
       missingArtwork: findMissingArtwork(exported),
       limitations: [
         "A flat portrait cannot create hidden pixels for large head turns or hands.",
         "Starter masks are crops, not newly created hidden artwork. Repair or generate dedicated eye-white, pupil, eyelid, and mouth artwork before production rigging.",
       ],
     };
+  };
+  const saveDraft = (): void => {
+    if (!image) return;
+    try {
+      sessionStorage.setItem(
+        "open-avatar-project",
+        JSON.stringify(buildProject()),
+      );
+    } catch {
+      // A very large local upload may exceed browser session storage. The
+      // validated export remains available even when transient autosave cannot.
+    }
+  };
+  const uploadToComfy = async (data: string, name: string): Promise<string> => {
+    const blob = await (await fetch(data)).blob();
+    const body = new FormData();
+    body.append("image", new File([blob], name, { type: "image/png" }));
+    body.append("overwrite", "true");
+    const response = await fetch("/comfy/upload/image", {
+      method: "POST",
+      body,
+    });
+    if (!response.ok) throw new Error("ComfyUI could not receive the image.");
+    const uploaded = (await response.json()) as {
+      name?: unknown;
+      subfolder?: unknown;
+    };
+    if (typeof uploaded.name !== "string")
+      throw new Error("ComfyUI returned an invalid upload.");
+    return typeof uploaded.subfolder === "string" && uploaded.subfolder
+      ? `${uploaded.subfolder}/${uploaded.name}`
+      : uploaded.name;
+  };
+  const loadImage = (imageSource: string): Promise<HTMLImageElement> =>
+    new Promise((resolve, reject) => {
+      const result = new Image();
+      result.onload = () => resolve(result);
+      result.onerror = () =>
+        reject(new Error("Could not load the ComfyUI result."));
+      result.src = imageSource;
+    });
+  const toDataUrl = async (url: string): Promise<string> => {
+    const blob = await (await fetch(url)).blob();
+    return asDataUrl(
+      new File([blob], "generated-art.png", { type: "image/png" }),
+    );
+  };
+  const waitForComfyOutput = async (promptId: string): Promise<string> => {
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 1000));
+      const response = await fetch(
+        `/comfy/history/${encodeURIComponent(promptId)}`,
+      );
+      if (!response.ok) continue;
+      const history = (await response.json()) as Record<
+        string,
+        {
+          outputs?: Record<
+            string,
+            {
+              images?: Array<{
+                filename?: unknown;
+                subfolder?: unknown;
+                type?: unknown;
+              }>;
+            }
+          >;
+        }
+      >;
+      const images = Object.values(history[promptId]?.outputs ?? {}).flatMap(
+        (output) => output.images ?? [],
+      );
+      const image = images[0];
+      if (!image || typeof image.filename !== "string") continue;
+      const query = new URLSearchParams({
+        filename: image.filename,
+        subfolder: typeof image.subfolder === "string" ? image.subfolder : "",
+        type: typeof image.type === "string" ? image.type : "output",
+      });
+      return `/comfy/view?${query.toString()}`;
+    }
+    throw new Error("ComfyUI did not finish within 90 seconds.");
+  };
+  const segmentMaskCanvas = async (
+    maskUrl: string,
+  ): Promise<HTMLCanvasElement> => {
+    const result = await loadImage(maskUrl);
+    const temporary = document.createElement("canvas");
+    temporary.width = canvas.width;
+    temporary.height = canvas.height;
+    const temporaryContext = temporary.getContext("2d", {
+      willReadFrequently: true,
+    });
+    if (!temporaryContext) throw new Error("Could not read the SAM3 mask.");
+    temporaryContext.drawImage(result, 0, 0, temporary.width, temporary.height);
+    const pixels = temporaryContext.getImageData(
+      0,
+      0,
+      temporary.width,
+      temporary.height,
+    );
+    for (let offset = 0; offset < pixels.data.length; offset += 4) {
+      const luminance =
+        ((pixels.data[offset] ?? 0) +
+          (pixels.data[offset + 1] ?? 0) +
+          (pixels.data[offset + 2] ?? 0)) /
+        3;
+      pixels.data[offset] = 255;
+      pixels.data[offset + 1] = 255;
+      pixels.data[offset + 2] = 255;
+      pixels.data[offset + 3] = luminance > 127 ? 255 : 0;
+    }
+    temporaryContext.putImageData(pixels, 0, 0);
+    return temporary;
+  };
+  const applySegmentMask = async (maskUrl: string): Promise<void> => {
+    const segmented = await segmentMaskCanvas(maskUrl);
+    const target = getMask().getContext("2d");
+    if (!target) throw new Error("Could not apply the SAM3 mask.");
+    target.clearRect(0, 0, canvas.width, canvas.height);
+    target.drawImage(segmented, 0, 0);
+  };
+  const segmentPromptForLayer = (name: string): string => {
+    if (
+      name.includes("pupil") ||
+      name.includes("highlight") ||
+      name.includes("eyelid") ||
+      name.includes("eye white")
+    )
+      return name
+        .replace(" pupil iris", " iris")
+        .replace(" eye white", " eye")
+        .replace(" eyelid", " eye")
+        .replace(" highlight", " eye highlight");
+    return name;
+  };
+  const segmentGeneratedPart = async (
+    artworkSource: string,
+    targetLayer: string,
+  ): Promise<boolean> => {
+    const modelsResponse = await fetch("/comfy/models/checkpoints");
+    const models = (await modelsResponse.json()) as unknown;
+    const sam3 = Array.isArray(models)
+      ? models.find(
+          (model): model is string =>
+            typeof model === "string" && model.startsWith("sam3"),
+        )
+      : undefined;
+    if (!sam3)
+      throw new Error("SAM3 is required to extract generated mouth parts.");
+    const sourceName = await uploadToComfy(
+      artworkSource,
+      `open-avatar-generated-${targetLayer.replaceAll(" ", "-")}.png`,
+    );
+    const response = await fetch("/comfy/prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: createSegmentWorkflow(sam3, sourceName, targetLayer),
+      }),
+    });
+    if (!response.ok)
+      throw new Error(`ComfyUI could not segment generated ${targetLayer}.`);
+    const queued = (await response.json()) as { prompt_id?: unknown };
+    if (typeof queued.prompt_id !== "string")
+      throw new Error("ComfyUI did not return a SAM3 extraction job id.");
+    const segmented = await segmentMaskCanvas(
+      await waitForComfyOutput(queued.prompt_id),
+    );
+    const segmentedContext = segmented.getContext("2d");
+    const hasPixels =
+      segmentedContext &&
+      cropBoundsFromAlpha(
+        segmentedContext.getImageData(0, 0, canvas.width, canvas.height).data,
+        canvas.width,
+        canvas.height,
+      );
+    if (!hasPixels) return false;
+    const target = getMask(targetLayer);
+    const targetContext = target.getContext("2d");
+    if (!targetContext) return false;
+    targetContext.clearRect(0, 0, target.width, target.height);
+    targetContext.drawImage(segmented, 0, 0);
+    generatedArtwork.set(targetLayer, artworkSource);
+    return true;
+  };
+  const suggestSelectedPart = async (): Promise<void> => {
+    if (!image) return;
+    suggest.disabled = true;
+    announce(`Checking local SAM3 for ${selectedLayer}…`);
+    try {
+      if (
+        selectedLayer.includes("pupil iris") ||
+        selectedLayer.includes("highlight") ||
+        selectedLayer.includes("eyelid")
+      ) {
+        paintSuggestion(selectedLayer);
+        renderLayers();
+        draw();
+        announce(
+          `Used pixel-aware ${selectedLayer} detection. Refine its edge with the manual tools.`,
+        );
+        return;
+      }
+      const modelsResponse = await fetch("/comfy/models/checkpoints");
+      const models = (await modelsResponse.json()) as unknown;
+      const sam3 = Array.isArray(models)
+        ? models.find(
+            (model): model is string =>
+              typeof model === "string" && model.startsWith("sam3"),
+          )
+        : undefined;
+      if (!sam3) {
+        paintSuggestion(selectedLayer);
+        renderLayers();
+        draw();
+        announce(
+          "SAM3 is not available. Used the local pixel suggestion; refine it with the brush.",
+        );
+        return;
+      }
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = canvas.width;
+      sourceCanvas.height = canvas.height;
+      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      const sourceName = await uploadToComfy(
+        sourceCanvas.toDataURL("image/png"),
+        "open-avatar-segment-source.png",
+      );
+      const response = await fetch("/comfy/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: createSegmentWorkflow(
+            sam3,
+            sourceName,
+            segmentPromptForLayer(selectedLayer),
+          ),
+        }),
+      });
+      if (!response.ok)
+        throw new Error("ComfyUI rejected the SAM3 segmentation workflow.");
+      const queued = (await response.json()) as { prompt_id?: unknown };
+      if (typeof queued.prompt_id !== "string")
+        throw new Error("ComfyUI did not return a SAM3 job id.");
+      announce(`SAM3 is segmenting ${selectedLayer} locally…`);
+      await applySegmentMask(await waitForComfyOutput(queued.prompt_id));
+      renderLayers();
+      draw();
+      announce(
+        `SAM3 suggested ${selectedLayer}. Review it, then refine its edge with the manual tools.`,
+      );
+    } catch (error) {
+      announce(
+        error instanceof Error ? error.message : "SAM3 part suggestion failed.",
+      );
+    } finally {
+      suggest.disabled = false;
+    }
+  };
+  const generateRepair = async () => {
+    if (!image) return;
+    const currentMask = getMask();
+    const bounds = cropBoundsFromAlpha(
+      currentMask
+        .getContext("2d")!
+        .getImageData(0, 0, canvas.width, canvas.height).data,
+      canvas.width,
+      canvas.height,
+    );
+    if (!bounds) {
+      repairStatus.textContent =
+        "Paint or create a mask for the selected part before generating.";
+      return;
+    }
+    repair.disabled = true;
+    repairStatus.textContent =
+      "Uploading the local portrait and mask to ComfyUI…";
+    try {
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = canvas.width;
+      sourceCanvas.height = canvas.height;
+      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      const sourceName = await uploadToComfy(
+        sourceCanvas.toDataURL("image/png"),
+        "open-avatar-source.png",
+      );
+      const maskName = await uploadToComfy(
+        currentMask.toDataURL("image/png"),
+        "open-avatar-mask.png",
+      );
+      const modelResponse = await fetch("/comfy/models/checkpoints");
+      const checkpoints = (await modelResponse.json()) as unknown;
+      const checkpoint = Array.isArray(checkpoints)
+        ? checkpoints.find(
+            (item): item is string =>
+              typeof item === "string" && !item.startsWith("sam"),
+          )
+        : undefined;
+      if (!checkpoint) throw new Error("No ComfyUI checkpoint is available.");
+      repairStatus.textContent =
+        "Generating missing artwork locally with SD 1.5…";
+      const prompt = `anime VTuber portrait, preserve the original character, ${repairPrompt.value.trim() || `repair the ${selectedLayer} artwork naturally`}, clean line art, matching colors`;
+      const response = await fetch("/comfy/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: createInpaintWorkflow(
+            checkpoint,
+            sourceName,
+            maskName,
+            prompt,
+            Math.floor(Math.random() * 2_000_000_000),
+          ),
+        }),
+      });
+      if (!response.ok)
+        throw new Error("ComfyUI rejected the inpainting workflow.");
+      const queued = (await response.json()) as { prompt_id?: unknown };
+      if (typeof queued.prompt_id !== "string")
+        throw new Error("ComfyUI did not return a job id.");
+      repairOutput.src = await toDataUrl(
+        await waitForComfyOutput(queued.prompt_id),
+      );
+      repairOutput.hidden = false;
+      applyRepair.disabled = false;
+      repairStatus.textContent =
+        "Draft repair complete. Compare it with the portrait before using it as artwork.";
+    } catch (error) {
+      repairStatus.textContent =
+        error instanceof Error ? error.message : "Local repair failed.";
+    } finally {
+      repair.disabled = false;
+    }
+  };
+  const expressionPrompt = (name: ExpressionName): string => {
+    const common =
+      "same anime VTuber portrait, preserve the exact character, face shape, hair, pose, line art, lighting, and colors; edit only the masked region";
+    switch (name) {
+      case "open mouth":
+        return `${common}, naturally open mouth, visible dark mouth interior, tongue and a small amount of teeth, clean separated Live2D mouth artwork`;
+      case "blink":
+        return `${common}, both eyes naturally closed in a relaxed blink, clean eyelid line art`;
+      case "left wink":
+        return `${common}, character's left eye naturally closed in a wink, other eye unchanged, clean eyelid line art`;
+      case "right wink":
+        return `${common}, character's right eye naturally closed in a wink, other eye unchanged, clean eyelid line art`;
+    }
+  };
+  const combinedExpressionMask = (
+    name: ExpressionName,
+  ): HTMLCanvasElement | undefined => {
+    const result = document.createElement("canvas");
+    result.width = canvas.width;
+    result.height = canvas.height;
+    const resultContext = result.getContext("2d");
+    if (!resultContext) return undefined;
+    let hasPixels = false;
+    expressionLayers[name].forEach((layer) => {
+      const mask = masks.get(layer);
+      if (!mask) return;
+      const maskContext = mask.getContext("2d");
+      if (!maskContext) return;
+      const bounds = cropBoundsFromAlpha(
+        maskContext.getImageData(0, 0, mask.width, mask.height).data,
+        mask.width,
+        mask.height,
+      );
+      if (!bounds) return;
+      hasPixels = true;
+      resultContext.drawImage(mask, 0, 0);
+    });
+    if (hasPixels && name === "open mouth") {
+      const pixels = resultContext.getImageData(
+        0,
+        0,
+        result.width,
+        result.height,
+      ).data;
+      const bounds = cropBoundsFromAlpha(pixels, result.width, result.height);
+      if (bounds) {
+        const paddingX = Math.max(8, bounds.width * 0.25);
+        const paddingTop = Math.max(4, bounds.height * 0.4);
+        const paddingBottom = Math.max(16, bounds.height * 2.2);
+        const x = Math.max(0, bounds.x - paddingX);
+        const y = Math.max(0, bounds.y - paddingTop);
+        const width = Math.min(result.width - x, bounds.width + paddingX * 2);
+        const height = Math.min(
+          result.height - y,
+          bounds.height + paddingTop + paddingBottom,
+        );
+        resultContext.fillStyle = "#ffffff";
+        resultContext.beginPath();
+        resultContext.roundRect(
+          x,
+          y,
+          width,
+          height,
+          Math.min(width, height) * 0.25,
+        );
+        resultContext.fill();
+      }
+    }
+    return hasPixels ? result : undefined;
+  };
+  const generateExpression = async (name: ExpressionName): Promise<void> => {
+    if (!image) return;
+    const expressionMask = combinedExpressionMask(name);
+    if (!expressionMask) {
+      expressionStatus.textContent = `Create the ${expressionLayers[name].join(", ")} masks before generating ${name}.`;
+      return;
+    }
+    const button = expressionButtons.get(name);
+    expressionButtons.forEach((item) => (item.disabled = true));
+    expressionStatus.textContent = `Uploading the portrait and ${name} mask to local ComfyUI…`;
+    try {
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = canvas.width;
+      sourceCanvas.height = canvas.height;
+      sourceCanvas.getContext("2d")?.drawImage(image, 0, 0);
+      const [sourceName, maskName, checkpoints] = await Promise.all([
+        uploadToComfy(
+          sourceCanvas.toDataURL("image/png"),
+          "open-avatar-expression-source.png",
+        ),
+        uploadToComfy(
+          expressionMask.toDataURL("image/png"),
+          `open-avatar-${name.replaceAll(" ", "-")}-mask.png`,
+        ),
+        fetch("/comfy/models/checkpoints").then(
+          (response) => response.json() as Promise<unknown>,
+        ),
+      ]);
+      const checkpoint = Array.isArray(checkpoints)
+        ? checkpoints.find(
+            (item): item is string =>
+              typeof item === "string" && !item.startsWith("sam"),
+          )
+        : undefined;
+      if (!checkpoint)
+        throw new Error("No SD inpainting checkpoint is available in ComfyUI.");
+      expressionStatus.textContent = `ComfyUI is creating the ${name} comparison state locally…`;
+      const response = await fetch("/comfy/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: createInpaintWorkflow(
+            checkpoint,
+            sourceName,
+            maskName,
+            expressionPrompt(name),
+            Math.floor(Math.random() * 2_000_000_000),
+          ),
+        }),
+      });
+      if (!response.ok)
+        throw new Error("ComfyUI rejected the expression workflow.");
+      const queued = (await response.json()) as { prompt_id?: unknown };
+      if (typeof queued.prompt_id !== "string")
+        throw new Error("ComfyUI did not return an expression job id.");
+      const generated = await toDataUrl(
+        await waitForComfyOutput(queued.prompt_id),
+      );
+      expressionArtwork.set(name, generated);
+      if (name === "open mouth") {
+        expressionStatus.textContent =
+          "Open mouth created. SAM3 is extracting mouth interior, tongue, and teeth…";
+        for (const target of ["mouth interior", "tongue", "teeth"]) {
+          await segmentGeneratedPart(generated, target);
+        }
+        renderLayers();
+      }
+      saveDraft();
+      expressionStatus.textContent = `${name} is ready. Open Motion Lab and choose it as a comparison state.`;
+      button?.classList.remove("quiet");
+    } catch (error) {
+      expressionStatus.textContent =
+        error instanceof Error
+          ? error.message
+          : "Expression generation failed.";
+    } finally {
+      expressionButtons.forEach((item) => (item.disabled = false));
+    }
+  };
+  const makeAvatarMotionReady = async (): Promise<void> => {
+    if (!image) return;
+    makeMotionReady.disabled = true;
+    completeAll.disabled = true;
+    const motionParts = [
+      "face base",
+      "left eye white",
+      "right eye white",
+      "left pupil iris",
+      "right pupil iris",
+      "left upper eyelid",
+      "right upper eyelid",
+      "left lower eyelid",
+      "right lower eyelid",
+      "mouth closed lips",
+      "torso",
+    ];
+    try {
+      for (const [index, name] of motionParts.entries()) {
+        const mask = masks.get(name);
+        const maskContext = mask?.getContext("2d");
+        const hasMask =
+          mask &&
+          maskContext &&
+          cropBoundsFromAlpha(
+            maskContext.getImageData(0, 0, mask.width, mask.height).data,
+            mask.width,
+            mask.height,
+          );
+        if (hasMask) continue;
+        selectedLayer = name;
+        layerName.textContent = name;
+        announce(
+          `Preparing motion part ${index + 1} of ${motionParts.length}: ${name}…`,
+        );
+        await suggestSelectedPart();
+      }
+      for (const name of ["left eye white", "right eye white"]) {
+        const mask = masks.get(name);
+        if (!mask) continue;
+        const target = getArtwork(name);
+        const targetContext = target.getContext("2d");
+        if (!targetContext) continue;
+        targetContext.clearRect(0, 0, target.width, target.height);
+        targetContext.fillStyle = "#fff9ed";
+        targetContext.fillRect(0, 0, target.width, target.height);
+        targetContext.globalCompositeOperation = "destination-in";
+        targetContext.drawImage(mask, 0, 0);
+        targetContext.globalCompositeOperation = "source-over";
+        generatedArtwork.set(name, target.toDataURL("image/png"));
+      }
+      for (const name of [
+        "open mouth",
+        "blink",
+        "left wink",
+        "right wink",
+      ] as const) {
+        if (expressionArtwork.has(name)) continue;
+        announce(`Generating ${name} for Motion Lab…`);
+        await generateExpression(name);
+      }
+      renderLayers();
+      saveDraft();
+      announce(
+        "Motion-ready draft completed. Eye whites were filled and generated mouth, blink, and wink states were saved for Motion Lab.",
+      );
+    } catch (error) {
+      announce(
+        error instanceof Error
+          ? error.message
+          : "Could not complete the motion-ready avatar.",
+      );
+    } finally {
+      makeMotionReady.disabled = false;
+      completeAll.disabled = false;
+    }
+  };
+  const completeAllMissing = async (): Promise<void> => {
+    const missing = layerNames.filter((name) => {
+      const mask = masks.get(name);
+      if (!mask) return true;
+      const context = mask.getContext("2d");
+      return (
+        !context ||
+        !cropBoundsFromAlpha(
+          context.getImageData(0, 0, mask.width, mask.height).data,
+          mask.width,
+          mask.height,
+        )
+      );
+    });
+    if (!missing.length) {
+      announce(
+        "Every listed part already has a mask. Review the results before export.",
+      );
+      return;
+    }
+    completeAll.disabled = true;
+    repair.disabled = true;
+    try {
+      for (const [index, name] of missing.entries()) {
+        selectedLayer = name;
+        layerName.textContent = name;
+        announce(`Completing ${index + 1} of ${missing.length}: ${name}…`);
+        await suggestSelectedPart();
+        const mask = getMask(name);
+        const context = mask.getContext("2d");
+        const hasMask =
+          context &&
+          cropBoundsFromAlpha(
+            context.getImageData(0, 0, mask.width, mask.height).data,
+            mask.width,
+            mask.height,
+          );
+        if (!hasMask) continue;
+        await generateRepair();
+        if (repairOutput.src) generatedArtwork.set(name, repairOutput.src);
+        saveDraft();
+      }
+      announce(
+        "Completed the missing-part queue. Review every generated layer before Motion Lab.",
+      );
+    } finally {
+      completeAll.disabled = false;
+      repair.disabled = false;
+      renderLayers();
+    }
+  };
+  const suggestAllParts = async (): Promise<void> => {
+    suggestAll.disabled = true;
+    try {
+      for (const [index, name] of layerNames.entries()) {
+        selectedLayer = name;
+        layerName.textContent = name;
+        announce(`Suggesting ${index + 1} of ${layerNames.length}: ${name}…`);
+        await suggestSelectedPart();
+      }
+      renderLayers();
+      announce(
+        "Suggested all parts locally. Review each horizontal layer card before painting or generating missing art.",
+      );
+    } finally {
+      suggestAll.disabled = false;
+    }
   };
 
   input.addEventListener("change", () => {
@@ -511,6 +1792,34 @@ export const mountLayerLab = (
     }),
   );
   canvas.addEventListener("pointerdown", (event) => {
+    if (guidingEye) {
+      const nextPoint = point(event);
+      guidePoints.push(nextPoint);
+      const pointNames = [
+        "outer corner",
+        "inner corner",
+        "top lid",
+        "lower lid",
+      ];
+      if (guidePoints.length === 4) {
+        const [outer, inner, top, bottom] = guidePoints;
+        if (!outer || !inner || !top || !bottom) return;
+        const guide = { outer, inner, top, bottom };
+        eyeGuides.set(guidingEye, guide);
+        applyEyeGuide(guidingEye, guide);
+        guideStatus.textContent = `${guidingEye === "left" ? "Left" : "Right"} eye guide ready.`;
+        guidingEye = undefined;
+        guidePoints = [];
+        draw();
+        announce(
+          "Eye guide saved. Set the other eye, then create guided eye layers.",
+        );
+      } else {
+        guideStatus.textContent = `${guidingEye === "left" ? "Left" : "Right"} eye: click ${pointNames[guidePoints.length]}.`;
+        draw();
+      }
+      return;
+    }
     drawing = true;
     saveSnapshot();
     canvas.setPointerCapture(event.pointerId);
@@ -523,6 +1832,58 @@ export const mountLayerLab = (
     drawing = false;
     renderLayers();
   });
+  const paintPartCanvas = (event: PointerEvent) => {
+    const bounds = selectedBounds();
+    if (!bounds) return;
+    const partBounds = partCanvas.getBoundingClientRect();
+    const mainBounds = canvas.getBoundingClientRect();
+    const x =
+      bounds.x +
+      ((event.clientX - partBounds.left) / partBounds.width) * bounds.width;
+    const y =
+      bounds.y +
+      ((event.clientY - partBounds.top) / partBounds.height) * bounds.height;
+    brush(
+      new PointerEvent("pointermove", {
+        clientX: mainBounds.left + (x / canvas.width) * mainBounds.width,
+        clientY: mainBounds.top + (y / canvas.height) * mainBounds.height,
+        button: event.button,
+        buttons: event.buttons,
+      }),
+    );
+  };
+  partCanvas.addEventListener("pointerdown", (event) => {
+    drawing = true;
+    saveSnapshot();
+    partCanvas.setPointerCapture(event.pointerId);
+    paintPartCanvas(event);
+  });
+  partCanvas.addEventListener("pointermove", (event) => {
+    if (drawing) paintPartCanvas(event);
+  });
+  partCanvas.addEventListener("pointerup", () => {
+    drawing = false;
+    renderLayers();
+  });
+  partCanvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      zoom = Math.min(
+        5,
+        Math.max(0.5, zoom + (event.deltaY < 0 ? 0.15 : -0.15)),
+      );
+      canvas.style.width = `${zoom * 100}%`;
+      canvas.style.maxWidth = "none";
+      announce(
+        `Canvas zoom ${Math.round(zoom * 100)}%. Ctrl/Cmd + wheel zooms; right-click erases.`,
+      );
+    },
+    { passive: false },
+  );
   size.addEventListener("input", () => (value.value = `${size.value} px`));
   const setMode = (next: "add" | "erase") => {
     mode = next;
@@ -533,23 +1894,85 @@ export const mountLayerLab = (
   erase.addEventListener("click", () => setMode("erase"));
   suggest.addEventListener("click", () => {
     saveSnapshot();
-    paintSuggestion(selectedLayer);
-    renderLayers();
-    draw();
-    announce(`Suggested a ${selectedLayer} region. Refine it with the brush.`);
+    void suggestSelectedPart();
   });
   suggestAll.addEventListener("click", () => {
-    layerNames.forEach(paintSuggestion);
-    renderLayers();
-    draw();
-    announce(
-      "Created editable starter masks for all 24 art parts. Review each one before validation.",
-    );
+    void suggestAllParts();
   });
   compare.addEventListener("click", () => {
     showingSource = !showingSource;
     compare.textContent = showingSource ? "Show mask" : "Compare source";
     draw();
+  });
+  const startGuide = (side: "left" | "right") => {
+    guidingEye = side;
+    guidePoints = [];
+    guideStatus.textContent = `${side === "left" ? "Left" : "Right"} eye: click outer corner.`;
+    announce(
+      "Eye guide mode: click outer corner, inner corner, top lid, then lower lid. The marks follow the real portrait.",
+    );
+    draw();
+  };
+  guideLeft.addEventListener("click", () => startGuide("left"));
+  guideRight.addEventListener("click", () => startGuide("right"));
+  createGuidedEyes.addEventListener("click", createEyeLayersFromGuides);
+  clearGuides.addEventListener("click", () => {
+    eyeGuides.clear();
+    guidingEye = undefined;
+    guidePoints = [];
+    guideStatus.textContent = "No eye guides set.";
+    draw();
+  });
+  repair.addEventListener("click", () => void generateRepair());
+  applyRepair.addEventListener("click", () => {
+    if (!repairOutput.src) return;
+    generatedArtwork.set(selectedLayer, repairOutput.src);
+    applyRepair.disabled = true;
+    repairStatus.textContent = `Applied the local repair to ${selectedLayer}. It will be included in Motion Lab and export.`;
+    saveDraft();
+  });
+  completeAll.addEventListener("click", () => void completeAllMissing());
+  makeMotionReady.addEventListener("click", () => void makeAvatarMotionReady());
+  expressionButtons.forEach((button, name) =>
+    button.addEventListener("click", () => void generateExpression(name)),
+  );
+  const setEditing = (next: "mask" | "art") => {
+    editing = next;
+    paintArt.classList.toggle("selected", next === "art");
+    paintMask.classList.toggle("selected", next === "mask");
+    announce(
+      next === "art"
+        ? "Painting artwork inside the selected mask."
+        : "Editing the selected mask.",
+    );
+  };
+  paintArt.addEventListener("click", () => setEditing("art"));
+  paintMask.addEventListener("click", () => setEditing("mask"));
+  fillArt.addEventListener("click", () => {
+    const target = getArtwork();
+    const targetContext = target.getContext("2d");
+    if (!targetContext) return;
+    targetContext.clearRect(0, 0, target.width, target.height);
+    targetContext.fillStyle = artColor.value;
+    targetContext.fillRect(0, 0, target.width, target.height);
+    targetContext.globalCompositeOperation = "destination-in";
+    targetContext.drawImage(getMask(), 0, 0);
+    targetContext.globalCompositeOperation = "source-over";
+    generatedArtwork.set(selectedLayer, target.toDataURL("image/png"));
+    saveDraft();
+    renderLayers();
+    draw();
+    announce(`Filled ${selectedLayer} with the selected color.`);
+  });
+  clearArt.addEventListener("click", () => {
+    const target = artworkCanvases.get(selectedLayer);
+    target?.getContext("2d")?.clearRect(0, 0, target.width, target.height);
+    artworkCanvases.delete(selectedLayer);
+    generatedArtwork.delete(selectedLayer);
+    saveDraft();
+    renderLayers();
+    draw();
+    announce(`Cleared artwork for ${selectedLayer}.`);
   });
   clear.addEventListener("click", () => {
     const mask = getMask();
@@ -579,6 +2002,18 @@ export const mountLayerLab = (
     restore(next);
     redo.disabled = snapshots.length === 0;
   });
+  document.addEventListener("keydown", (event) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.matches("input, textarea, select")) return;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      if (event.shiftKey) redo.click();
+      else undo.click();
+      return;
+    }
+    if (event.key.toLowerCase() === "b") setMode("add");
+    if (event.key.toLowerCase() === "e") setMode("erase");
+  });
   validate.addEventListener("click", () => {
     const project = buildProject();
     if (!isProjectReady(project.layers)) {
@@ -602,5 +2037,30 @@ export const mountLayerLab = (
       "Exported a local project file. Keep it with the original portrait.",
     );
   });
-  load(exampleSource);
+  const savedDraft = (() => {
+    try {
+      const parsed: unknown = JSON.parse(
+        sessionStorage.getItem("open-avatar-project") ?? "null",
+      );
+      if (!parsed || typeof parsed !== "object") return undefined;
+      const project = parsed as Partial<ExportedProject>;
+      return project.version === 1 &&
+        typeof project.source === "string" &&
+        project.layers
+        ? ({
+            version: 1,
+            updatedAt: project.updatedAt ?? Date.now(),
+            source: project.source,
+            layers: project.layers,
+            generatedArtwork: project.generatedArtwork ?? {},
+            expressionArtwork: project.expressionArtwork ?? {},
+            missingArtwork: project.missingArtwork ?? [],
+            limitations: project.limitations ?? [],
+          } satisfies ExportedProject)
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+  load(savedDraft?.source ?? exampleSource, savedDraft);
 };

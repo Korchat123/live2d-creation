@@ -1,7 +1,7 @@
 # ADR 0001: Runtime and avatar format
 
-- Status: Proposed
-- Date: 2026-07-29
+- Status: Accepted; amended for dual output
+- Date: 2026-07-31
 - Decision owners: project maintainers
 - Scope: browser renderer, runtime boundary, and distributable avatar format
 
@@ -9,11 +9,13 @@
 
 Open 2D Avatar needs to render layered and deformable characters in modern
 browsers while allowing humans, scripts, tracking adapters, and AI applications
-to use one semantic control contract. The project must not depend on Live2D
-Cubism Core, its SDK, editor, or file formats. It must also be possible to
-validate untrusted bundles before GPU allocation, export bundles
-deterministically, audit asset rights, and evolve the renderer without changing
-the public control protocol.
+to use one semantic control contract. The default runtime and export must not
+depend on Live2D Cubism Core, its SDK, editor, or file formats. An optional
+Cubism-ready PSD handoff may depend on a user-installed Cubism Editor without
+changing the Open Avatar runtime boundary. It must also be possible to validate
+untrusted bundles before GPU allocation, export bundles deterministically,
+audit asset rights, and evolve the renderer without changing the public control
+protocol.
 
 This ADR compares a custom runtime built on PixiJS with open, non-Cubism
 alternatives that are close enough to merit evaluation. "Open" here means that
@@ -44,15 +46,16 @@ that every authoring tool or hosted service is open source or free.
 | DragonBonesJS and DragonBones data                          | DragonBonesJS is MIT licensed.                                                                                                                                                                               | The official repository describes a JavaScript/TypeScript runtime with PixiJS and other engine integrations.                                                                                                                                                          | Bone animation and runtime playback are available, but the abstraction is skeletal animation rather than the complete semantic control, arbitration, live-channel mixing, validation, and lifecycle system required here.                              | Existing DragonBones data/export workflows could be adapted, but they do not provide the project's proposed rights manifest, checksums, semantic capability schema, or deterministic Open Avatar exporter as one owned contract.                                                                                                                  | The repository lists only three releases and identifies v3.0.1 from January 2015 as the latest release, despite later repository activity. That release signal and fragmented editor history create adoption risk. | Rejected as the foundation. It may be useful as prior art for skeletal data and Pixi integration.                                                                                                                      |
 
 Spine is not eligible because its official runtimes and editor use a commercial
-license rather than an open runtime license. Live2D Cubism is excluded by the
-product boundary. Lottie is not evaluated as a puppet runtime because its core
-contract is authored animation playback, not continuous deformable avatar
-control.
+license rather than an open runtime license. Live2D Cubism is excluded as the
+default runtime but is supported as an optional authoring handoff. Lottie is
+not evaluated as a puppet runtime because its core contract is authored
+animation playback, not continuous deformable avatar control.
 
 ## Decision
 
 Adopt an **Open Avatar-owned runtime and bundle format**, with **PixiJS 8 as the
-initial rendering adapter**.
+initial rendering adapter**. Open Avatar is the default automated rig, preview,
+and export. The product also supports an optional Cubism-ready PSD export.
 
 The format is not a serialized Pixi scene. It is renderer-neutral application
 data:
@@ -77,6 +80,20 @@ The public control protocol remains provider-neutral. Rive, Inochi2D, a future
 renderer, and any authoring UI may only integrate through adapters; none may
 introduce their parameter names, state-machine inputs, or file-format concepts
 into semantic command types.
+
+### Cubism handoff boundary
+
+The generated project may export aligned, named, grouped PSD source art for
+manual or assisted import into Live2D Cubism Editor. This exporter is an
+authoring adapter and must not make packages depend on Cubism Core or accept
+Cubism types in the Open Avatar control protocol.
+
+A PSD is labelled **Cubism-ready**, not a Live2D model. Official Cubism
+documentation states that PSD import creates ArtMeshes and that parameter-linked
+vertex movement is stored in the `.moc3` exported by Modeler. Only data imported,
+rigged or verified, and exported through an approved Cubism Editor version may
+be labelled a Live2D Cubism model. Automated `.cmo3` or `.moc3` creation is not
+approved.
 
 ### Production renderer and fallback policy
 
@@ -113,6 +130,8 @@ unsupported/unavailable results even when animated rendering is unavailable.
   authoring format.
 - Original model data is not locked to an editor subscription or hosted
   service.
+- Users who need the Cubism ecosystem have an explicit optional handoff without
+  making it the default runtime.
 
 ### Negative
 
@@ -126,6 +145,8 @@ unsupported/unavailable results even when animated rendering is unavailable.
   devices where WebGL is unavailable.
 - PixiJS upgrades can affect shader, mesh, mask, texture, and lifecycle behavior
   and therefore require pinned versions and regression testing.
+- The optional Cubism path requires a separately installed and appropriately
+  licensed editor, plus human rig review.
 
 ## Vertical spike proofs and risks
 
@@ -186,6 +207,8 @@ Primary and official sources accessed 2026-07-29:
 - [Inochi2D official SDK repository](https://github.com/Inochi2D/inochi2d)
 - [Inochi2D technical documentation](https://docs.inochi2d.com/)
 - [DragonBonesJS official repository](https://github.com/DragonBones/DragonBonesJS)
+- [Live2D Cubism PSD import](https://docs.live2d.com/en/cubism-editor-manual/psd-import/)
+- [Live2D Cubism model files](https://docs.live2d.com/en/cubism-sdk-manual/model-web/)
 
 Repository activity and release dates are evidence of current project activity,
 not a guarantee of future maintenance. Dependency versions and licenses must be

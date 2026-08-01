@@ -7,10 +7,10 @@ of permission.
 
 ## Current status
 
-The reference avatar has no artwork or external references. Its
-`LICENSES/rights.json` therefore declares an explicit empty state and an
-`incomplete` review. It makes no ownership claim. Export remains blocked until
-real assets have evidence-backed records and the review is approved.
+The reference avatar inventory contains three project-authored SVG studies and
+is approved for its recorded uses. This approval does not cover uploaded
+references, checkpoints, LoRAs, generated images, or future model projects.
+Each generated project must carry its own complete evidence before export.
 
 ## Required record for each asset
 
@@ -29,6 +29,32 @@ real assets have evidence-backed records and the review is approved.
 Do not label an asset original, public domain, or redistributable without
 evidence. AI-generated assets also require the tool/provider, generation date,
 input provenance, applicable terms, and a human review for third-party material.
+
+## Generated-project evidence
+
+A prompt-generated project must additionally record:
+
+- generation provider and adapter version;
+- workflow-template identifier and version;
+- checkpoint/model identifier, version or hash, source, license, and evidence
+  access date;
+- every LoRA, embedding, control model, VAE, or other model dependency with the
+  same evidence;
+- prompt provenance without forcing private prompt text into a distributable
+  bundle;
+- seed and bounded generation settings needed for audit or reproduction;
+- hashes of input references and generated artifacts;
+- provider terms applicable on the generation date;
+- whether commercial use and redistribution of the generated output are known
+  to be allowed; and
+- human review for copied signatures, watermarks, logos, characters, or other
+  recognizable third-party material.
+
+Studio may list a locally installed checkpoint before its rights record exists,
+but it must label that checkpoint **unverified**. It may be used only for a
+local candidate under an explicit warning. Accepting it into an exportable
+project remains blocked until the evidence is approved. Studio must never
+choose the first discovered checkpoint automatically.
 
 ## Addition procedure
 

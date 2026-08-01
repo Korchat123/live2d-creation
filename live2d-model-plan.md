@@ -1,515 +1,444 @@
-# Open 2D Avatar - Product and Delivery Plan
+# Prompt-to-Live2D Studio - Product and Delivery Plan
 
-Status: planning  
-Working name: Open Avatar  
-Repository name: `live2d-model` (legacy name; product language must use
-"Open 2D Avatar")
+Status: draft product pivot; implementation gates require approval
+
+Working name: Prompt-to-Live2D Studio
+
+Repository name: `live2d-model`
+
+Approved output decision: support both formats. Open Avatar is the default
+automated rig, preview, and export path. Live2D Cubism is an optional layered
+PSD handoff completed and exported through Cubism Editor.
 
 ## 1. Product goal
 
-Build an original, portable 2D avatar system that a human or an AI can control
-through the same public API. The finished product must:
+Build a local-first Studio in which a user can:
 
-- render an original layered and deformable avatar in modern browsers;
-- accept real-time input from a human controller, keyboard, pointer, tracking
-  source, script, or AI agent;
-- expose stable TypeScript and provider-neutral JSON control contracts;
-- support expressions, gestures, gaze, blinking, body/head pose, and lip sync;
-- validate and safely load third-party Open Avatar bundles;
-- run without Live2D Cubism Core, SDK, Editor, or model formats;
-- ship as reusable packages, a controller/preview app, documentation, examples,
-  and a distributable avatar bundle.
+1. describe a new 2D character in a text box;
+2. generate a consistent character design and every required movable part;
+3. review and correct the generated parts without cropping a flattened portrait;
+4. assemble and auto-rig an editable 2D avatar;
+5. preview gaze, blink, mouth, head, body, and secondary motion;
+6. upload a project and request changes such as a new hairstyle, eye color, or
+   outfit without destroying the accepted version; and
+7. export an Open Avatar bundle and a Cubism-ready layered PSD.
 
-It will not generate `.moc3`, `.model3.json`, or other Cubism-compatible files.
+The quality target is a riggable character assembled from purpose-generated,
+transparent, overlap-complete parts. A flattened portrait may be used as an
+optional identity or style reference, but it is not the source from which the
+product crops all parts.
 
-## 2. Users and final workflows
+The existing Open Avatar runtime, control protocol, renderer, validator, and
+Studio work remain useful. They become the preview, automated rig, validation,
+and provider-neutral runtime path behind the new prompt-first authoring flow.
 
-### Human operator
+## 2. What “real Live2D model” means
 
-A human opens the Studio app, loads an avatar, and controls it using UI
-controls, keyboard shortcuts, pointer gaze, microphone level, or an optional
-tracking adapter. The operator can record, replay, and export command sequences.
+The product must use precise output labels:
 
-### AI application
+- **Generated project:** the editable source of truth owned by this repository.
+- **Open Avatar bundle:** the generated art and rig running in the repository's
+  existing browser runtime. It is not a Live2D Cubism model.
+- **Cubism-ready PSD:** aligned, named, layered art prepared for import into
+  Live2D Cubism Editor. It is not yet a rigged Cubism model.
+- **Live2D Cubism model:** editable `.cmo3` data or runtime `.moc3` and
+  `.model3.json` data created and exported by Live2D Cubism Editor.
 
-An AI application imports the runtime package or sends validated commands
-through an adapter. It can request semantic states such as `happy`, `thinking`,
-`wave`, or a gaze target without knowing model-specific parameter names.
+Live2D's official documentation says a PSD import creates ArtMeshes, while the
+parameter-linked vertex movement is recorded in the `.moc3` exported by
+Modeler. Therefore ComfyUI image generation alone cannot truthfully produce a
+finished Cubism model.
 
-### Avatar author
+The default Generate and Export flow delivers an automated Open Avatar rig.
+Users may additionally export a Cubism-ready PSD. An actual `.moc3` is an
+assisted Cubism Editor handoff until a documented, licensed, reliable
+automation route is approved. The application must never rename a layered
+image or Open Avatar bundle as a Cubism model.
 
-An author prepares licensed layer art, rigs it, previews parameter ranges,
-validates rights and bundle integrity, and exports a deterministic bundle.
+## 3. Primary user workflows
 
-### Application developer
+### Create a model from a prompt
 
-A developer embeds a canvas or web component, loads a bundle, subscribes to
-runtime events, and supplies commands from any control source.
+1. Enter character, style, outfit, palette, and motion requirements.
+2. Choose local ComfyUI or another approved generation provider.
+3. Generate several neutral full-character concepts.
+4. Accept one concept to lock the identity and character bible.
+5. Review the proposed part inventory.
+6. Generate each part on the same full canvas with transparency, concealed
+   overlap, stable landmarks, and reference conditioning.
+7. Inspect the neutral composite and fix or regenerate individual parts.
+8. Auto-rig supported parameters and run motion validation.
+9. Export the editable project and default Open Avatar bundle, with a
+   Cubism-ready PSD available as an optional additional export.
 
-## 3. Product boundaries
+### Change an uploaded model with a prompt
 
-This repository owns:
+1. Upload a generated project, not merely a screenshot or runtime texture.
+2. Enter a request such as “long wavy hair,” “green eyes,” or “black jacket.”
+3. Preview the interpreted change scope before generation.
+4. Generate variants in a new revision while preserving accepted identity,
+   pose, canvas, landmarks, and unaffected parts.
+5. Compare old and new neutral composites and motion extremes.
+6. Accept, reject, or refine the revision.
+7. Re-rig only the affected dependency set when possible.
 
-- the open bundle format and JSON Schema;
-- runtime, animation mixer, renderer, SDK, and control protocol;
-- human controller/preview Studio;
-- authoring/export/validation tools;
-- original reference avatar and its rights records;
-- tests, examples, documentation, and release artifacts.
+Uploads containing only a flattened image may start a new reference-conditioned
+project, but cannot promise preservation of the original rig. Cubism runtime
+files are not treated as editable source art. Cubism project import remains a
+separate feasibility and licensing decision.
 
-Host applications own:
+## 4. Product principles
 
-- conversation, agent, and user state;
-- microphone permission and audio capture;
-- camera/tracking permission and raw tracking data;
-- AI prompts, provider events, credentials, and tool calls;
-- authorization for remote control.
+1. **Generate for separation.** Ask the model for purpose-built layers rather
+   than using crops as the primary art source.
+2. **Lock identity before parts.** Accepted face, proportions, palette, line
+   treatment, canvas, and landmarks form a character bible used by every job.
+3. **Full-canvas alignment.** Every part is returned in the canonical canvas
+   coordinate system, even when most pixels are transparent.
+4. **Concealed overlap is required.** Hair, eyelids, jaw, neck, clothing, and
+   mouth parts include pixels hidden in the neutral pose.
+5. **Non-destructive revisions.** Prompts create candidate revisions; only
+   explicit acceptance changes the active project.
+6. **Dependency-aware editing.** A recolor may replace a texture. A silhouette
+   change may require new masks, meshes, physics, and motion validation.
+7. **Provider-neutral orchestration.** Studio uses an internal generation port;
+   ComfyUI is the first adapter, not a public product contract.
+8. **Reproducible evidence.** Record seed, workflow version, model/checkpoint
+   identifier, adapter version, prompts, inputs, and artifact hashes.
+9. **Safe data boundary.** Prompts, workflows, uploads, and outputs are hostile
+   data and are bounded and validated before use.
+10. **Human approval at quality gates.** Automation may propose art and rigs,
+    but cannot silently approve identity, rights, or motion quality.
+11. **Preserve dependency direction.** Applications consume packages; packages
+    never import from applications.
+12. **Keep packages private.** No package or model is published until license
+    and release policy approval.
 
-Avatar bundles must never contain executable code, secrets, raw provider
-events, or application state.
-
-## 4. Architecture principles
-
-1. **One control contract.** Humans and AI use the same semantic command types.
-2. **Deterministic core.** Given a bundle, command stream, clock, and seed, the
-   pose result is reproducible.
-3. **Dependency direction.** Apps depend on public packages; core packages
-   never import from apps.
-4. **Ports and adapters.** Keyboard, UI, AI, audio, and tracking are adapters
-   around the control API, not renderer features.
-5. **Capability discovery.** A controller queries supported capabilities before
-   sending commands and receives a graceful unsupported result.
-6. **Safe data boundary.** Schema validation, limits, path normalization, and
-   integrity checks happen before GPU allocation.
-7. **Lifecycle ownership.** Every created texture, buffer, listener, and audio
-   node has an explicit dispose path.
-8. **Accessibility and reduced motion.** Human controls are keyboard accessible;
-   consumers can disable physics, idle motion, and flashes.
-9. **Versioned public APIs.** Packages, protocol, schema, and bundles follow
-   semantic versioning independently.
-10. **No premature editor.** Prove the runtime and file format before building a
-    full visual rig editor.
-11. **CI/CD grows with every phase.** A phase is incomplete until its new
-    requirements run automatically. Deployment publishes only the safe preview,
-    report, package, or release artifact appropriate to that phase.
-
-## 5. System design
-
-```text
-Human UI / keyboard / tracking / microphone      AI / scripts / host app
-                    |                                      |
-                    +---------- control adapters ----------+
-                                           |
-                                  validated commands
-                                           |
-                              control router + policy
-                                           |
-                           scheduler / animation state machine
-                                           |
-                  parameter mixer (base + motion + expression + live input)
-                                           |
-                               deformer / pose evaluator
-                                           |
-                                  PixiJS renderer
-                                           |
-                                         canvas
-```
-
-### Runtime layers
-
-- **Bundle loader:** parses, validates, resolves, and verifies assets.
-- **Capability registry:** reports expressions, motions, parameters, and input
-  channels available in the loaded avatar.
-- **Control router:** validates commands, applies source priority, rate limits,
-  cancellation, and ownership rules.
-- **Scheduler:** timestamps commands and manages queues, interruption, and
-  cross-fades.
-- **Parameter mixer:** combines layers in a fixed order:
-  defaults -> idle/physics -> motion -> expression -> gaze/tracking -> lip sync
-  -> safety clamp.
-- **Pose evaluator:** evaluates keyframes, interpolation, pivots, and mesh
-  deformation without renderer-specific application logic.
-- **Renderer:** owns PixiJS resources and renders the evaluated pose.
-
-Production uses WebGL initially. WebGPU remains an experimental path until
-browser behavior and visual parity pass the release suite.
-
-## 6. Public control contract
-
-All sources submit an envelope; source identity is supplied by the trusted host,
-not accepted from an untrusted AI payload.
-
-```ts
-type AvatarCommand =
-  | { type: "expression.set"; id: string; intensity?: number; fadeMs?: number }
-  | { type: "motion.play"; id: string; priority?: number; fadeMs?: number }
-  | { type: "motion.stop"; id?: string; fadeMs?: number }
-  | { type: "gaze.set"; x: number; y: number; durationMs?: number }
-  | {
-      type: "pose.set";
-      parameters: Record<string, number>;
-      durationMs?: number;
-    }
-  | { type: "lipSync.set"; mouthOpen: number }
-  | { type: "viseme.set"; id: string; weight: number; durationMs?: number }
-  | { type: "state.reset"; fadeMs?: number };
-
-type CommandEnvelope = {
-  protocol: "open-avatar-control";
-  version: "1.0";
-  requestId: string;
-  timestamp: number;
-  command: AvatarCommand;
-};
-```
-
-The SDK returns an acknowledged result with `accepted`, `completed`,
-`interrupted`, `unsupported`, `invalid`, or `rate_limited`. Continuous channels
-such as gaze and mouth level are coalesced instead of queued.
-
-### Control arbitration
-
-- Emergency reset and host policy have highest priority.
-- Explicit human input wins over AI input for a configurable hold period.
-- Lip sync owns only mouth/viseme parameters.
-- Gaze/tracking owns only declared gaze/head channels.
-- A motion cannot write undeclared targets.
-- Commands have bounds, maximum duration, and rate limits.
-- Remote control is opt-in and belongs in the host adapter, not the core runtime.
-
-## 7. Open Avatar bundle contract
+## 5. System architecture
 
 ```text
-avatar-bundle/
-|-- avatar.json
-|-- textures/
-|-- meshes/
-|-- animations/
-|-- thumbnails/
-|-- LICENSES/
-|   |-- rights.json
-|   `-- notices.txt
-`-- checksums.sha256
+Studio prompt / optional reference / uploaded generated project
+                              |
+                     authoring orchestrator
+                              |
+            approved generation-provider contract
+                     /                    \
+          local ComfyUI adapter       future adapter
+                     \                    /
+              bounded artifact intake + provenance
+                              |
+        project revisions + character bible + part graph
+                              |
+        part validator -> compositor -> rig generator
+                              |
+             motion sweeps + visual approval
+                    /                     \
+        Open Avatar exporter          layered PSD exporter
+                    |                     |
+          existing browser runtime    Cubism Editor handoff
+                                            |
+                                    .cmo3 / .moc3 export
 ```
 
-`avatar.json` contains:
+### Reuse from the current repository
 
-- format and bundle version;
-- canvas and coordinate system;
-- resource limits and texture references;
-- parts, draw order, masks, pivots, and meshes;
-- typed parameter definitions with defaults and ranges;
-- expressions, motions, and transitions;
-- semantic capability mappings;
-- lip-sync and optional viseme mappings;
-- accessibility metadata and reduced-motion behavior;
-- rights-manifest reference.
+- `packages/schema`, `validator`, and `exporter`: extend only after the new
+  private project and generation contracts are approved.
+- `packages/core`, `runtime`, `renderer-pixi`, `controls`, and `audio`: retain
+  as the automated rig preview and Open Avatar runtime.
+- `apps/studio`: evolve into the prompt workspace, revision review, part
+  inspector, and Motion Lab.
+- existing rights, security, performance, browser, and release checks: retain
+  and extend.
 
-The canonical schema is JSON Schema Draft 2020-12. Unknown major versions are
-rejected; unknown optional fields are preserved where safe. Paths must be
-relative, normalized, inside the bundle, and referenced files must match their
-hashes.
+### New internal boundaries
 
-## 8. Target repository structure
+The exact public types are deliberately deferred.
 
-Use a pnpm TypeScript workspace with explicit `workspace:` dependencies.
+- **Authoring project:** immutable source reference, character bible, part
+  graph, accepted revision, candidate revisions, masks, meshes, rig metadata,
+  limitations, provenance, and rights records.
+- **Generation request:** intent plus approved references and bounded settings.
+- **Generation result:** one or more typed artifacts and diagnostics, never an
+  arbitrary command or executable workflow.
+- **Provider adapter:** health/capability discovery, job submission, progress,
+  cancellation, and artifact retrieval.
+- **Change planner:** maps a user request to affected parts and downstream rig
+  dependencies, with user confirmation before an expensive or destructive
+  regeneration.
 
-```text
-live2d-model/
-|-- .changeset/                 # package release notes and versioning
-|-- .github/
-|   `-- workflows/              # CI, security, release
-|-- apps/
-|   |-- studio/                 # human controller and authoring preview
-|   `-- playground/             # minimal SDK integration example
-|-- packages/
-|   |-- schema/                 # manifest/control schemas and generated types
-|   |-- core/                   # clock, math, scheduler, mixer, pose evaluation
-|   |-- runtime/                # public high-level AvatarRuntime API
-|   |-- renderer-pixi/          # PixiJS resource and rendering adapter
-|   |-- controls/               # router, policy, human/AI input adapters
-|   |-- audio/                  # RMS and optional viseme input adapters
-|   |-- validator/              # safe bundle validation and diagnostics
-|   |-- exporter/               # deterministic bundle creation
-|   `-- web-component/          # framework-neutral browser embedding
-|-- assets/
-|   |-- source/                 # original editable art; never runtime-loaded
-|   |-- reference-avatar/       # source definition for the first-party avatar
-|   `-- fixtures/               # small valid/malformed test bundles
-|-- docs/
-|   |-- adr/                    # architecture decision records
-|   |-- architecture/
-|   |-- authoring/
-|   |-- protocol/
-|   |-- security/
-|   `-- tutorials/
-|-- examples/
-|   |-- ai-controller/
-|   `-- human-controller/
-|-- tests/
-|   |-- e2e/
-|   |-- golden/
-|   |-- performance/
-|   `-- soak/
-|-- tools/                      # repository-only scripts and build helpers
-|-- AGENTS.md                   # contributor/agent instructions
-|-- LICENSE
-|-- README.md
-|-- SECURITY.md
-|-- package.json
-|-- pnpm-lock.yaml
-|-- pnpm-workspace.yaml
-|-- tsconfig.base.json
-`-- vitest.workspace.ts
-```
+No new public package contract is frozen before its scheduled phase gate.
 
-Rules:
+## 6. Generation strategy
 
-- Each package has `src/`, `test/`, `package.json`, `tsconfig.json`, and a
-  documented public entry point.
-- Import through package entry points; do not deep-import another package's
-  `src`.
-- Keep generated files identifiable and reproducible.
-- Keep test fixtures out of published packages unless explicitly required.
-- Store large binary source art with Git LFS once binary artwork is introduced.
-- Never commit credentials, local recordings, camera captures, build output,
-  dependency folders, or unsigned release archives.
+### Character bible
 
-## 9. Initial semantic capabilities
+The accepted concept freezes:
 
-- Expressions: `neutral`, `happy`, `sad`, `angry`, `surprised`, `thinking`.
-- Motions: `idle`, `nod`, `wave`, `explain`, `shrug`.
-- Gaze: normalized X/Y in `[-1, 1]`.
-- Lip level: normalized mouth-open in `[0, 1]`.
-- Blink: automatic plus explicit override.
-- Pose: bounded semantic head/body parameters.
-- Optional visemes: documented symbol set and phoneme mapping.
+- canonical front pose, canvas, crop policy, and scale;
+- face landmarks and body anchors;
+- silhouette, proportions, age presentation, and identity features;
+- palette swatches and material descriptions;
+- line weight, shading, rendering style, and transparency rules;
+- outfit and accessory inventory;
+- approved negative constraints; and
+- required expressions, pose range, and part inventory.
 
-Model-specific parameter and layer names remain internal. Semantic mappings are
-declared by each bundle.
+All later generation is conditioned on this record. A change that intentionally
+alters an identity-locked field must say so and trigger broader review.
+
+### Required generated parts
+
+The v1 inventory includes:
+
+- back, side, and front hair groups with scalp overlap;
+- ears, neck, face base, and optional separated face shading;
+- independent left/right sclera, iris/pupil, highlight, upper lid/lashes, lower
+  lid, and brows;
+- nose when the approved style needs it separated;
+- upper/lower lips, mouth cavity, tongue, and upper/lower teeth as applicable;
+- torso, rear/front garment pieces, collar pieces, and accessories;
+- optional upper arm, forearm, and hand groups only when requested; and
+- alternate art required for approved expressions that deformation alone
+  cannot represent.
+
+Each result uses the same full canvas, transparent background, stable layer ID,
+declared draw order, anchors, and adequate hidden overlap. Generation can use a
+full-frame reference and mask internally, but the accepted layer is not a crop
+cut from the original flattened portrait.
+
+### ComfyUI adapter
+
+The first spike uses ComfyUI's documented workflow-graph and asynchronous job
+model. The repository owns versioned, reviewed workflow templates. User text is
+inserted only into bounded template fields.
+
+Initial policy:
+
+- connect to an explicitly configured local endpoint;
+- discover health and required capabilities before enabling Generate;
+- use allowlisted workflow templates and node classes;
+- never execute a workflow graph supplied by an uploaded project;
+- never allow prompts to select output paths, nodes, checkpoints, URLs, or
+  commands directly;
+- apply time, queue, pixel, file-count, and byte limits;
+- validate decoded MIME type, dimensions, alpha, and hashes;
+- keep credentials out of browser bundles and exported projects; and
+- store checkpoint/workflow identifiers for reproducibility without bundling
+  checkpoint files.
+
+Specific checkpoint and custom-node dependencies are selected only in the
+generation spike and must have recorded licenses and version pins.
+
+## 7. Prompt-edit impact rules
+
+| Requested change             | Expected scope                                       | Required follow-up                                              |
+| ---------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
+| Eye color                    | Iris/pupil textures                                  | Composite, gaze, and identity checks                            |
+| Hair color                   | Existing hair textures                               | Composite, alpha-edge, and motion sweeps                        |
+| Hairstyle                    | Hair parts and possibly occlusion masks              | Mesh, physics, draw-order, head-pose, and overlap checks        |
+| Clothing color/material      | Affected garment textures                            | Composite and motion sweeps                                     |
+| Clothing silhouette          | Garment parts, masks, and possibly arms/hair overlap | Mesh, draw-order, pose, and clipping checks                     |
+| Facial feature or age change | Face and dependent facial parts                      | Treat as identity revision and rerun full facial rig validation |
+| Body pose/proportion         | Broad part graph                                     | Treat as a new model version and rerig                          |
+
+The change planner must show this impact before running the job. Users can
+override the plan only within safe, validated bounds.
+
+## 8. Quality and acceptance
+
+### Art acceptance
+
+- Neutral composite matches the accepted concept at the intended viewing size.
+- Part boundaries have no light fringe, holes, duplicated lines, or background.
+- Hidden overlap covers every approved deformation extreme.
+- Paired parts preserve intentional symmetry or documented asymmetry.
+- All parts retain identity, palette, line style, lighting, and canvas alignment.
+- No watermark, signature, prompt text, or unexplained foreign object exists.
+- The project records generation provenance and the user's rights declaration.
+
+### Rig acceptance
+
+- Pupils remain clipped inside their own eye openings at all gaze extremes.
+- Individual and combined blinks close without leaks.
+- Mouth open/form states reveal only valid interior art and return to neutral.
+- Approved head X/Y and body motion do not expose missing pixels.
+- Hair and clothing physics remain bounded and disable in reduced-motion mode.
+- Combined parameter sweeps do not tear, invert meshes, drift, or change draw
+  order unexpectedly.
+- Reset reproduces the accepted neutral composite.
+
+### Revision acceptance
+
+- Unaffected part hashes remain unchanged unless the impact plan approved them.
+- Identity similarity does not regress for a non-identity edit.
+- The before/after diff is shown at neutral and affected motion extremes.
+- Rejecting a candidate leaves the active revision byte-for-byte unchanged.
+- Project save/load preserves revision history and generation metadata.
+
+## 9. Security, privacy, and rights
+
+- Local-first remains the default. A cloud provider requires a separate consent,
+  privacy, credential-storage, retention, and cost design.
+- Uploaded archives, project manifests, prompts, workflow metadata, image files,
+  and provider responses are untrusted.
+- Reject traversal, absolute paths, external asset URLs, decompression bombs,
+  excessive dimensions, excessive part counts, unexpected file types,
+  malformed images, non-finite numbers, and unknown major versions.
+- Never execute commands, scripts, serialized nodes, or embedded metadata from
+  a project or generated image.
+- Strip unnecessary image metadata from exports while retaining project-level
+  provenance.
+- The user must confirm rights to uploaded references. The project must record
+  checkpoint/model and generated-output license evidence before export.
+- Generated output is never automatically declared original, exclusive,
+  trademark-safe, or redistributable.
+- Do not commit prompts containing personal data, uploaded art, generated
+  output, checkpoints, recordings, credentials, or release archives.
 
 ## 10. Delivery phases and gates
 
-### Phase 0 - Foundation and decisions
+### Phase P0 - Pivot approval and feasibility
 
-- [ ] Approve this product scope and repository structure.
-- [ ] Create ADR template and decision log.
-- [ ] Compare the custom PixiJS format/runtime with eligible open alternatives.
-- [ ] Decide browser baseline, package manager version, license, and release
-      policy.
-- [ ] Scaffold the workspace, linting, formatting, tests, and CI.
-- [ ] Add CI for document policy, secret scanning, install, lint, type-check,
-      unit tests, and build; add a manual dry-run artifact packaging job.
+- [x] Support both output paths, with Open Avatar as the default and Cubism as
+      an optional Editor handoff.
+- [ ] Approve local ComfyUI as the first provider and name the reference GPU,
+      operating system, VRAM, storage, and acceptable generation time.
+- [ ] Approve the rights policy for references, checkpoints, LoRAs, generated
+      output, and commercial use.
+- [ ] Record the Cubism Editor/license boundary and supported handoff.
+- [ ] Audit the current uncommitted Studio generation work against this plan;
+      preserve it until ownership and intent are confirmed.
+- [ ] Update the runtime/format ADR instead of silently contradicting it.
 
-Gate: ADR records the chosen format/runtime; the empty workspace passes CI and
-the dry-run artifact contains no secret or ignored file.
+Gate: the output labels, provider boundary, hardware budget, rights policy, and
+current-work disposition are approved. No speculative public contract is added.
 
-### Phase A - Rights, requirements, and visual specification
+### Phase P1 - Safe generation-provider spike
 
-- [x] Create a machine-readable rights manifest for every image, font, and
-      reference.
-- [x] Approve an original character sheet, turnaround, front pose, palette,
-      proportions, safe areas, and layer breakdown.
-- [x] Set target canvas, texture, bundle-size, and memory budgets.
-- [x] Decide RMS-only or the languages/viseme set required for v1.
-- [x] Approve expression, motion, and accessibility acceptance checklists.
-- [x] Extend CI with rights-manifest and specification completeness checks;
-      publish the review report as a non-release artifact.
+- [x] Add a prompt workspace with endpoint setup, health state, model/template
+      selection from an allowlist, Generate, progress, cancel, and errors.
+- [x] Prove one reviewed ComfyUI workflow end to end through a private adapter
+      on the reference device, including successful generation and provider
+      cancellation.
+- [x] Record job provenance and validate every returned artifact.
+- [x] Add unit tests for request construction and hostile prompt handling.
+- [x] Add integration tests with a fake provider; keep physical ComfyUI tests
+      manual and hardware-labelled until a controlled runner exists.
 
-Gate: rights records are complete, all art is original or redistributable, and
-the character/layer specification is approved. Phase A CI passes.
+Gate: a user prompt produces a bounded candidate image without arbitrary node,
+path, network, or command control; cancel and failure leave no partial project
+revision.
 
-### Phase B - Vertical runtime spike
+### Phase P2 - Character bible and part plan
 
-- [ ] Load a minimal schema-valid bundle.
-- [ ] Render a layered head/torso and one deformable mesh.
-- [ ] Demonstrate human UI and scripted/AI commands through the same API.
-- [ ] Demonstrate gaze, blink, mouth-open, interruption, reset, and disposal.
-- [ ] Record frame time, memory, bundle size, context loss, and remount results.
-- [ ] Extend CI with schema fixtures, browser smoke tests, lifecycle checks, and
-      performance reporting; deploy an approval-gated preview.
+- [x] Generate and compare concept variants.
+- [x] Add an explicit Accept design action.
+- [x] Extract or mark stable face/body landmarks.
+- [x] Create an editable part inventory and dependency graph from approved
+      templates.
+- [x] Freeze the private authoring-project schema only after review.
 
-Gate: stable 60 FPS on the named reference device; no lifecycle leaks; control
-contract and format can represent all required capabilities.
-The preview must be reproducible from the tested commit.
+Gate: a saved project round-trips the accepted concept, character bible,
+landmarks, part plan, provider metadata, and rights state.
 
-### Phase C - Runtime MVP
+### Phase P3 - Purpose-generated part artwork
 
-- [x] Implement schema, validator, loader, scheduler, mixer, pose evaluator,
-      renderer, and runtime SDK.
-- [x] Implement command acknowledgements, cancellation, arbitration, capability
-      discovery, limits, and diagnostics.
-- [x] Implement context loss, resize, device-pixel ratio, reduced motion, and
-      cleanup.
-- [x] Extend CI with contract, malformed-input, browser-matrix, coverage, and
-      package-pack checks.
+- [ ] Generate the required parts in dependency order using the accepted design
+      as conditioning.
+- [ ] Produce full-canvas transparent layers with hidden overlap.
+- [ ] Add per-part variants, retry, compare, accept, and manual replacement.
+- [ ] Add alpha, bounds, alignment, duplicate-content, and missing-part checks.
+- [ ] Add a layer inspector with draw-order, solo, opacity, checkerboard,
+      composite, and reference overlay views.
 
-Gate: public API contract tests and malformed-input security tests pass.
-Packed packages must install in a clean consumer fixture.
+Gate: accepted layers reconstruct the approved neutral character without using
+cropped source patches, and every required moving boundary has validated hidden
+art.
 
-### Phase D - First-party avatar and animation
+### Phase P4 - Assembly, correction, and exportable source
 
-- [ ] Produce separated artwork and approved meshes.
-- [x] Rig head/body pose, eyes, blink, brows, and mouth; optional physics is
-      intentionally deferred for the lightweight first-party fixture.
-- [x] Author all required semantic expressions and motions as deterministic
-      first-party clips.
-- [x] Add interruption, cross-fade, and private RMS/optional viseme processing;
-      live mouth input remains isolated from unrelated parameters.
-- [x] Extend CI with rights checks, interruption coverage, and deterministic
-      parameter sweeps for the authored clips.
-- [ ] Add golden renders and first-party asset budgets; publish a validated
-      avatar artifact from approved source inputs. Automated source validation
-      and enforced fixture-size budgets are in place, as is a reviewed Chromium
-      fixture-render baseline; per-clip visual baselines and the approved
-      release artifact remain pending.
+- [ ] Add non-destructive mask/paint correction, transform adjustment, and
+      undo/redo.
+- [ ] Validate eye and mouth clipping, draw order, anchors, and part hierarchy.
+- [ ] Export/import the versioned private project deterministically.
+- [ ] Export a Cubism-ready PSD with documented layer names and groups.
+- [ ] Add clean-session round-trip and hostile-project tests.
 
-Gate: parameter sweeps do not tear; repeated interruptions return to a stable
-idle pose; live channels never overwrite unrelated parameters.
-The bundle must be generated from validated source inputs.
+Gate: project and PSD round trips preserve canvas alignment, hierarchy, alpha,
+neutral composition, rights records, provenance, and limitations.
 
-Current status: runtime animation, clip authoring, Studio integration,
-parameter-sweep CI, the first-party fixture rig, a Chromium visual baseline,
-and enforced fixture budgets are implemented. The Phase D gate remains pending
-separated approved artwork, per-clip visual evidence, production texture-memory
-budgets, and a validated first-party release bundle.
+### Phase P5 - Auto-rig and Motion Lab
 
-### Phase E - Human Studio and authoring tools
+- [ ] Generate conservative meshes/deformers and mappings for gaze, blink,
+      brows, mouth open/form, head X/Y, body/breath, and optional hair motion.
+- [ ] Use the existing Open Avatar runtime for interactive preview.
+- [ ] Add landmark, mesh, clipping, physics, and combined-parameter editors.
+- [ ] Run deterministic parameter sweeps and visual regression at extremes.
+- [ ] Export a validated Open Avatar bundle.
 
-- [ ] Build accessible control panels, keyboard mappings, pointer gaze, audio
-      meter, command timeline, capability inspector, and diagnostics.
-- [ ] Add deterministic exporter, rights editor, validation report, and bundle
-      preview.
-- [x] Support recording/replaying the provider-neutral command stream.
-- [ ] Extend CI with Studio unit, end-to-end, accessibility, exporter
-      reproducibility, and preview smoke tests.
+Gate: all art and rig acceptance checks pass; reset exactly restores neutral;
+the exported bundle loads, controls, disposes, and reloads safely.
 
-Gate: a human can load, inspect, control, validate, and export the avatar
-without editing source code.
-The tested Studio preview must match the deployed commit.
+### Phase P6 - Prompt editing and revision management
 
-Current status: the Studio exposes all declared semantic expressions and
-motions as accessible buttons and keyboard shortcuts through the shared
-validated control path. It records/replays trusted provider-neutral command
-streams and shows a bounded diagnostics timeline. The authoring/export,
-persisted recording import/export, and Phase E CI gate work remain pending.
+- [ ] Add upload for this repository's generated project format.
+- [ ] Add prompt interpretation, impact preview, and cost/time estimate.
+- [ ] Implement texture-only, localized geometry, and full-version edit paths.
+- [ ] Add before/after neutral and motion-extreme comparison.
+- [ ] Add accept/reject, history, rollback, and provenance.
 
-### Phase F - AI and host integration
+Gate: eye-color, hairstyle, and outfit tests preserve unaffected parts and
+rerun all required downstream validation. Rejected edits cannot mutate the
+accepted revision.
 
-- [x] Publish a minimal AI-controller example with allowlisted semantic cues.
-- [x] Publish framework-neutral runtime and web component examples.
-- [ ] Add adapter guidance for agent, TTS, viseme, and streaming-audio hosts.
-- [x] Verify that removing or rejecting a bundle falls back safely.
-- [ ] Extend CI with example-consumer, web-component, concurrent-controller,
-      fallback, and integration tests.
+### Phase P7 - Cubism handoff
 
-Gate: both example controllers drive the same runtime concurrently, human
-override works, and no provider-specific type enters a core package.
-Every published example records its source commit and package versions.
+- [ ] Validate the layered PSD against current official Cubism import rules.
+- [ ] Publish a parameter, part, draw-order, mask, and deformer handoff guide.
+- [ ] Prove the handoff in the approved Cubism Editor version.
+- [ ] Record which rigging steps are manual and which are reproducibly assisted.
+- [ ] Validate exported `.moc3`, `.model3.json`, textures, motions, expressions,
+      and physics in an approved Cubism SDK sample or viewer.
 
-Current status: allowlisted semantic host controls, web-component guidance, and
-rejected-bundle fallback coverage are implemented. Concurrent-controller and
-dedicated integration-CI coverage remain pending.
+Gate: a reviewer can import the PSD, complete or verify the rig, export from
+Cubism Editor, and run the resulting model. Only this artifact is labelled a
+Live2D Cubism model.
 
-### Phase G - Hardening and release
+### Phase P8 - Hardening and release readiness
 
-- [ ] Complete unit, integration, browser, visual regression, accessibility,
-      performance, context-loss, 30-minute soak, and supply-chain checks.
-- [ ] Publish migration rules, API docs, bundle authoring guide, checksums,
-      license metadata, SBOM, and signed artifacts.
-- [ ] Version packages, protocol, format, and avatar bundle independently.
-- [ ] Require approval-gated release jobs with provenance, SBOM, checksums,
-      signatures, clean-install verification, and post-publish smoke tests.
+- [ ] Complete accessibility, browser, visual, performance, cancellation,
+      recovery, context-loss, soak, dependency, and supply-chain checks.
+- [ ] Document model installation, workflow pins, hardware budgets, backup,
+      migration, rights review, and troubleshooting.
+- [ ] Add approval-gated release metadata, SBOM, checksums, and clean-install
+      verification without publishing.
+- [ ] Select project license, distribution policy, and supported-provider
+      policy before any publish or deployment action.
 
-Gate: all release budgets pass on supported browsers and a clean consumer
-project can install, load, control, dispose, and reload the avatar.
+Gate: `pnpm run ci` and all labelled physical-generation and Cubism evidence
+pass; release remains blocked until license and explicit release approval.
 
-Current status: a manual, approval-gated preflight creates a commit-linked
-source archive, checksums, and CycloneDX SBOM without publishing. Physical
-performance/soak evidence, a selected license, signing credentials, versioning,
-and publish/post-publish authority remain pending.
+## 11. First implementation slice after approval
 
-## 10.1 CI/CD policy
+The next slice is Phase P1 only:
 
-- Pull requests run all checks accumulated through the current phase.
-- Branch protection requires relevant checks; unreviewed commits cannot publish.
-- Workflows use minimum permissions; ordinary CI has read-only repository access
-  and no deployment secrets.
-- Installation uses the committed lockfile and avoids unapproved lifecycle
-  scripts where practical.
-- Caches never contain environment files, tokens, recordings, or signing keys.
-- Preview artifacts are immutable and labeled with the full Git commit.
-- Forked or untrusted changes never receive protected environment secrets.
-- CD uses approval-protected GitHub environments and scoped credentials.
-- Production releases are tag-triggered, reproducible, checksummed, signed, and
-  followed by clean-consumer smoke tests.
-- Rollback selects a previous immutable artifact; versions are never overwritten.
+1. preserve and audit the current uncommitted Studio changes;
+2. extract a minimal private provider seam from any reusable ComfyUI logic;
+3. implement endpoint health, one allowlisted workflow, progress, cancellation,
+   output validation, and a fake-provider test;
+4. do not add part generation, public schemas, or Cubism export yet; and
+5. run `pnpm run ci` before handoff.
 
-## 11. Quality budgets
+## 12. Evidence
 
-Exact numbers are approved during Phase A; initial targets:
+Primary sources reviewed for this pivot:
 
-- 60 FPS on the named reference development device.
-- P95 main-thread frame work below 12 ms at 1x DPR.
-- No unbounded allocations during idle or continuous control.
-- No retained renderer resources after repeated mount/dispose cycles.
-- First-party compressed runtime bundle target below 5 MB, excluding source art.
-- Texture dimensions and total decoded GPU memory have hard validator limits.
-- A command is acknowledged within one animation frame.
-- Identical exporter inputs produce byte-identical manifests and stable hashes.
+- [ComfyUI workflow concepts](https://docs.comfy.org/development/core-concepts/workflow)
+- [ComfyUI workflow submission](https://docs.comfy.org/api-reference/cloud/workflow/submit-a-workflow-for-execution)
+- [Live2D Cubism PSD import](https://docs.live2d.com/en/cubism-editor-manual/psd-import/)
+- [Live2D Cubism illustration processing](https://docs.live2d.com/en/cubism-editor-tutorials/psd/)
+- [Live2D Cubism model files](https://docs.live2d.com/en/cubism-sdk-manual/model-web/)
 
-## 12. Test strategy
-
-- Unit tests for math, interpolation, mixing, scheduling, and path handling.
-- Contract tests shared by all controller adapters.
-- Schema tests with valid, boundary, malformed, and adversarial fixtures.
-- Golden screenshots for expressions, motions, and cross-fades.
-- Browser tests for resize, high DPR, context loss, reduced motion, and disposal.
-- Fuzz/property tests for parameter bounds, mesh indices, and command sequences.
-- Performance and 30-minute CPU/GPU memory soak tests.
-- End-to-end tests for human override of AI and stable return to idle.
-- Export reproducibility and rights-manifest completeness tests.
-
-## 13. Security and privacy
-
-- Treat bundles and AI commands as untrusted data.
-- No dynamic evaluation, bundle scripts, external URLs, or absolute paths.
-- Enforce maximum archive size, expanded size, files, textures, vertices,
-  keyframes, command rate, and duration.
-- Prevent ZIP bombs, traversal, invalid indices, NaN/Infinity, and GPU
-  over-allocation.
-- Keep microphone/camera processing local by default and outside the runtime.
-- Require explicit host authorization for network or remote controllers.
-- Redact user content from diagnostics and telemetry; telemetry is opt-in.
-
-## 14. Versioning and compatibility
-
-- Start public packages and schemas at `0.1.0`.
-- Declare the public API and use semantic versioning.
-- Include protocol and bundle versions in data, not only package versions.
-- Add a migration path before changing a stable manifest or command contract.
-- Reject unknown major versions and tolerate documented optional additions.
-- Maintain fixtures for every supported bundle/protocol version.
-
-## 15. Explicit non-goals for v1
-
-- Cubism reverse engineering or compatible output.
-- A general-purpose illustration editor.
-- Server-side rendering of the avatar.
-- Built-in AI, LLM, speech, camera, or identity provider.
-- Executable plugins inside avatar bundles.
-- Unrestricted AI access to raw model parameters.
-- Full-body motion capture or photorealistic rendering.
-
-## 16. First deliverable
-
-Before full artwork or rigging, deliver:
-
-1. approved Phase A rights and visual-spec documents;
-2. an ADR choosing the format/runtime;
-3. a browser spike with an original layered head, eye focus, blinking, and
-   mouth-open;
-4. one human control panel and one scripted controller using the same API;
-5. recorded performance and lifecycle results.
-
-No full character rig begins until the rights checklist and runtime ADR pass.
+Versions, licenses, provider APIs, and Cubism requirements must be rechecked at
+the start of their implementation phase.

@@ -1,312 +1,426 @@
-# Sub-Agent Work Plan
+# Work Ownership Plan for the Prompt-to-Live2D Pivot
 
-This document divides the Open 2D Avatar project into bounded work packages for
-delegated agents. The canonical product requirements remain in
-`live2d-model-plan.md`; `subagents.toml` is the machine-readable copy of this
-task graph.
+Status: draft; task execution begins only after the corresponding gate is
+approved
+
+Canonical scope: `live2d-model-plan.md`
+
+This file defines ownership and dependency order. It does not authorize
+publishing, deployment, signing, committing, pushing, installing unreviewed
+models, or replacing the current uncommitted Studio work.
 
 ## Operating rules
 
-- The root agent owns integration, architecture decisions, dependency changes,
-  shared configuration, and final acceptance.
-- One agent owns a file or package at a time.
-- Agents must inspect the current workspace before editing and preserve
-  unrelated changes.
-- Agents may not change public contracts, add dependencies, or expand scope
-  without notifying the root agent.
-- Every handoff states changed files, verification performed, remaining risks,
-  and any decisions required.
-- Research agents produce documents only; implementation agents do not silently
-  turn unresolved questions into architecture decisions.
-- Tasks with unmet dependencies remain blocked.
-- Commits are optional unless the root agent explicitly requests them. Agents
-  must never push, publish, deploy, or create releases independently.
-- Every task that adds behavior must add or update its CI coverage. CD changes
-  require root review and immutable artifacts labeled with the tested commit.
+- The root agent owns product-plan integration, cross-package contracts, gate
+  decisions, and final repository-wide verification.
+- One task has one primary owner and a declared write scope.
+- An owner must inspect existing changes in its scope before editing and must
+  preserve unrelated work.
+- Applications may consume package entry points; packages never import from
+  applications.
+- Internal dependencies use explicit `workspace:` ranges.
+- New project, generation, and Cubism contracts remain private and must not be
+  frozen before their scheduled approval.
+- Prompts, workflows, uploaded bundles, provider results, and commands are
+  hostile data.
+- Generated images, references, checkpoints, local provider state, recordings,
+  credentials, environment files, build output, and release archives are not
+  committed.
+- Each behavior change includes automated CI coverage.
+- Each task handoff states changed files, verification, assumptions, and
+  remaining risks.
+- The root agent runs `pnpm run ci` before integrated handoff.
+
+## Existing dirty-work ownership
+
+The following files had uncommitted work when this plan was written:
+
+- `apps/studio/src/authoring.ts`
+- `apps/studio/src/main.ts`
+- `apps/studio/src/motion.ts`
+- `apps/studio/src/style.css`
+- `apps/studio/test/authoring.test.ts`
+- `apps/studio/vite.config.ts`
+
+They are reserved for the current Studio authoring task until the root agent
+records their owner and intent. No other task may rewrite, format, revert, or
+move them. Phase P1 starts with an audit of this work and integrates reusable
+pieces through narrow patches.
 
 ## Shared definition of done
 
-A task is complete only when:
+A work item is complete only when:
 
-1. its listed deliverables exist;
-2. its acceptance criteria are satisfied;
-3. relevant tests, type checks, linting, or document checks pass;
-4. no secrets, generated build output, or unrelated files were added;
-5. the handoff identifies assumptions and unresolved risks.
-6. the behavior runs in CI and any phase artifact traces to the tested commit.
+- its phase dependency and approval are recorded;
+- outputs stay inside the declared write scope;
+- new external dependencies and models have license and version evidence;
+- failure, cancellation, limits, accessibility, and hostile-input behavior are
+  tested where relevant;
+- documentation distinguishes generated projects, Open Avatar bundles,
+  Cubism-ready PSDs, and genuine Cubism models;
+- scoped checks pass; and
+- the owner hands results to the root agent without publishing or committing
+  unless the root task explicitly authorizes it.
 
-## Recommended execution waves
+## Wave P0 - Product and feasibility decisions
 
-### Wave 0 - Decisions and repository foundation
+Run `P0-A`, `P0-B`, and `P0-C` as read-only or documentation-only studies.
+`P0-D` integrates them.
 
-Run `W0-A` and `W0-B` in parallel. The root agent reviews both, records final
-decisions, then runs `W0-C`. Do not scaffold packages before those decisions are
-accepted.
+### P0-A - Output and Cubism boundary
 
-#### W0-A - Runtime and format research
+Owner role: product/format agent
 
-Owner role: architecture research agent  
-Write scope: `docs/adr/0001-runtime-and-format.md`
+Write scope:
+
+- `docs/adr/0001-runtime-and-format.md`
+- a new Cubism handoff ADR if approved by the root agent
 
 Deliverables:
 
-- compare a custom PixiJS runtime with eligible open non-Cubism alternatives;
-- record licensing, redistribution, browser, TypeScript, control, export, and
-  maintenance evidence;
-- recommend a production renderer and fallback policy;
-- list risks that the vertical spike must prove.
+- decision record for the approved dual-output product: Open Avatar is the
+  default automated path and Cubism is the optional Editor handoff;
+- exact terminology for generated project, Open Avatar bundle, Cubism-ready
+  PSD, `.cmo3`, `.moc3`, and `.model3.json`;
+- current official Cubism import/export and licensing constraints;
+- feasibility boundary for Cubism project import and automation.
 
 Acceptance:
 
-- claims about current tools cite primary sources;
-- recommendation preserves the provider-neutral control contract;
-- no implementation files are modified.
+- does not claim that ComfyUI output is a `.moc3`;
+- identifies the step and tool that creates the genuine Cubism artifact;
+- leaves disputed licensing or automation claims blocked.
 
-#### W0-B - Product policy research
+### P0-B - Generation provider and hardware study
 
-Owner role: product/security agent  
+Owner role: generation systems agent
+
 Write scope:
 
-- `docs/adr/0002-supported-platforms.md`
+- `docs/architecture/generation-provider.md`
+- `docs/phase-status/phase-p0.md`
+
+Deliverables:
+
+- local ComfyUI transport, health, queue, progress, cancellation, and artifact
+  retrieval study;
+- reference Windows/GPU/VRAM/storage/generation-time budget;
+- core-node versus custom-node capability matrix;
+- model/checkpoint/LoRA version and license inventory template;
+- fake-provider testing strategy.
+
+Acceptance:
+
+- does not install or download a checkpoint without explicit authorization;
+- separates documented ComfyUI behavior from proposed adapter behavior;
+- lists manual physical tests that cannot run in ordinary CI.
+
+### P0-C - Rights, privacy, and threat update
+
+Owner role: security/rights agent
+
+Write scope:
+
 - `docs/security/threat-model.md`
-
-Deliverables:
-
-- proposed supported browsers and reference development device;
-- bundle and command trust boundaries;
-- resource-limit categories and privacy rules;
-- accessibility and reduced-motion baseline.
-
-Acceptance:
-
-- distinguishes v1 requirements from future work;
-- covers malformed bundles, hostile commands, camera/audio privacy, and remote
-  control authorization.
-
-#### W0-C - Workspace scaffold
-
-Owner role: build/tooling agent  
-Depends on: `W0-A`, `W0-B`, root approval  
-Write scope: root configuration and empty package/app skeletons
-
-Deliverables:
-
-- pnpm workspace and pinned runtime/toolchain policy;
-- TypeScript base configuration;
-- lint, format, unit-test, type-check, and build commands;
-- package boundaries matching the target repository structure;
-- CI workflow and contributor instructions.
-- phase-aware CI and a manual dry-run artifact workflow.
-
-Acceptance:
-
-- clean install is reproducible;
-- lint, type-check, test, and build succeed from the repository root;
-- workflows use minimum permissions and ordinary CI receives no protected secret;
-- workspace packages use explicit `workspace:` dependencies;
-- empty packages do not expose speculative APIs.
-
-### Wave A - Rights and visual specification
-
-After `W0-C`, run `A1`, `A2`, and `A3` in parallel. `A4` integrates them.
-
-#### A1 - Rights inventory
-
-Owner role: asset-rights agent  
-Write scope:
-
-- `assets/reference-avatar/LICENSES/rights.json`
 - `docs/authoring/rights-checklist.md`
 
 Deliverables:
 
-- machine-readable source, author, license, modification, and redistribution
-  record format;
-- an entry for every current asset/reference, including an explicit empty-state
-  declaration when no assets exist;
-- review procedure for future additions.
-- CI rights validation and a review-report artifact.
+- threats for prompt injection, hostile workflows, image metadata, malformed
+  outputs, archive bombs, local endpoint access, cloud credentials, and
+  unauthorized references;
+- rights fields for source references, checkpoints, LoRAs, generated output,
+  trademark review, and redistribution;
+- local/cloud privacy and consent boundary.
 
 Acceptance:
 
-- does not claim ownership without evidence;
-- unresolved ownership is marked blocked and cannot pass export validation.
+- generated output is not automatically declared original or redistributable;
+- untrusted projects cannot execute embedded workflows or commands;
+- secrets never enter exports or browser bundles.
 
-#### A2 - Character and layer specification
+### P0-D - Pivot review
 
-Owner role: art-direction agent  
-Write scope:
+Owner role: root agent
 
-- `docs/authoring/visual-spec.md`
-- `docs/authoring/layer-spec.md`
+Depends on: `P0-A`, `P0-B`, `P0-C`
 
 Deliverables:
 
-- character silhouette, palette, proportions, poses, safe areas, canvas, and
-  texture budget;
-- layer hierarchy, naming rules, pivots, masks, draw order, and deformation
-  intent;
-- turnaround and expression-sheet acceptance criteria.
+- reconcile ADR, product plan, security, rights, and hardware decisions;
+- audit the existing dirty Studio files and record their intended integration;
+- record the human-approved default Open Avatar plus optional Cubism output
+  decision;
+- obtain human approval for provider, hardware, rights, and detailed Cubism
+  handoff;
+- record the P0 gate status.
 
 Acceptance:
 
-- uses only original placeholders or properly recorded references;
-- separates creative choices requiring human approval from technical rules.
+- unresolved decisions remain visibly blocked;
+- no implementation contract is invented to bypass approval;
+- existing runtime work has an explicit reuse disposition.
 
-#### A3 - Capability acceptance specification
+## Wave P1 - Safe provider spike
 
-Owner role: QA/product agent  
+Run `P1-A` first. `P1-B` and `P1-C` can then proceed against the approved
+private seam. `P1-D` integrates the slice.
+
+### P1-A - Private provider seam and fake
+
+Owner role: generation systems agent
+
+Depends on: `P0-D`
+
 Write scope:
 
-- `docs/protocol/capabilities.md`
-- `docs/authoring/acceptance-checklist.md`
+- new private provider code in an approved package or Studio-local module;
+- its unit tests and fixtures;
+- no edits to reserved dirty files until the audit assigns them
 
 Deliverables:
 
-- testable definitions for expressions, motions, gaze, blink, mouth-open, pose,
-  interruption, reset, and reduced motion;
-- RMS-only versus viseme decision proposal;
-- human and AI control acceptance scenarios.
-- CI requirements-traceability checks.
+- health/capability, submit, progress, cancel, and result concepts;
+- bounded request/result diagnostics;
+- deterministic fake provider for CI;
+- lifecycle and cancellation tests.
 
 Acceptance:
 
-- every requirement has observable pass/fail behavior;
-- model-specific parameter names do not enter the semantic protocol.
+- provider-specific workflow nodes do not enter existing public runtime types;
+- cancellation settles every pending operation;
+- fake results exercise invalid MIME, dimensions, bytes, and missing alpha.
 
-#### A4 - Phase A review
+### P1-B - Reviewed ComfyUI adapter
+
+Owner role: ComfyUI integration agent
+
+Depends on: `P1-A`
+
+Write scope:
+
+- approved adapter directory;
+- versioned workflow templates;
+- adapter tests and documentation
+
+Deliverables:
+
+- explicitly configured local endpoint;
+- health and required-capability checks;
+- one reviewed allowlisted workflow;
+- asynchronous progress, cancellation, and bounded artifact retrieval;
+- workflow, checkpoint, seed, prompt, adapter, and artifact provenance.
+
+Acceptance:
+
+- user text can alter only approved template input fields;
+- uploaded projects cannot submit workflow graphs;
+- node, path, URL, checkpoint, file-count, pixel, byte, queue, and time controls
+  are enforced;
+- physical ComfyUI evidence is hardware-labelled and kept out of CI fixtures.
+
+### P1-C - Prompt workspace
+
+Owner role: Studio UX agent
+
+Depends on: `P1-A`
+
+Write scope:
+
+- the six reserved Studio files after `P0-D` assigns them;
+- additional `apps/studio/` files and Studio tests
+
+Deliverables:
+
+- accessible prompt field;
+- endpoint/health and capability state;
+- approved model/template selection;
+- Generate, progress, cancel, retry, and actionable errors;
+- candidate preview that is not silently accepted into a project.
+
+Acceptance:
+
+- keyboard operation and 200% zoom remain usable;
+- duplicate submissions are prevented;
+- navigation, cancel, provider failure, and invalid result do not create a
+  partial accepted revision;
+- all new behavior uses the fake provider in CI.
+
+### P1-D - Provider spike integration
 
 Owner role: root agent  
-Depends on: `A1`, `A2`, `A3`
+Depends on: `P1-A`, `P1-B`, `P1-C`
 
 Deliverables:
 
-- resolve cross-document inconsistencies;
-- obtain human approval for creative and budget choices;
-- record Phase A gate status.
+- review package direction and private boundaries;
+- reconcile overlapping Studio edits;
+- run repository CI and the labelled manual provider smoke test;
+- record Phase P1 status.
 
 Acceptance:
 
-- no unresolved rights item is treated as approved;
-- canvas, texture, performance, language, and capability targets are explicit.
+- one prompt safely produces one bounded candidate;
+- no arbitrary workflow, node, path, network target, or command is controlled
+  by prompt text;
+- cancellation and failure clean up all temporary state.
 
-### Wave B - Vertical spike
+## Wave P2 - Character bible and project model
 
-Run `B1` first. Then `B2` and `B3` may run in parallel against the frozen
-contracts. `B4` verifies the integrated result.
+### P2-A - Private authoring project
 
-#### B1 - Schema and control contracts
+Owner role: project/schema agent
 
-Owner role: protocol agent  
-Depends on: `W0-C`, `A4`, approved runtime ADR  
+Depends on: `P1-D`
+
 Write scope:
 
-- `packages/schema/`
-- `docs/protocol/control-api.md`
+- approved private project module;
+- project fixtures and tests;
+- authoring format documentation
 
 Deliverables:
 
-- Draft 2020-12 schemas for minimal bundles and command envelopes;
-- generated or source TypeScript types;
-- capability query, acknowledgement, cancellation, and error contracts;
-- valid and malformed fixtures.
-- schema and malformed-fixture CI jobs.
+- versioned project representation for immutable source, accepted concept,
+  character bible, landmarks, part graph, revisions, provenance, rights, and
+  limitations;
+- deterministic save/load and migrations;
+- resource and archive limits.
 
 Acceptance:
 
-- rejects traversal, absolute paths, non-finite values, invalid ranges, and
-  unknown major versions;
-- continuous input channels are coalescible;
-- protocol has no AI-provider or UI-specific fields.
+- round-trip is deterministic;
+- unknown major versions and hostile paths/files are rejected;
+- no executable provider workflow or secret is serialized.
 
-#### B2 - Core animation spike
+### P2-B - Design approval UX
 
-Owner role: runtime agent  
-Depends on: `B1`  
-Write scope: `packages/core/`
+Owner role: Studio UX agent
+
+Depends on: `P2-A`
+
+Write scope: `apps/studio/` and its tests
 
 Deliverables:
 
-- deterministic clock interface;
-- scheduler, interruption, cross-fade, parameter layers, and clamps;
-- gaze, blink, mouth-open, expression, motion, and reset evaluation;
-- unit tests using a fake clock.
-- core contract and coverage CI jobs.
+- concept variant comparison;
+- explicit Accept design action;
+- editable character-bible fields and landmark review;
+- part-plan and missing-capability review.
 
 Acceptance:
 
-- same inputs, seed, and clock produce the same poses;
-- lip sync and gaze write only declared channels;
-- reset returns to a stable neutral state.
+- no part job starts before design acceptance;
+- changing identity-locked fields produces a new reviewed revision;
+- project reload preserves the exact accepted concept and plan.
 
-#### B3 - Renderer and bundle spike
+### P2-C - P2 integration and contract approval
 
-Owner role: graphics agent  
-Depends on: `B1`  
+Owner role: root agent
+
+Depends on: `P2-A`, `P2-B`
+
+Deliverables:
+
+- approve the private project boundary;
+- verify it does not leak into unrelated public control contracts;
+- run CI and hostile-project tests;
+- record Phase P2 status.
+
+## Wave P3 - Purpose-generated part artwork
+
+After `P2-C`, `P3-A` and `P3-B` may proceed in parallel. `P3-C` integrates.
+
+### P3-A - Part generation orchestrator
+
+Owner role: generation systems agent
+
 Write scope:
 
-- `packages/renderer-pixi/`
-- `assets/fixtures/minimal-avatar/`
+- approved generation/orchestration package;
+- workflow templates, fixtures, and tests
 
 Deliverables:
 
-- layered head/torso render;
-- at least one deformable mesh;
-- load, resize, render, context-recovery, and dispose lifecycle;
-- original or clearly licensed placeholder assets.
-- browser lifecycle and golden-render CI jobs.
+- dependency-ordered part jobs conditioned on the character bible;
+- full-canvas alpha artifacts, stable IDs, anchors, overlap targets, variants,
+  retry, and cancellation;
+- result validation and provenance.
 
 Acceptance:
 
-- no GPU resource remains after dispose;
-- renderer consumes evaluated pose data rather than control commands;
-- renderer does not import from apps.
+- accepted parts are not cropped source patches;
+- retries cannot mutate accepted parts;
+- all required roles and concealed overlaps are measurable.
 
-#### B4 - Studio spike and performance report
+### P3-B - Layer review and correction UI
 
-Owner role: integration agent  
-Depends on: `B2`, `B3`  
-Write scope:
+Owner role: authoring UX agent
 
-- `apps/studio/`
-- `tests/performance/spike-report.md`
+Write scope: `apps/studio/` and its tests
 
 Deliverables:
 
-- a human panel and scripted controller using the same runtime API;
-- capability inspector, gaze, blink, mouth-open, expression, motion, and reset
-  demonstrations;
-- frame-time, memory, bundle-size, resize, context-loss, and remount results.
-- an approval-gated preview tied to the tested commit.
+- part list, solo/visibility/opacity/draw-order controls;
+- checkerboard, reference overlay, and neutral composite;
+- compare, accept, reject, replace, and bounded correction tools;
+- accessible undo/redo.
 
 Acceptance:
 
-- human override behavior is observable;
-- target reference device sustains the approved performance budget;
-- repeated mount/dispose does not show resource growth.
+- active part and revision are always visible;
+- users can identify alpha, alignment, overlap, and draw-order errors;
+- original references and accepted revisions remain recoverable.
 
-### Later waves
+### P3-C - Art-quality integration
 
-Create detailed tasks for Phases C-G only after the vertical spike freezes the
-public boundaries. The expected owners are:
+Owner role: root agent with QA/art review
 
-- Core runtime: `packages/core`, `packages/runtime`.
-- Control adapters: `packages/controls`.
-- Audio/visemes: `packages/audio`.
-- Validation/export: `packages/validator`, `packages/exporter`.
-- Human authoring: `apps/studio`.
-- Embedding: `packages/web-component`, `apps/playground`.
-- First-party art/rig: `assets/reference-avatar`.
-- QA/release: `tests`, documentation, release metadata.
+Depends on: `P3-A`, `P3-B`
 
-Avoid pre-assigning implementation details that the spike may invalidate.
+Deliverables:
+
+- neutral and overlap visual baselines;
+- required-part, alignment, alpha, duplicate, and hidden-art CI checks;
+- human art-quality decision record.
+
+Acceptance:
+
+- neutral reconstructs the approved concept;
+- all moving boundaries have sufficient hidden art;
+- every accepted artifact has rights and generation provenance.
+
+## Later waves
+
+Detailed implementation tasks for P4-P8 are created only after P3 freezes the
+project and part boundaries.
+
+Expected ownership:
+
+- P4 project correction and PSD export: authoring, exporter, and validation
+  owners.
+- P5 auto-rig and Motion Lab: core runtime, graphics, and motion QA owners.
+- P6 prompt edits: change-planning, generation, Studio UX, and regression QA
+  owners.
+- P7 Cubism handoff: format/licensing, authoring, and interoperability QA
+  owners.
+- P8 hardening: accessibility, security, performance, documentation, and
+  release-readiness owners.
+
+No later-wave task may claim automated `.moc3` creation unless P7 records an
+officially supported and licensed method.
 
 ## Root-agent integration checklist
 
-- Confirm all dependencies are complete.
-- Review public API and schema changes before integrating consumers.
-- Check that write scopes did not overlap.
-- Run repository-wide lint, type-check, unit, integration, and build commands.
-- Review licenses and dependency changes.
-- Update ADR status and the canonical product plan.
-- Ask for human approval at creative, security-policy, and release gates.
+- Confirm dependencies and gate approvals.
+- Identify and preserve all pre-existing working-tree changes.
+- Review every new project, provider, schema, and export boundary before a
+  consumer depends on it.
+- Check application-to-package dependency direction and explicit `workspace:`
+  ranges.
+- Review provider/model licenses and lockfile changes.
+- Verify prompt, workflow, bundle, file, network, and resource limits.
+- Run scoped tests during integration and `pnpm run ci` before handoff.
+- State changed files, verification, assumptions, and remaining risks.
+- Request human approval at creative, security, Cubism, license, and release
+  gates.

@@ -14,7 +14,9 @@ body {
     radial-gradient(circle at 18% 0, #183657 0, transparent 37%), #071018;
 }
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 button {
@@ -27,13 +29,15 @@ button {
   cursor: pointer;
 }
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid #ffd479;
   outline-offset: 3px;
 }
 header,
 main {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1800px, calc(100% - 2rem));
   margin: auto;
 }
 header {
@@ -76,9 +80,7 @@ h1 {
   height: max-content;
 }
 main {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.85fr);
-  gap: 1rem;
+  display: block;
   padding-bottom: 3rem;
 }
 .stage-card,
@@ -242,6 +244,27 @@ li strong {
   border-radius: 0.8rem;
   padding: 0.8rem;
 }
+.part-inspector {
+  border: 1px solid #ffffff16;
+  border-radius: 0.7rem;
+  padding: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+.part-inspector h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+#part-canvas {
+  position: static;
+  display: block;
+  width: 100%;
+  min-height: 180px;
+  max-height: 420px;
+  object-fit: contain;
+  touch-action: none;
+  background: repeating-conic-gradient(#173242 0 25%, #0c1b27 0 50%) 50% / 20px
+    20px;
+}
 .layer-buttons {
   display: grid;
   gap: 0.45rem;
@@ -301,6 +324,244 @@ li strong {
     min-height: 420px;
   }
   .layer-lab-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prompt-workspace {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr) minmax(
+      14rem,
+      0.8fr
+    );
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid #385063;
+  border-radius: 1.25rem;
+  background: #0d1c28;
+}
+
+.prompt-workspace h2 {
+  margin-top: 0.2rem;
+}
+
+.prompt-controls,
+.prompt-controls label {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.prompt-controls textarea,
+.prompt-controls select {
+  width: 100%;
+}
+
+.prompt-plan {
+  padding: 0.7rem;
+  border: 1px solid #385063;
+  border-radius: 0.75rem;
+  background: #071018;
+}
+
+.prompt-plan summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.prompt-plan dl {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0;
+}
+
+.prompt-plan dl div {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.prompt-plan dt {
+  color: #ffd479;
+  font-weight: 700;
+}
+
+.prompt-plan dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #c7d4df;
+}
+
+.concept-candidate {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-height: 12rem;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px dashed #385063;
+  border-radius: 1rem;
+  background: #071018;
+}
+
+.concept-candidate img {
+  width: 100%;
+  max-height: 24rem;
+  object-fit: contain;
+  border-radius: 0.75rem;
+}
+
+.concept-image-stage {
+  position: relative;
+  min-height: 8rem;
+}
+
+#landmark-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landmark-marker {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  border: 2px solid #071018;
+  border-radius: 50%;
+  background: #ffd479;
+  color: #071018;
+  font-size: 0.7rem;
+  font-weight: 800;
+  transform: translate(-50%, -50%);
+}
+
+.marking-landmarks {
+  cursor: crosshair;
+}
+
+.concept-variants {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.concept-variant {
+  padding: 0.2rem;
+  border: 2px solid transparent;
+}
+
+.concept-variant.selected {
+  border-color: #ffd479;
+}
+
+.concept-variant img {
+  display: block;
+  width: 100%;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: 0.45rem;
+}
+
+.concept-candidate figcaption {
+  overflow-wrap: anywhere;
+  color: #9db2c5;
+  font-size: 0.85rem;
+}
+
+.project-review {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid #385063;
+  border-radius: 1.25rem;
+  background: #0d1c28;
+}
+
+.project-review-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(14rem, 0.65fr) minmax(
+      16rem,
+      0.8fr
+    );
+  gap: 1rem;
+}
+
+.character-bible,
+.character-bible label,
+.landmark-review,
+.part-plan-review,
+.project-actions {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.character-bible input,
+.character-bible textarea {
+  width: 100%;
+}
+
+.landmark-review,
+.part-plan-review {
+  padding: 1rem;
+  border: 1px solid #385063;
+  border-radius: 0.9rem;
+}
+
+.project-part-plan {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.landmark-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.landmark-value {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.45rem;
+  border: 1px solid #385063;
+  border-radius: 0.6rem;
+}
+
+.landmark-value legend {
+  grid-column: 1 / -1;
+  color: #72e6c1;
+  font-size: 0.75rem;
+}
+
+.landmark-value label,
+.landmark-value input {
+  width: 100%;
+  min-width: 0;
+}
+
+.part-plan-entry {
+  color: #c6d5e1;
+  font-size: 0.82rem;
+}
+
+.project-actions {
+  grid-template-columns: max-content max-content minmax(12rem, 1fr);
+  align-items: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .prompt-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .project-review-grid,
+  .project-actions {
     grid-template-columns: 1fr;
   }
 }
@@ -390,13 +651,10 @@ li strong {
 }
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(175px, 0.7fr) minmax(0, 1.7fr) minmax(
-      185px,
-      0.75fr
-    );
+  grid-template-columns: 270px minmax(600px, 1fr) 360px;
   align-items: start;
 }
-.tool-panel,
+.control-rail,
 .canvas-panel,
 .layer-panel,
 .motion-stage,
@@ -406,9 +664,87 @@ li strong {
   border-radius: 0.8rem;
   padding: 0.9rem;
 }
-.tool-panel {
-  max-height: 72vh;
+.control-rail {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
   overflow: auto;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+.control-panel {
+  border: 1px solid #ffffff16;
+  background: #07101888;
+  border-radius: 0.8rem;
+  padding: 0.8rem;
+}
+.control-panel h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+}
+.selection-panel .layer-buttons {
+  max-height: 25vh;
+  overflow: auto;
+}
+.selection-panel button,
+.completion-panel button,
+.shape-tools-panel button {
+  background: #1a3040;
+  color: #c7d5df;
+}
+.selection-panel button.selected,
+.completion-panel button.selected {
+  background: #72e6c1;
+  color: #062019;
+}
+.layer-panel {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+.canvas-viewport {
+  height: min(76vh, 1000px);
+  overflow: auto;
+  border: 1px solid #ffffff16;
+  background: #071018;
+}
+.canvas-viewport #layer-canvas {
+  display: block;
+  min-width: 100%;
+  max-height: none;
+}
+.eye-guide {
+  border: 1px solid #ffffff1f;
+  border-radius: 0.65rem;
+  padding: 0.7rem;
+}
+.eye-guide h3 {
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+.eye-guide > button {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+.eye-guide textarea,
+.repair-output {
+  width: 100%;
+}
+.eye-guide textarea {
+  resize: vertical;
+  border: 1px solid #385063;
+  border-radius: 0.45rem;
+  background: #071018;
+  color: inherit;
+  padding: 0.5rem;
+}
+.repair-output {
+  margin-top: 0.65rem;
+  border-radius: 0.45rem;
+  background: repeating-conic-gradient(#173242 0 25%, #0c1b27 0 50%) 50% / 16px
+    16px;
 }
 .file-picker {
   display: grid;
@@ -420,16 +756,91 @@ li strong {
 }
 .layer-row {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
   border-bottom: 1px solid #ffffff12;
   padding: 0.45rem 0;
+  cursor: pointer;
+  border-radius: 0.45rem;
+}
+.layer-row:hover,
+.layer-row:focus-visible {
+  background: #1a3040;
+  outline: none;
+}
+
+/* Cubism-style authoring flow: tools, canvases, then a horizontal layer strip. */
+.workspace-grid {
+  grid-template-columns: 1fr;
+}
+.control-rail {
+  order: 1;
+}
+.layer-panel {
+  order: 2;
+}
+.canvas-panel {
+  order: 3;
+}
+.control-rail {
+  position: static;
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.2rem;
+}
+.control-panel {
+  min-width: 240px;
+  flex: 1 0 240px;
+}
+.layer-panel {
+  position: static;
+  max-height: none;
+  overflow: visible;
+  margin-top: 1rem;
+}
+.layer-output-list {
+  display: flex;
+  gap: 0.75rem;
+  min-height: 150px;
+  overflow-x: auto;
+}
+.layer-row {
+  min-width: 190px;
+}
+.canvas-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(290px, 0.65fr);
+  gap: 1rem;
+  align-items: start;
+}
+.canvas-toolbar,
+.canvas-panel > .note {
+  grid-column: 1 / -1;
+}
+.canvas-viewport {
+  grid-column: 1;
+  grid-row: 2;
+}
+.part-inspector {
+  grid-column: 2;
+  grid-row: 2;
+  margin: 0;
+}
+.bottom-parts-list {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+.bottom-parts-list button {
+  min-width: max-content;
 }
 .layer-preview {
-  width: 42px;
-  height: 42px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
   background: repeating-conic-gradient(#173242 0 25%, #0c1b27 0 50%) 50% / 12px
     12px;

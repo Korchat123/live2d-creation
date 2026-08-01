@@ -1,10 +1,10 @@
 # Open 2D Avatar Threat Model
 
 - Status: Proposed
-- Applies to: bundle loader, runtime, renderer, control adapters, Studio,
-  exporter, examples, and host integration
-- Trust posture: avatar bundles, AI output, remote commands, and media inputs
-  are untrusted
+- Applies to: generation providers, project/bundle loader, runtime, renderer,
+  control adapters, Studio, exporter, examples, and host integration
+- Trust posture: prompts, workflows, generated artifacts, avatar projects and
+  bundles, remote commands, and media inputs are untrusted
 
 ## Security goals
 
@@ -39,6 +39,32 @@ or preserved only when doing so cannot activate behavior.
 
 Bundle signatures may establish provenance in a future release; absence of a
 signature in v1 must never be presented as proof that a bundle is safe.
+
+### Generation-provider boundary
+
+Studio may connect to an explicitly configured local ComfyUI endpoint through a
+development or installed-app bridge. It must not discover arbitrary network
+hosts or accept a provider URL from an uploaded project. Production deployment
+must not expose an unrestricted reverse proxy to a user's local network.
+
+The repository owns reviewed workflow templates. Prompt text and bounded
+settings may fill allowlisted template inputs, but may not select node classes,
+paths, URLs, commands, output directories, or arbitrary checkpoints. Uploaded
+projects and image metadata never supply executable workflows. Provider
+capabilities and checkpoint identifiers are discovered separately, shown to the
+user, and matched against a local allowlist with rights evidence.
+
+Provider jobs have a single active-job limit on the reference device, a bounded
+queue, timeout, cancellation, and cleanup. Returned artifacts are untrusted
+until their status, count, encoded bytes, decoded MIME signature, dimensions,
+pixel count, alpha requirements, and hashes pass validation. Provider errors
+and provenance records must not copy complete prompts, local paths, credentials,
+or image content into logs.
+
+Cloud generation is not part of the approved P1 boundary. A future cloud
+adapter requires explicit consent, credential storage outside exported projects
+and browser bundles, destination and retention disclosure, cost controls, and a
+separate threat review.
 
 ### Command boundary
 
@@ -75,20 +101,25 @@ authoring, export, or filesystem rights.
 
 ## Threats and required controls
 
-| Threat                              | v1 required control                                                                                                                                                                   |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Archive bomb or oversized expansion | Stream/count entries where possible; reject before full expansion; enforce compressed and expanded byte limits and compression-ratio limits.                                          |
-| Path traversal or overwrite         | Normalize and validate every path; reject absolute, parent, reserved-device, duplicate/case-collision, link, and outside-root targets; extraction uses a private temporary directory. |
-| Malformed image or GPU exhaustion   | Decode through maintained browser APIs; verify dimensions and aggregate decoded/GPU estimates before texture creation; cap texture count and dimensions.                              |
-| Invalid mesh/index data             | Require finite values, bounded vertex/index counts, legal indices, declared attributes, and bounded coordinates before buffer allocation.                                             |
-| Animation complexity attack         | Cap parameters, motions, keyframes, duration, nesting, masks, and work evaluated per frame; reject non-finite time/value data.                                                        |
-| Command flood or starvation         | Per-source and global rate/burst/queue limits; coalesce continuous channels; expiry, cancellation, fair scheduling, and human/emergency priority.                                     |
-| Capability or priority escalation   | Host-attached identity and policy; semantic capability allowlists; ignore payload identity/priority claims; never expose unrestricted parameter writes to AI.                         |
-| Persistent nuisance motion          | Maximum durations, reset/stop action, human override, reduced-motion clamp, and safe neutral state after disconnect.                                                                  |
-| Media surveillance                  | Explicit browser permission plus in-product active indicator and stop action; local processing by default; no automatic capture on bundle load.                                       |
-| Data leakage through logs/telemetry | Structured error codes, payload redaction, no raw media or transcripts, telemetry off by default, bounded retention controlled by the host.                                           |
-| Malicious external asset fetch      | No external URLs in bundles; host supplies bytes through an explicit loader and its own fetch/CSP policy.                                                                             |
-| Resource leak after failure         | Transactional load; dispose all temporary CPU/GPU/audio/listener resources on success, rejection, cancellation, context loss, and remount.                                            |
+| Threat                               | v1 required control                                                                                                                                                                   |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Archive bomb or oversized expansion  | Stream/count entries where possible; reject before full expansion; enforce compressed and expanded byte limits and compression-ratio limits.                                          |
+| Path traversal or overwrite          | Normalize and validate every path; reject absolute, parent, reserved-device, duplicate/case-collision, link, and outside-root targets; extraction uses a private temporary directory. |
+| Malformed image or GPU exhaustion    | Decode through maintained browser APIs; verify dimensions and aggregate decoded/GPU estimates before texture creation; cap texture count and dimensions.                              |
+| Invalid mesh/index data              | Require finite values, bounded vertex/index counts, legal indices, declared attributes, and bounded coordinates before buffer allocation.                                             |
+| Animation complexity attack          | Cap parameters, motions, keyframes, duration, nesting, masks, and work evaluated per frame; reject non-finite time/value data.                                                        |
+| Command flood or starvation          | Per-source and global rate/burst/queue limits; coalesce continuous channels; expiry, cancellation, fair scheduling, and human/emergency priority.                                     |
+| Capability or priority escalation    | Host-attached identity and policy; semantic capability allowlists; ignore payload identity/priority claims; never expose unrestricted parameter writes to AI.                         |
+| Persistent nuisance motion           | Maximum durations, reset/stop action, human override, reduced-motion clamp, and safe neutral state after disconnect.                                                                  |
+| Media surveillance                   | Explicit browser permission plus in-product active indicator and stop action; local processing by default; no automatic capture on bundle load.                                       |
+| Data leakage through logs/telemetry  | Structured error codes, payload redaction, no raw media or transcripts, telemetry off by default, bounded retention controlled by the host.                                           |
+| Malicious external asset fetch       | No external URLs in bundles; host supplies bytes through an explicit loader and its own fetch/CSP policy.                                                                             |
+| Resource leak after failure          | Transactional load; dispose all temporary CPU/GPU/audio/listener resources on success, rejection, cancellation, context loss, and remount.                                            |
+| Prompt-controlled workflow execution | Insert text only into reviewed template fields; allowlist node classes and setting ranges; prompts cannot select paths, URLs, checkpoints, nodes, or commands.                        |
+| Hostile generated artifact           | Enforce response status, count, bytes, MIME signature, dimensions, pixels, alpha policy, hashes, and decode timeout before project use.                                               |
+| Local-provider pivot or CSRF         | Fixed loopback target, same-origin bridge, origin checks where supported, no project-defined endpoint, and no unrestricted production reverse proxy.                                  |
+| Checkpoint or output rights failure  | Explicit user selection plus evidence-backed model/output rights record; unknown or incompatible rights block project export.                                                         |
+| Stuck or abandoned generation job    | One active job, bounded timeout and polling, abort signal, provider cancellation, idempotent cleanup, and no accepted revision until completion.                                      |
 
 ## Resource-limit categories
 
@@ -111,6 +142,9 @@ possible. Limit categories required for v1 are:
   per-source/global rate and burst, queue depth, duration, and expiry;
 - diagnostics: message length, event frequency, retained history, and export
   size.
+- generation: prompt bytes, template fields, active jobs, queue depth, timeout,
+  polling interval, input/output count, encoded bytes, image dimensions and
+  pixels, revisions, and retained candidates.
 
 The exact numeric ceilings are a human approval gate during Phase A and must be
 centralized in versioned policy, tested at boundaries, and included in
@@ -179,6 +213,8 @@ The following policy choices remain proposed:
 5. which security-reporting, dependency-audit, and fuzzing gates block release;
 6. jurisdiction-specific privacy language and whether a formal data protection
    assessment is required.
+7. cloud generation providers, destinations, retention, credential storage,
+   and spending limits.
 
 No unresolved item above permits weakening the invariant controls: no bundle
 code, no bundle-triggered capture, no payload-defined trust, no unbounded
