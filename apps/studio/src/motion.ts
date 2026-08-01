@@ -243,8 +243,19 @@ if (!canvas || !status || !readiness || !project) {
         if (assembledFromParts) {
           [
             "back hair",
+            "left side hair",
+            "right side hair",
+            "left leg",
+            "right leg",
+            "left footwear",
+            "right footwear",
+            "coat tails",
             "torso",
+            "skirt layers",
             "outfit front",
+            "corset",
+            "left sleeve",
+            "right sleeve",
             "left arm and hand",
             "right arm and hand",
             "neck",
@@ -298,9 +309,14 @@ if (!canvas || !status || !readiness || !project) {
         }
         if (expression !== "none") drawExpression(expression);
         if (assembledFromParts) {
-          ["left eyebrow", "right eyebrow", "front hair", "accessory"].forEach(
-            (name) => drawMasked(name),
-          );
+          [
+            "left eyebrow",
+            "right eyebrow",
+            "front hair",
+            "headwear",
+            "accessory",
+            "held prop",
+          ].forEach((name) => drawMasked(name));
         }
         context.restore();
         output("gaze-x-value").value = gazeX.value;

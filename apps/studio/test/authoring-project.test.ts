@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
   createAuthoringProject,
+  createPromptPartPlan,
   defaultPartPlan,
   isCharacterBibleComplete,
   parseAuthoringProject,
@@ -162,5 +163,47 @@ it("allows bounded optional parts but never disables a required part", () => {
   ).toBe(true);
   expect(() => setPartEnabled(project, "face base", false)).toThrow(
     "invalid part plan",
+  );
+});
+
+it("expands complex prompts into specific riggable groups", () => {
+  const plan = createPromptPartPlan(
+    "long hair, ruffle dress, corset, military tailcoat, wide cuffs, witch hat, skull cane",
+  );
+  const enabled = new Set(
+    plan.filter((entry) => entry.enabled).map((entry) => entry.id),
+  );
+  for (const part of [
+    "left side hair",
+    "right side hair",
+    "skirt layers",
+    "corset",
+    "coat tails",
+    "left sleeve",
+    "right sleeve",
+    "headwear",
+    "held prop",
+  ] as const)
+    expect(enabled.has(part)).toBe(true);
+  expect(enabled.has("accessory")).toBe(false);
+});
+
+it("migrates a saved plan created before prompt-aware groups were added", () => {
+  const project = createAuthoringProject(concept, {
+    projectId: "legacy-plan",
+    createdAt: 100,
+  });
+  const value = JSON.parse(serializeAuthoringProject(project)) as {
+    partPlan: Array<{ id: string }>;
+  };
+  value.partPlan = value.partPlan.filter(
+    ({ id }) =>
+      !["left leg", "right leg", "left footwear", "right footwear"].includes(
+        id,
+      ),
+  );
+  const migrated = parseAuthoringProject(JSON.stringify(value));
+  expect(migrated.partPlan.find(({ id }) => id === "left leg")?.enabled).toBe(
+    true,
   );
 });

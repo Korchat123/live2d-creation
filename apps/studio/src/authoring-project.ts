@@ -29,7 +29,20 @@ export const partDefinitions = [
   { id: "teeth", required: false },
   { id: "mouth closed lips", required: true },
   { id: "front hair", required: true },
+  { id: "left side hair", required: false },
+  { id: "right side hair", required: false },
   { id: "outfit front", required: true },
+  { id: "coat tails", required: false },
+  { id: "left sleeve", required: false },
+  { id: "right sleeve", required: false },
+  { id: "corset", required: false },
+  { id: "skirt layers", required: false },
+  { id: "left leg", required: true },
+  { id: "right leg", required: true },
+  { id: "left footwear", required: true },
+  { id: "right footwear", required: true },
+  { id: "headwear", required: false },
+  { id: "held prop", required: false },
   { id: "accessory", required: false },
   { id: "left arm and hand", required: false },
   { id: "right arm and hand", required: false },
@@ -58,7 +71,20 @@ export const partDependencies: Readonly<Record<PartId, readonly PartId[]>> = {
   teeth: ["mouth interior"],
   "mouth closed lips": ["mouth interior"],
   "front hair": ["back hair", "face base"],
+  "left side hair": ["back hair"],
+  "right side hair": ["back hair"],
   "outfit front": ["torso", "neck"],
+  "coat tails": ["outfit front"],
+  "left sleeve": ["outfit front"],
+  "right sleeve": ["outfit front"],
+  corset: ["outfit front"],
+  "skirt layers": ["outfit front"],
+  "left leg": ["torso"],
+  "right leg": ["torso"],
+  "left footwear": ["left leg"],
+  "right footwear": ["right leg"],
+  headwear: ["front hair"],
+  "held prop": ["left arm and hand"],
   accessory: ["front hair", "outfit front"],
   "left arm and hand": ["torso"],
   "right arm and hand": ["torso"],
@@ -79,6 +105,48 @@ export const defaultPartPlan: readonly PartPlanEntry[] = partDefinitions.map(
     dependencies: partDependencies[id],
   }),
 );
+
+export const createPromptPartPlan = (
+  prompt: string,
+): readonly PartPlanEntry[] => {
+  const value = prompt.toLowerCase();
+  const enabled = new Set<PartId>([
+    "tongue",
+    "teeth",
+    "left arm and hand",
+    "right arm and hand",
+  ]);
+  const enableWhen = (pattern: RegExp, ...parts: PartId[]) => {
+    if (pattern.test(value)) parts.forEach((part) => enabled.add(part));
+  };
+  enableWhen(
+    /long hair|twin.?tail|side lock|braid/u,
+    "left side hair",
+    "right side hair",
+  );
+  enableWhen(/hat|hood|crown|cap|headwear|headpiece|tiara/u, "headwear");
+  enableWhen(
+    /cane|staff|wand|sword|spear|weapon|holding|umbrella/u,
+    "held prop",
+  );
+  enableWhen(
+    /coat|tailcoat|cape|cloak/u,
+    "coat tails",
+    "left sleeve",
+    "right sleeve",
+  );
+  enableWhen(/sleeve|cuff|jacket/u, "left sleeve", "right sleeve");
+  enableWhen(/corset|waistcoat/u, "corset");
+  enableWhen(/dress|skirt|ruffle|petticoat/u, "skirt layers");
+  enableWhen(
+    /glasses|choker|necklace|earring|ribbon|brooch|jewelry|accessory/u,
+    "accessory",
+  );
+  return defaultPartPlan.map((entry) => ({
+    ...entry,
+    enabled: entry.required || enabled.has(entry.id),
+  }));
+};
 
 export const landmarkNames = [
   "leftEye",
@@ -224,10 +292,28 @@ const validateLandmarks = (
 };
 
 const validatePartPlan = (value: unknown): readonly PartPlanEntry[] => {
-  if (!Array.isArray(value) || value.length !== partDefinitions.length)
+  if (!Array.isArray(value) || value.length > partDefinitions.length)
     throw new Error("The project part plan is incomplete.");
-  return partDefinitions.map((definition, index) => {
-    const entry = value[index] as Partial<PartPlanEntry> | undefined;
+  const entries = new Map<string, Partial<PartPlanEntry>>();
+  for (const item of value) {
+    const entry = item as Partial<PartPlanEntry> | undefined;
+    if (
+      typeof entry?.id !== "string" ||
+      entries.has(entry.id) ||
+      !partDefinitions.some(({ id }) => id === entry.id)
+    )
+      throw new Error("The project contains an invalid part plan.");
+    entries.set(entry.id, entry);
+  }
+  return partDefinitions.map((definition) => {
+    const entry = entries.get(definition.id);
+    if (!entry)
+      return {
+        id: definition.id,
+        required: definition.required,
+        enabled: definition.required,
+        dependencies: partDependencies[definition.id],
+      };
     if (
       entry?.id !== definition.id ||
       entry.required !== definition.required ||

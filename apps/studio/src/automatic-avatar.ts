@@ -6,7 +6,7 @@ import {
 
 const MAX_PROJECT_BYTES = 64 * 1024 * 1024;
 const MAX_IMAGE_LENGTH = 8 * 1024 * 1024;
-const MAX_LAYER_COUNT = 32;
+const MAX_LAYER_COUNT = 48;
 const safeLayerName = /^[a-z][a-z0-9 ]{0,63}$/u;
 const DATABASE_NAME = "open-avatar-generated";
 const STORE_NAME = "projects";

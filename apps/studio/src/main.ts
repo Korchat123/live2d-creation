@@ -2,6 +2,7 @@ import portraitUrl from "../../../assets/source/reference-avatar/generated-test-
 import { mountLayerLab, type ExportedProject } from "./authoring.js";
 import {
   createAuthoringProject,
+  createPromptPartPlan,
   updateCharacterBible,
 } from "./authoring-project.js";
 import {
@@ -347,10 +348,7 @@ promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
       });
       authoringProject = {
         ...authoringProject,
-        partPlan: authoringProject.partPlan.map((entry) => ({
-          ...entry,
-          enabled: true,
-        })),
+        partPlan: createPromptPartPlan(concept.prompt),
       };
       const partJobs = createPartGenerationJobs(authoringProject);
       await labController.loadSource(concept.image);

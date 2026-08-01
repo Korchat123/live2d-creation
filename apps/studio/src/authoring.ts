@@ -246,7 +246,20 @@ export const automaticLayerRegions: Readonly<
   neck: [0.43, 0.4, 0.14, 0.15],
   torso: [0.25, 0.48, 0.5, 0.4],
   "front hair": [0.2, 0.04, 0.6, 0.25],
+  "left side hair": [0.2, 0.16, 0.25, 0.42],
+  "right side hair": [0.55, 0.16, 0.25, 0.42],
   "back hair": [0.15, 0.04, 0.7, 0.52],
+  "coat tails": [0.18, 0.42, 0.64, 0.48],
+  "left sleeve": [0.14, 0.34, 0.27, 0.38],
+  "right sleeve": [0.59, 0.34, 0.27, 0.38],
+  corset: [0.39, 0.4, 0.22, 0.24],
+  "skirt layers": [0.28, 0.5, 0.44, 0.33],
+  "left leg": [0.34, 0.62, 0.17, 0.3],
+  "right leg": [0.49, 0.62, 0.17, 0.3],
+  "left footwear": [0.33, 0.85, 0.18, 0.13],
+  "right footwear": [0.49, 0.85, 0.18, 0.13],
+  headwear: [0.17, 0.01, 0.66, 0.24],
+  "held prop": [0.08, 0.3, 0.28, 0.65],
   accessory: [0.7, 0.12, 0.1, 0.13],
   "left arm and hand": [0.15, 0.45, 0.18, 0.4],
   "right arm and hand": [0.67, 0.45, 0.18, 0.4],
@@ -1226,7 +1239,9 @@ export const mountLayerLab = (
       "Created eye layers from your portrait guides. Inspect each thumbnail, then use the brush for any final edge correction.",
     );
   };
-  const buildProject = (): ExportedProject => {
+  const buildProject = (
+    expectedLayers: readonly string[] = layerNames,
+  ): ExportedProject => {
     const exported: Record<string, string> = {};
     masks.forEach((mask, name) => {
       const bounds = cropBoundsFromAlpha(
@@ -1256,7 +1271,7 @@ export const mountLayerLab = (
       expressionArtwork: Object.fromEntries(expressionArtwork) as Partial<
         Record<ExpressionName, string>
       >,
-      missingArtwork: findMissingArtwork(exported),
+      missingArtwork: expectedLayers.filter((name) => !exported[name]),
       limitations: everyVisibleLayerGenerated
         ? [
             "Automatic segmentation and generated hidden artwork still require visual review at motion extremes.",
@@ -2269,7 +2284,7 @@ export const mountLayerLab = (
     buildAutomatically: async (jobs) => {
       await completeAllMissing(jobs);
       await makeAvatarMotionReady();
-      const project = buildProject();
+      const project = buildProject(jobs?.map(({ partId }) => partId));
       const missingRequired = findMissingRequiredMotionLayers(project.layers);
       if (missingRequired.length)
         throw new Error(

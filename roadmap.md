@@ -192,6 +192,14 @@ The visual gate remains failed because the generic accessory layer oversized
 the witch hat and the coarse outfit/body groups lost separately controllable
 lower-body detail. See `docs/authoring/part-first-physical-smoke.md`.
 
+The recovery implementation now addresses that failure with a prompt-aware
+manifest. Long hair, headwear, held props, coats, sleeves, corsets, and layered
+skirts enable their own jobs; left/right legs and footwear are required for
+every full-body build. The concept prompt also rejects giant headwear and
+floating props unless explicitly requested. This expanded manifest is covered
+by CI but still requires a labelled physical reconstruction before the visual
+gate can pass.
+
 ## Primary references
 
 - [Animagine XL 4.0 model card](https://huggingface.co/cagliostrolab/animagine-xl-4.0)
