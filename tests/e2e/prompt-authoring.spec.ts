@@ -67,7 +67,7 @@ test("presents one-click generation and restores a generated project", async ({
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Generate Live2D avatar" }),
+    page.getByRole("button", { name: "Generate Open Avatar" }),
   ).toBeVisible();
   await expect(page.locator("#project-review")).toBeHidden();
   await expect(page.locator("#layer-lab")).toBeHidden();

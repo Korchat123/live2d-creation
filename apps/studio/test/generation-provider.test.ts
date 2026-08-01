@@ -82,7 +82,10 @@ describe("prompt generation policy", () => {
     expect(plan.pose).toContain("complete shoes");
     expect(plan.pose).toContain("75 percent");
     expect(plan.pose).toContain("proportionate wearable headwear");
+    expect(plan.pose).toContain("face fully visible and evenly lit");
+    expect(plan.pose).toContain("headwear do not cover the eyes or face");
     expect(plan.negative).toContain("giant hat");
+    expect(plan.negative).toContain("hat covering face");
     expect(plan.negative).toContain("multiple people");
     expect(plan.negative).toContain("close-up");
     const workflow = createConceptWorkflow(request);

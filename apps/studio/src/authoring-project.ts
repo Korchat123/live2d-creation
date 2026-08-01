@@ -120,7 +120,7 @@ export const createPromptPartPlan = (
     if (pattern.test(value)) parts.forEach((part) => enabled.add(part));
   };
   enableWhen(
-    /long hair|twin.?tail|side lock|braid/u,
+    /long(?:\s+[a-z-]+){0,4}\s+hair|twin.?tail|side lock|braid/u,
     "left side hair",
     "right side hair",
   );

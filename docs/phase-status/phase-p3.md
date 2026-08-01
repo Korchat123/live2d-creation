@@ -25,6 +25,10 @@ Reviewed: 2026-08-01
   IndexedDB, and enables project download and Motion Lab preview.
 - A physical one-prompt/one-click run produced 24 layers, 24 generated-artwork
   entries, four expression states, and zero missing-art entries.
+- The prompt-aware expanded physical run produced 35 separate masks and
+  generated-art entries, four expressions, and zero missing-art entries. It
+  proved separate coat, sleeves, corset, skirt, legs, footwear, hat, prop, and
+  arm jobs, but visual approval remains blocked by an obscured generated face.
 
 ## Blocking art evidence
 

@@ -39,7 +39,7 @@ root.innerHTML = `
           <label>Character description<textarea id="character-prompt" rows="5" maxlength="16384" placeholder="Original anime librarian with shoulder-length blue hair, round glasses, navy jacket, warm expression, neutral front pose"></textarea></label>
           <label hidden>Approved local checkpoint<select id="concept-checkpoint"><option value="">Check local ComfyUI first</option></select></label>
           <details class="prompt-plan" hidden><summary>Review interpreted generation request</summary><dl id="concept-prompt-plan"><div><dt>Identity</dt><dd>Enter a character description.</dd></div></dl></details>
-          <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate Live2D avatar</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
+          <div class="buttons"><button id="check-generation" type="button" hidden>Check local ComfyUI</button><button id="generate-concept" type="button" disabled>Generate Open Avatar</button><button id="cancel-generation" type="button" class="quiet" disabled>Cancel</button></div>
           <p id="generation-status" class="note" aria-live="polite">Checking the local generation provider…</p>
         </div>
         <figure class="concept-candidate">
@@ -238,7 +238,7 @@ const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
 if (workspaceDescription)
   workspaceDescription.textContent =
     "One generation can take several minutes because every motion part is created and checked locally.";
-generate.textContent = "Generate Live2D avatar";
+generate.textContent = "Generate Open Avatar";
 check.hidden = true;
 accept.hidden = true;
 variants.hidden = true;
@@ -258,7 +258,7 @@ automaticPanel.innerHTML = `
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
-  <p id="automatic-status" class="note" aria-live="polite">Enter a prompt, then choose Generate Live2D avatar.</p>
+  <p id="automatic-status" class="note" aria-live="polite">Enter a prompt, then choose Generate Open Avatar.</p>
   <div class="buttons">
     <button id="download-automatic-project" type="button" disabled>Download project</button>
     <button id="open-automatic-motion" type="button" class="quiet" disabled>Open avatar</button>

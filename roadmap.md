@@ -196,9 +196,15 @@ The recovery implementation now addresses that failure with a prompt-aware
 manifest. Long hair, headwear, held props, coats, sleeves, corsets, and layered
 skirts enable their own jobs; left/right legs and footwear are required for
 every full-body build. The concept prompt also rejects giant headwear and
-floating props unless explicitly requested. This expanded manifest is covered
-by CI but still requires a labelled physical reconstruction before the visual
-gate can pass.
+floating props unless explicitly requested. A labelled physical reconstruction
+completed in 24 minutes 3 seconds with 35 masks, 35 generated-art entries, four
+expressions, no missing art, full-canvas RGBA transparency, and a transparent
+source. It materially improved the coat, skirt, legs, boots, and cane
+separation, but the visual gate still failed because the concept obscured the
+face and made the hat too dominant. Studio now strengthens face-visibility
+conditioning and recognizes color words between "long" and "hair" when
+planning side-hair jobs. See
+`docs/authoring/expanded-part-first-physical-smoke.md`.
 
 ## Primary references
 

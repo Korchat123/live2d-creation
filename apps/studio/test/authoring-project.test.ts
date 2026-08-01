@@ -168,7 +168,7 @@ it("allows bounded optional parts but never disables a required part", () => {
 
 it("expands complex prompts into specific riggable groups", () => {
   const plan = createPromptPartPlan(
-    "long hair, ruffle dress, corset, military tailcoat, wide cuffs, witch hat, skull cane",
+    "long white hair streaked light blue, ruffle dress, corset, military tailcoat, wide cuffs, witch hat, skull cane",
   );
   const enabled = new Set(
     plan.filter((entry) => entry.enabled).map((entry) => entry.id),
