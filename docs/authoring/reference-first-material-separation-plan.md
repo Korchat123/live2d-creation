@@ -204,36 +204,36 @@ and reversible placement metadata. For Cubism, export named PSD groups and
 verify import in Cubism Editor. Do not label the atlas, PSD, or Open Avatar
 bundle as a finished `.moc3` model.
 
-## Mandatory user-review workflow
+## User-facing flow and automatic quality gates
 
-Automatic confidence never approves creative or anatomical correctness. Studio
-must persist the following review state machine and keep export disabled while
-any required decision is pending:
+Automatic confidence never turns guessed anatomy into ground truth. The user
+reviews the coherent front reference and the final motion result; Studio runs
+the intermediate state machine automatically and keeps export disabled while a
+blocking validator is unresolved:
 
 1. **Front reference:** show the full coherent reference, framing/face/body
    diagnostics, prompt interpretation, seed, and checkpoint. The user can
    accept, reject, or regenerate without overwriting an accepted revision.
-2. **Manifest and orientation:** show the part hierarchy and explicitly define
-   character-left as screen-right in a front view. The user confirms optional
-   parts, draw order, and supported motion envelope.
-3. **Visible part review:** for every part, show source, colored mask overlay,
-   isolated RGBA on checkerboard, and assembled context. Show segmentation
-   prompt, confidence, anchor, bounds, edge contact, ownership, and warnings.
-   Provide Accept, Reject, Retry mask, brush correction, replacement upload,
-   solo, visibility, opacity, and draw-order controls.
-4. **Visible reconstruction:** show reference and reconstruction side by side,
-   a wipe comparison, alpha-aware coverage/duplicate heatmaps, edge-weighted
-   difference, and reconstruction error. No hidden-art job may start until the
-   user accepts this gate.
-5. **Concealed-art review:** before generation, display the proposed
-   concealed-required region in cyan, the motion that requires it, uncertainty,
-   anatomy/garment prior, and maximum motion range. After generation, show
-   visible-only, generated-hidden-only, completed part, and neighbor overlap.
-   The user may accept, retry, edit, replace, or reduce motion to avoid the fill.
+2. **Private lock and manifest:** derive orientation, landmarks, part hierarchy,
+   character-left, draw order, and conservative motion envelope without a user
+   form. Reject invalid or ambiguous structures before generation.
+3. **Visible parts:** validate every mask and RGBA layer for confidence, anchor,
+   bounds, edge contact, ownership, coverage, duplicates, and protected pixels.
+   Retry automatically; expose correction/replacement controls only if bounded
+   retries and safe merge/bake/rigid/reduced-motion fallbacks cannot pass.
+4. **Visible reconstruction:** compare reference and reconstruction with
+   alpha-aware coverage/duplicate heatmaps, edge-weighted difference, and exact
+   protected-pixel checks. No hidden-art job starts until this automatic gate
+   passes.
+5. **Concealed art:** record each concealed-required region, motion reason,
+   uncertainty, anatomy/garment prior, and maximum range. Validate the completed
+   part and neighbor overlap automatically; retry, merge, bake, keep rigid, or
+   reduce motion when a fill cannot be proved safe.
 6. **Final assembly and motion:** toggle reference/reconstruction, checkerboard,
    seam heatmap, and individual layers. Test reset plus min/neutral/max for gaze,
    separate blinks, brows, mouth, head, body, hair, clothing, and supported limb
-   motion. Record a reviewer sign-off before export.
+   motion. Studio opens this view automatically after a successful build and
+   records the user's final test before export.
 
 Every accepted edit invalidates dependent hidden fills, occlusion decisions,
 and rig checks through the part dependency graph. Review decisions, candidate
@@ -387,11 +387,11 @@ Studio never converts a failed gate into an automatic approval.
     Round-trip landmarks, masks, and pixels through save/load. Any accepted edit
     invalidates dependent guides, hidden fills, expressions, occlusion, meshes,
     motion checks, and export sign-off.
-15. **Review fatigue and false confidence — closed in design.** Present an
-    exception-first contact sheet, but require explicit front-reference,
-    reconstruction, concealed-art, and final-motion sign-offs. Per-part metrics
-    rank work; they never approve creative or anatomical truth. Project files
-    persist pending decisions and resume at the first invalid gate.
+15. **Review fatigue and false confidence — closed in design.** Require only
+    explicit front-reference and final-motion user sign-offs. Blocking metrics
+    drive intermediate retries and safe degradation, but never relabel guessed
+    anatomy as truth. Project files persist checkpoints and resume at the first
+    invalid automatic gate; correction UI appears only for unresolved errors.
 16. **Motion tears, leaks, and unsupported range — closed in design.** Generate
     motion-swept concealed masks from the declared range, cache layer surfaces,
     test each parameter and combined corners at min/neutral/max, verify reset,
@@ -429,7 +429,7 @@ Implementation status on 2026-08-01:
 
 - Steps 1 and 2 are complete for the private Studio flow: the contracts are
   reconciled, and explicit neutral-master accept/reject/regenerate decisions
-  persist and restore without downstream auto-generation.
+  persist and restore. Accept or resume now starts downstream generation.
 - Step 3 is partial: the immutable master and stronger authoring prompt are
   implemented, while measured framing/face/hand diagnostics remain pending.
 - The next active gate is the canonical transform and registered technical guide
@@ -442,13 +442,14 @@ Implementation status on 2026-08-01:
    and accepted revisions across restart.
 3. Add the authoring prompt planner and front-pose/framing gate. Produce an
    immutable neutral master before any guide or expression job.
-4. Create the non-exported technical guide record: false-color ownership, edge,
-   pose, landmarks, registration metrics, provenance, and user corrections.
+4. Create the non-exported technical guide record automatically: false-color
+   ownership, edge, pose, landmarks, registration metrics, provenance, and any
+   exception-only corrections.
 5. Connect provider candidates to the semantic selector for five hard groups:
    face/hair, one eye, coat/dress, leg/boot, and hand/cane. Add positive/negative
    prompts, side, component, area/aspect/edge, overlap, topology, and hierarchy
    gates; remove all automatic rectangle acceptance.
-6. Implement alpha-aware ownership and visible reconstruction review. Stop the
+6. Implement alpha-aware ownership and visible reconstruction validation. Stop the
    expansion if the five-group exact-interior, coverage, duplicate, fringe, and
    z-order benchmark cannot pass.
 7. Benchmark material solvers independently: opaque hair/lace matting,
@@ -458,14 +459,15 @@ Implementation status on 2026-08-01:
 8. Implement per-part correction/replacement, dependency invalidation,
    checkpoint/resume, and content-addressed IndexedDB blob storage.
 9. Add the anatomy/garment prior ledger, clothed-envelope fit, occlusion graph,
-   and motion-swept concealed masks. Require the cyan pre-generation review.
+   and motion-swept concealed masks. Persist cyan diagnostics for the final
+   Motion Lab report and exception recovery.
 10. Restrict inpainting to accepted concealed masks, restore protected visible
     pixels, and gate seam, palette, line, identity, and overlap quality.
 11. Generate identity-locked expression candidates only as local masked edits;
     prove all pixels outside the expression mask remain unchanged.
 12. Cache Motion Lab layers and add reference/reconstruction toggles, seam and
     ownership views, automated individual/combined parameter sweeps, reset,
-    FPS/memory soak, and reviewer sign-off.
+    FPS/memory soak, automatic handoff, and final user test.
 13. Run rights, hostile-input, corrupt-storage, quota, cancellation, restart,
     rollback, and deterministic export suites.
 14. Expand from five hard groups to the complete manifest only after every
@@ -504,8 +506,9 @@ Production acceptance requires:
 - Motion Lab maintains at least 30 FPS during the 60-second reference-hardware
   soak without monotonic memory growth, then reset returns every parameter and
   layer transform to its recorded neutral state; and
-- reference, visible reconstruction, concealed candidates, final motion,
-  provenance, and rights all have persisted human sign-off.
+- the front reference and final motion have persisted user sign-off; visible
+  reconstruction and concealed candidates have persisted passing validator
+  evidence; and provenance and rights gates pass.
 
 The pipeline passes only the features it can prove. A character may pass with
 translucent fabric baked into its receiver or a hand/prop kept rigid, provided

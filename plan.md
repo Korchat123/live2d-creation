@@ -6,8 +6,9 @@ execution order for the product pivot.
 
 ## Outcome
 
-Replace the portrait-cropping-first workflow with a prompt-first workflow that
-generates a consistent design and purpose-built, full-canvas transparent parts.
+Use a prompt-first, reference-first workflow that generates one coherent design,
+separates it into semantic full-canvas transparent layers, and inpaints only
+the concealed overlap required for supported motion.
 Keep the existing Open Avatar runtime as the automated rig and preview path.
 Add non-destructive prompt edits for generated projects. Export a layered
 Cubism-ready PSD, then use Live2D Cubism Editor for a genuine `.moc3` export.
@@ -19,8 +20,10 @@ Cubism-ready PSD, then use Live2D Cubism Editor for a genuine `.moc3` export.
   They belong to the user/current task and must not be overwritten or reverted.
 - The output target is approved: support both, with Open Avatar as the default
   and Cubism as the optional Editor handoff.
-- Phases P0, P1, and P2 are accepted. The current work item is the
-  production-model control experiment required before P3 part generation.
+- The provider foundation and private automatic character-lock boundary are
+  accepted. The former user-facing Phase P2 is retired. The current work item
+  is the production-model control experiment required before production part
+  generation.
 - Animagine XL 4.0 Opt is hardware-compatible but its prompt-only benchmark is
   rejected: 17/20 complete framing and repeated identity drift. The next
   experiment adds reviewed composition and identity conditioning.
@@ -33,10 +36,12 @@ Cubism-ready PSD, then use Live2D Cubism Editor for a genuine `.moc3` export.
 2. **P1 — completed.** Prompt box, local endpoint health, one
    allowlisted workflow, progress, cancellation, bounded artifacts, provenance,
    and fake-provider CI.
-3. **P2 — completed.** Concept variants, explicit design approval,
-   character bible, landmarks, and editable part graph.
+3. **Automatic character lock — completed internally.** After explicit neutral
+   master approval, derive the private specification, landmarks, orientation,
+   and part graph without a user form, then continue automatically.
 4. **P3 — generate parts.** Generate aligned transparent layers with concealed
-   overlap; inspect and approve each part and the neutral composite.
+   overlap; validate each part and neutral composite automatically, then open
+   Motion Lab when the complete build passes.
 5. **P4 — correct and export source.** Mask/paint correction, hierarchy
    validation, deterministic project round-trip, and Cubism-ready PSD.
 6. **P5 — auto-rig.** Generate a conservative Open Avatar rig, validate all

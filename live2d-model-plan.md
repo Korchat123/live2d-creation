@@ -62,13 +62,14 @@ image or Open Avatar bundle as a Cubism model.
 1. Enter character, style, outfit, palette, and motion requirements.
 2. Choose local ComfyUI or another approved generation provider.
 3. Generate several neutral full-character concepts.
-4. Accept one concept to lock the identity and character bible.
-5. Review the proposed part inventory.
-6. Generate each part on the same full canvas with transparency, concealed
+4. Accept one concept. Studio derives the private identity lock, landmarks,
+   orientation, and prompt-aware part inventory automatically.
+5. Generate each part on the same full canvas with transparency, concealed
    overlap, stable landmarks, and reference conditioning.
-7. Inspect the neutral composite and fix or regenerate individual parts.
-8. Auto-rig supported parameters and run motion validation.
-9. Export the editable project and default Open Avatar bundle, with a
+6. Run blocking reconstruction, concealed-art, and motion validators; retry or
+   reduce unsupported motion automatically when a gate fails.
+7. Save the editable project and open Motion Lab for the user's final test.
+8. Export the default Open Avatar bundle, with a
    Cubism-ready PSD available as an optional additional export.
 
 ### Change an uploaded model with a prompt
@@ -107,8 +108,9 @@ separate feasibility and licensing decision.
    identifier, adapter version, prompts, inputs, and artifact hashes.
 9. **Safe data boundary.** Prompts, workflows, uploads, and outputs are hostile
    data and are bounded and validated before use.
-10. **Human approval at quality gates.** Automation may propose art and rigs,
-    but cannot silently approve identity, rights, or motion quality.
+10. **Human approval at product gates.** The user approves the coherent
+    reference and performs the final Motion Lab test. Intermediate technical
+    gates run automatically; rights and release approval remain explicit.
 11. **Preserve dependency direction.** Applications consume packages; packages
     never import from applications.
 12. **Keep packages private.** No package or model is published until license
@@ -330,24 +332,25 @@ Gate: a user prompt produces a bounded candidate image without arbitrary node,
 path, network, or command control; cancel and failure leave no partial project
 revision.
 
-### Phase P2 - Character bible and part plan
+### Automatic character lock (internal; not a user phase)
 
 - [x] Generate and compare concept variants.
 - [x] Add an explicit Accept design action.
-- [x] Extract or mark stable face/body landmarks.
-- [x] Create an editable part inventory and dependency graph from approved
-      templates.
+- [x] Derive the private character specification and prompt-aware part
+      inventory without asking the user to mark landmarks or fill a form.
+- [x] Create the dependency graph from approved templates.
 - [x] Freeze the private authoring-project schema only after review.
 
-Gate: a saved project round-trips the accepted concept, character bible,
-landmarks, part plan, provider metadata, and rights state.
+Gate: after reference acceptance, a saved project automatically round-trips the
+accepted concept, private character specification, landmarks, part plan,
+provider metadata, and rights state. No separate Phase P2 screen blocks users.
 
 ### Phase P3 - Purpose-generated part artwork
 
 - [ ] Generate the required parts in dependency order using the accepted design
       as conditioning.
 - [ ] Produce full-canvas transparent layers with hidden overlap.
-- [ ] Add per-part variants, retry, compare, accept, and manual replacement.
+- [ ] Add automatic per-part variants, retry, selection, and bounded recovery.
 - [ ] Add alpha, bounds, alignment, duplicate-content, and missing-part checks.
 - [ ] Add a layer inspector with draw-order, solo, opacity, checkerboard,
       composite, and reference overlay views.

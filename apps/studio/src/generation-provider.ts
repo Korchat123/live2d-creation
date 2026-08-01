@@ -963,7 +963,7 @@ export const mountPromptWorkspace = (
           }),
         );
         status.textContent =
-          "Neutral master accepted as revision 1. Character-bible review is next.";
+          "Neutral master accepted. Studio is building the avatar automatically.";
         prompt.disabled = true;
         checkpoint.disabled = true;
         check.disabled = true;

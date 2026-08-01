@@ -17,7 +17,6 @@ import {
   type AcceptedConceptDetail,
 } from "./generation-provider.js";
 import { createPartGenerationJobs } from "./part-generation.js";
-import { mountProjectReview } from "./project-review.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -52,21 +51,6 @@ root.innerHTML = `
           <div class="buttons"><button id="accept-concept" type="button" disabled>Accept neutral master</button><button id="reject-concept" type="button" class="quiet" disabled>Reject selected reference</button></div>
           <p class="note">No parts, hidden anatomy, expressions, rigging, or export begin until the selected neutral master is accepted and saved.</p>
         </figure>
-      </section>
-      <section id="project-review" class="project-review" aria-labelledby="project-review-title" hidden>
-        <div class="section-heading"><div><p class="eyebrow">Phase P2</p><h2 id="project-review-title">Lock the character bible</h2></div><span class="status">Private draft</span></div>
-        <div class="project-review-grid">
-          <form id="character-bible-form" class="character-bible">
-            <label>Character name<input name="displayName" maxlength="120" required></label>
-            <label>Visual style<textarea name="style" rows="3" maxlength="1000" required placeholder="Clean anime line art, soft cel shading…"></textarea></label>
-            <label>Palette<textarea name="palette" rows="2" maxlength="1000" required placeholder="Navy, muted blue, warm skin…"></textarea></label>
-            <label>Outfit rules<textarea name="outfit" rows="3" maxlength="1000" required></textarea></label>
-            <label>Identity-locked features<textarea name="identityNotes" rows="4" maxlength="2000" required placeholder="Face shape, eye shape, hairline, proportions, features that must not drift…"></textarea></label>
-          </form>
-          <section class="landmark-review" aria-labelledby="landmark-title"><h3 id="landmark-title">Canonical landmarks</h3><p>Mark in order: left eye, right eye, nose, mouth center, chin, then neck joint. Keyboard users can enter normalized X/Y values below.</p><div class="buttons"><button id="mark-landmarks" type="button">Mark landmarks</button><button id="clear-landmarks" type="button" class="quiet">Clear</button></div><p id="landmark-status" class="note" aria-live="polite">0/6 landmarks marked.</p><div id="landmark-values" class="landmark-values"></div></section>
-          <section class="part-plan-review" aria-labelledby="part-plan-title"><h3 id="part-plan-title">Part plan</h3><p class="note">Required parts are locked. Enable optional parts only when the design needs them.</p><div id="project-part-plan" class="project-part-plan"></div></section>
-        </div>
-        <div class="project-actions"><button id="save-authoring-project" type="button">Save project file</button><label class="file-picker">Load project file<input id="load-authoring-project" type="file" accept="application/json,.json"></label><p id="project-review-status" class="note" aria-live="polite">Accept a design to begin.</p></div>
       </section>
       <section id="layer-lab" class="workspace" aria-labelledby="workspace-title" hidden>
         <div class="section-heading"><div><p class="eyebrow">Legacy and correction tools</p><h2 id="workspace-title">Portrait Layer Lab</h2></div><span class="status">Local computer only</span></div>
@@ -204,7 +188,6 @@ arrangeAuthoringPanels();
 
 const promptWorkspace =
   document.querySelector<HTMLElement>("#prompt-workspace");
-const projectReview = document.querySelector<HTMLElement>("#project-review");
 const lab = document.querySelector<HTMLElement>("#layer-lab");
 const generate = document.querySelector<HTMLButtonElement>("#generate-concept");
 const check = document.querySelector<HTMLButtonElement>("#check-generation");
@@ -216,7 +199,6 @@ const checkpoint = document
   ?.closest("label");
 if (
   !promptWorkspace ||
-  !projectReview ||
   !lab ||
   !generate ||
   !check ||
@@ -244,7 +226,6 @@ if (workspaceDescription)
     "One coherent reference keeps the face, direction, outfit, and lighting consistent. Visible pixels are separated and only concealed motion artwork is generated.";
 generate.textContent = "Generate reference";
 check.hidden = true;
-projectReview.hidden = true;
 lab.hidden = true;
 
 const automaticPanel = document.createElement("section");
@@ -258,7 +239,7 @@ automaticPanel.innerHTML = `
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
-  <p id="automatic-status" class="note" aria-live="polite">Enter a prompt, then choose Generate Open Avatar.</p>
+  <p id="automatic-status" class="note" aria-live="polite">Generate a reference, accept it, and Studio will build the avatar automatically before opening Motion Lab.</p>
   <div class="buttons">
     <button id="download-automatic-project" type="button" disabled>Download project</button>
     <button id="open-automatic-motion" type="button" class="quiet" disabled>Open avatar</button>
@@ -292,13 +273,6 @@ const resetStages = () =>
 
 let activeProject: ExportedProject | undefined;
 const labController = mountLayerLab(lab, portraitUrl);
-const conceptOutput =
-  document.querySelector<HTMLImageElement>("#concept-output");
-if (!conceptOutput) throw new Error("Missing neutral-master preview");
-const projectReviewController = mountProjectReview(
-  projectReview,
-  conceptOutput,
-);
 const internalAnnouncement = document.querySelector<HTMLElement>("#announce");
 if (internalAnnouncement)
   new MutationObserver(() => {
@@ -341,86 +315,81 @@ promptWorkspace.addEventListener("avatarreferencereviewrestored", (event) => {
   automaticStatus.textContent = `Accepted neutral master restored from ${new Date(review.updatedAt).toLocaleString()}. Resume it to continue; no ComfyUI work restarted automatically.`;
 });
 
+const buildAcceptedAvatar = async (
+  concept: AcceptedConceptDetail,
+): Promise<void> => {
+  if (promptWorkspace.dataset.pipelineBusy === "true") return;
+  promptWorkspace.dataset.pipelineBusy = "true";
+  accept.disabled = true;
+  resetStages();
+  downloadProject.disabled = true;
+  openAvatar.disabled = true;
+  automaticState.textContent = "Building";
+  stage("concept", "complete");
+  stage("parts", "active");
+  automaticStatus.textContent =
+    "Reference accepted. Building the internal specification, visible parts, concealed overlaps, expressions, and motion. Keep ComfyUI open…";
+  let completed = false;
+  try {
+    let authoringProject = createAuthoringProject(concept, {
+      projectId: crypto.randomUUID(),
+      createdAt: Date.now(),
+    });
+    authoringProject = updateCharacterBible(authoringProject, {
+      displayName: "Generated avatar",
+      style: "clean Japanese anime line art with consistent cel shading",
+      palette: concept.prompt,
+      outfit: concept.prompt,
+      identityNotes: concept.prompt,
+    });
+    authoringProject = {
+      ...authoringProject,
+      partPlan: createPromptPartPlan(concept.prompt),
+    };
+    const partJobs = createPartGenerationJobs(authoringProject);
+    await labController.loadSource(concept.image);
+    const project =
+      concept.provenance.templateId === partsFirstTemplateId
+        ? await labController.buildFromParts(partJobs)
+        : await labController.buildAutomatically(partJobs);
+    stage("parts", "complete");
+    stage("rig", "complete");
+    stage("project", "complete");
+    await makeProjectAvailable(project);
+    completed = true;
+    automaticState.textContent = "Opening Motion Lab";
+    automaticStatus.textContent =
+      "Avatar saved and validated. Opening Motion Lab for your final test…";
+    window.location.assign("/motion.html");
+  } catch (error) {
+    const active = automaticPanel.querySelector<HTMLElement>(
+      '[data-state="active"]',
+    );
+    if (active) active.dataset.state = "error";
+    automaticState.textContent = "Needs retry";
+    automaticStatus.textContent =
+      error instanceof Error ? error.message : "Automatic avatar build failed.";
+  } finally {
+    delete promptWorkspace.dataset.pipelineBusy;
+    if (!completed) accept.disabled = false;
+  }
+};
+
 promptWorkspace.addEventListener("avatarconceptaccepted", (event) => {
   const concept = (event as CustomEvent<AcceptedConceptDetail>).detail;
-  void (async () => {
-    resetStages();
-    stage("concept", "complete");
-    downloadProject.disabled = true;
-    openAvatar.disabled = true;
-    automaticState.textContent = "Reference accepted";
-    automaticStatus.textContent =
-      "Neutral master saved. Review its character bible, landmarks, orientation, and part manifest. Parts remain blocked.";
-    const restored = await projectReviewController.restore(
-      concept.provenance.artifactSha256,
-    );
-    if (!restored) projectReviewController.acceptConcept(concept);
-    projectReview.scrollIntoView({ behavior: "smooth", block: "start" });
-  })().catch((error: unknown) => {
-    automaticState.textContent = "Review save failed";
-    automaticStatus.textContent =
-      error instanceof Error
-        ? error.message
-        : "Could not open the character-bible review.";
-  });
+  void buildAcceptedAvatar(concept);
 });
 
 promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
   const concept = (event as CustomEvent<AcceptedConceptDetail>).detail;
-  void (async () => {
-    resetStages();
-    downloadProject.disabled = true;
-    openAvatar.disabled = true;
-    automaticState.textContent = "Building";
-    stage("concept", "complete");
-    stage("parts", "active");
-    automaticStatus.textContent =
-      "Separating visible layers and completing concealed artwork. Keep ComfyUI open…";
-    try {
-      let authoringProject = createAuthoringProject(concept, {
-        projectId: crypto.randomUUID(),
-        createdAt: Date.now(),
-      });
-      authoringProject = updateCharacterBible(authoringProject, {
-        displayName: "Generated avatar",
-        style: "clean Japanese anime line art with consistent cel shading",
-        palette: concept.prompt,
-        outfit: concept.prompt,
-        identityNotes: concept.prompt,
-      });
-      authoringProject = {
-        ...authoringProject,
-        partPlan: createPromptPartPlan(concept.prompt),
-      };
-      const partJobs = createPartGenerationJobs(authoringProject);
-      await labController.loadSource(concept.image);
-      const project =
-        concept.provenance.templateId === partsFirstTemplateId
-          ? await labController.buildFromParts(partJobs)
-          : await labController.buildAutomatically(partJobs);
-      stage("parts", "complete");
-      stage("rig", "complete");
-      stage("project", "complete");
-      await makeProjectAvailable(project);
-      automaticState.textContent = "Ready";
-      automaticStatus.textContent =
-        "Avatar ready. Download the project or open it in Motion Lab.";
-    } catch (error) {
-      const active = automaticPanel.querySelector<HTMLElement>(
-        '[data-state="active"]',
-      );
-      if (active) active.dataset.state = "error";
-      automaticState.textContent = "Needs retry";
-      automaticStatus.textContent =
-        error instanceof Error
-          ? error.message
-          : "Automatic avatar build failed.";
-    } finally {
-      delete promptWorkspace.dataset.pipelineBusy;
-      generate.disabled = false;
-    }
-  })();
+  void buildAcceptedAvatar(concept);
 });
+
+/*
+  The accepted reference is the only user-authored gate before the automatic
+  build. Character-bible fields, landmarks, and the prompt-aware part manifest
+  remain private implementation data rather than another user form.
+*/
 
 downloadProject.addEventListener("click", download);
 openAvatar.addEventListener("click", () =>

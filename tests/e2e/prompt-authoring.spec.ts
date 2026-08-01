@@ -57,7 +57,7 @@ test("keeps a portrait concept preview inside its safe stage", async ({
   );
 });
 
-test("restores an accepted neutral master without starting downstream work", async ({
+test("restores an accepted neutral master and starts the automatic build only on resume", async ({
   page,
 }) => {
   await page.goto("/");
@@ -110,20 +110,15 @@ test("restores an accepted neutral master without starting downstream work", asy
     "data-state",
     "active",
   );
-  await expect(page.locator("#project-review")).toBeHidden();
+  await expect(page.locator("#project-review")).toHaveCount(0);
 
   await page.locator("#accept-concept").click();
-  await expect(page.locator("#project-review")).toBeVisible();
-  await expect(page.locator("#automatic-state")).toHaveText(
-    "Reference accepted",
-  );
-  await expect(page.locator("#automatic-status")).toContainText(
-    "Parts remain blocked",
-  );
-  await expect(page.locator('[data-stage="parts"]')).not.toHaveAttribute(
+  await expect(page.locator("#automatic-state")).toHaveText("Building");
+  await expect(page.locator('[data-stage="parts"]')).toHaveAttribute(
     "data-state",
     "active",
   );
+  await expect(page.locator("#project-review")).toHaveCount(0);
 });
 
 test("presents gated reference review and restores a generated project", async ({
@@ -144,7 +139,7 @@ test("presents gated reference review and restores a generated project", async (
   await expect(page.locator('[data-stage="parts"]')).toHaveText(
     "Separate visible parts and complete hidden artwork",
   );
-  await expect(page.locator("#project-review")).toBeHidden();
+  await expect(page.locator("#project-review")).toHaveCount(0);
   await expect(page.locator("#layer-lab")).toBeHidden();
   await expect(page.locator("#concept-checkpoint")).toBeVisible();
   await expect(page.locator("#accept-concept")).toBeVisible();
@@ -161,7 +156,7 @@ test("presents gated reference review and restores a generated project", async (
     .getByLabel("Character description")
     .fill("blue-haired woman with a navy jacket");
   await expect(page.locator("#automatic-status")).toContainText(
-    "Enter a prompt",
+    "Generate a reference",
   );
 
   await page.locator("#upload-automatic-project").setInputFiles({

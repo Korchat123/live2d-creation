@@ -6,8 +6,9 @@ and rigs them for the existing Open Avatar browser runtime. It also plans
 non-destructive prompt edits for generated projects and a layered PSD handoff
 for Live2D Cubism Editor.
 
-Phases P0 through P2 are accepted and the production-model benchmark is in
-progress. The existing provider-neutral runtime, renderer, validation,
+The provider foundation and private automatic character-lock boundary are
+accepted, and the production-model benchmark is in progress. The existing
+provider-neutral runtime, renderer, validation,
 controls, and Studio work are retained as foundations. See
 [`live2d-model-plan.md`](live2d-model-plan.md) for the canonical plan and
 [`plan.md`](plan.md) for the immediate execution order. The remaining technical
@@ -38,13 +39,13 @@ Useful individual commands are `pnpm format:check`, `pnpm lint`,
 
 ## Local concept-generation spike
 
-The default Studio experience is now one-click: enter a character prompt and
-choose **Generate Live2D avatar**. Studio generates the concept, extracts and
-repairs transparent motion parts through local ComfyUI, creates blink and mouth
-states, validates the result, and enables Open Avatar project download and
-Motion Lab preview. Generated project files can be uploaded from the same
-screen. Character-bible and Portrait Layer Lab controls are internal recovery
-tools and are not part of the default user flow.
+The default Studio experience is one click after reference approval: enter a
+character prompt, generate a coherent neutral master, and accept it. Studio
+then derives its private specification, extracts and repairs transparent motion
+parts through local ComfyUI, creates blink and mouth states, validates and saves
+the result, and opens Motion Lab. Generated project files can be uploaded from
+the same screen. Portrait Layer Lab controls are exception-only recovery tools
+and are not part of the default user flow.
 
 Phase P1 can connect the Studio development server to a local ComfyUI instance
 at `127.0.0.1:8188`. Checkpoint discovery never authorizes a model
@@ -61,10 +62,11 @@ passed a labelled physical ComfyUI generation and cancellation test on the
 reference RTX 3050 laptop. CI uses a deterministic fake provider and does not
 download models.
 
-Phase P2 is also accepted: candidate comparison, design locking, editable
-character bible, normalized landmarks, bounded part dependencies, IndexedDB
-persistence, and validated project-file round trips are implemented. The next
-gate is the production-model control experiment in `roadmap.md`. The
+The former Phase P2 user screen is retired. After neutral-master acceptance,
+Studio derives its private character specification, normalized landmarks, and
+bounded part dependencies automatically, persists the project in IndexedDB,
+and continues the build. Successful builds open Motion Lab for the final user
+test. The next gate is the production-model control experiment in `roadmap.md`. The
 prompt-only Animagine benchmark passed hardware stability but failed framing
 and identity quality. The verified OpenPose SDXL control improved framing to
 19/20, but the strict crop/background gate still failed, so the workflow is not

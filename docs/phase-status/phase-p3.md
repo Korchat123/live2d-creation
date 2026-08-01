@@ -1,6 +1,6 @@
 # Phase P3 status: reference-first material separation
 
-Status: neutral-master review gate implemented; production art gate blocked
+Status: neutral-master gate and automatic handoff implemented; production art gate blocked
 
 Reviewed: 2026-08-01
 
@@ -16,17 +16,20 @@ only the concealed overlap required by approved motion. See
 - Studio visibly presents the interpreted prompt, approved checkpoint,
   candidate history, provenance/hash, optional rejection note, Accept neutral
   master, Reject, and Regenerate controls.
-- Generating a reference stops at review. It does not start part generation,
-  hidden fill, expressions, rigging, export, or Motion Lab.
+- Generating a reference stops for one user decision. Accepting it, or explicitly
+  resuming an already accepted reference, starts the downstream build.
 - The private versioned reference-review state records up to four validated
   embedded candidates, selection, rejection reason/timestamp, and exactly one
   immutable accepted candidate keyed by its artifact SHA-256.
 - Pending, rejected, selected, and accepted decisions persist in IndexedDB. An
   accepted neutral master restores after reload without automatically restarting
   ComfyUI work; the user explicitly resumes it.
-- Resume opens the persisted character-bible, landmark, orientation, and part
-  manifest review. A concept hash mismatch cannot silently restore an unrelated
-  authoring project.
+- Accept or resume automatically creates the private character specification,
+  landmarks, orientation, and prompt-aware manifest, then starts the build. The
+  retired Phase P2 form and user landmark marking are absent. A concept hash
+  mismatch cannot silently restore an unrelated authoring project.
+- A successful automatic build saves the project and opens Motion Lab for the
+  user's final test.
 - The authoring prompt now requests an orthographic-looking centered front pose,
   level features and body axes, neutral mouth/open eyes, separated arms/legs,
   5–10% silhouette margins, visible hands and shoes, even lighting, and props
@@ -63,11 +66,13 @@ P3 remains blocked until all of the following pass in order:
    remain byte-identical;
 5. implement alpha-aware reconstruction and material-specific hair/lace,
    same-color contact, shadow, and transparency decisions;
-6. review the cyan motion-swept concealed masks before hidden-only inpainting;
-7. implement per-part decisions, dependency invalidation, checkpoint/resume,
-   blob storage, and explicit merge/bake/rigid/reduced-motion fallbacks; and
+6. validate the cyan motion-swept concealed masks automatically before
+   hidden-only inpainting and preserve them as final diagnostics;
+7. implement automatic per-part decisions, dependency invalidation,
+   checkpoint/resume, blob storage, and explicit
+   merge/bake/rigid/reduced-motion fallbacks; and
 8. pass final motion, storage, cancellation, rights, hostile-input, FPS, memory,
-   and human art-quality gates.
+   automated art gates and final Motion Lab user testing.
 
 Current operational risks are bounded but unresolved: candidate images still
 use embedded data URLs until the scheduled Blob-store migration; legacy
@@ -78,10 +83,11 @@ not yet resumable.
 ## Verification
 
 - Studio typecheck passes.
-- Studio unit tests pass, including the new four-test reference-review state
-  suite.
-- Chromium acceptance tests pass reference persistence, explicit resume, hidden
-  downstream stages, existing project import, and safe unconfigured-provider
-  behavior.
-- The repository-wide `pnpm run ci` result is recorded at handoff after all
-  current changes are complete.
+- All 120 repository unit tests pass, including the four-test reference-review
+  state suite.
+- All 18 focused Chromium, Firefox, and WebKit acceptance tests pass reference
+  persistence, explicit automatic-build resume, removal of the Phase P2 UI,
+  existing project import, safe unconfigured-provider behavior, and Motion Lab
+  failure safety.
+- The repository-wide `pnpm run ci` passes formatting, lint, type checks, unit
+  tests, safety/rights/requirements gates, and production builds.

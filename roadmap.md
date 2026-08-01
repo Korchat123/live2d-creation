@@ -8,30 +8,30 @@ Cubism-ready layered PSD is the optional handoff to Live2D Cubism Editor.
 
 ## Default product flow
 
-The default is a guided reference-first workflow:
+The default is a one-click-after-approval reference-first workflow:
 
 1. enter one character prompt and generate coherent front-reference variants;
 2. accept, reject, or regenerate the front reference;
-3. create a registered non-exported authoring pack from the accepted neutral
-   master: false-color ownership, edges, pose, landmarks, and local masked
-   expression candidates;
-4. confirm the prompt-aware part manifest, hierarchy, character-relative
-   left/right, and supported motion envelope;
-5. review every semantic mask and visible extracted part on checkerboard,
-   source overlay, and assembled context;
-6. accept the visible reconstruction after coverage, duplicate, edge, and
-   difference review;
-7. review proposed concealed regions, then accept, retry, correct, replace, or
-   reduce motion for every generated hidden overlap;
-8. inspect the final assembly and min/neutral/max Motion Lab controls;
-9. sign off and download the generated project or optional handoff; and
-10. upload a previously generated project to continue its immutable revisions.
+3. after acceptance, automatically create a registered non-exported authoring
+   pack from the neutral master: false-color ownership, edges, pose, landmarks,
+   and local masked expression candidates;
+4. automatically derive the prompt-aware manifest, hierarchy,
+   character-relative left/right, and conservative motion envelope;
+5. generate and validate semantic layers, visible reconstruction, concealed
+   overlaps, expressions, and rigging, retrying or reducing unsupported motion
+   when a blocking gate fails;
+6. save the project and automatically open Motion Lab;
+7. let the user test the final assembly and min/neutral/max controls, then
+   download or return to exception-focused correction; and
+8. upload a previously generated project to continue its immutable revisions.
 
-Review is part of the product, not a hidden recovery tool. Automation may
-prioritize exceptions and preselect candidates, but it cannot approve the
-reference, uncertain anatomy, visible reconstruction, motion extremes, rights,
-or export. The optional Cubism route remains an Editor handoff; automatic
-output is labelled Open Avatar rather than an Editor-exported Cubism model.
+The user approves the coherent front reference and performs the final Motion
+Lab test. Intermediate manifest, segmentation, hidden-fill, reconstruction,
+and rig checks are blocking automated validators rather than user marking
+steps. Uncertain anatomy is never declared recovered truth: the pipeline
+merges, bakes, keeps rigid, reduces motion, or stops with a precise recovery
+option. The optional Cubism route remains an Editor handoff; automatic output
+is labelled Open Avatar rather than an Editor-exported Cubism model.
 
 ## Reference-first material-separation contract
 
@@ -84,13 +84,15 @@ are prohibited.
 
 ## Delivery order
 
-### P2 - Character lock and private project
+### Automatic character lock (internal; no Phase P2 screen)
 
 1. Compare several concept candidates without mutating the accepted project.
 2. Accept one design explicitly.
-3. Review editable character-bible fields and normalized landmarks.
-4. Review the bounded part inventory and optional parts.
-5. Save/load through IndexedDB and deterministic project files.
+3. Derive the private character specification, normalized landmarks,
+   orientation, bounded part inventory, and optional parts automatically.
+4. Validate the derived plan and conservative motion envelope internally.
+5. Save/load through IndexedDB and deterministic project files, then continue
+   directly into part generation.
 
 Gate: a clean session restores the exact accepted design, bible, landmarks,
 part plan, provenance, and blocking rights state.
@@ -174,19 +176,21 @@ rig or pack derived outputs. See
 
 Front-reference review and persistence are now implemented. Generation stops at
 the visible neutral-master gate; accept/reject/regenerate decisions, rejection
-notes, candidate history, provenance, immutable acceptance, and explicit
-reload/resume survive in IndexedDB without restarting ComfyUI or downstream
-work. The authoring pose also keeps props beside rather than across the central
-silhouette.
+notes, candidate history, provenance, and immutable acceptance survive in
+IndexedDB. Accept or explicit reload/resume creates the private character lock
+and starts downstream work automatically. A successful build saves the project
+and opens Motion Lab. The authoring pose also keeps props beside rather than
+across the central silhouette.
 
 The immediate implementation order is now the canonical/inverse canvas
 transform and immutable invalidation graph; then the registered non-exported
 false-color, edge, pose, and landmark guide; then the five-group semantic-mask
 and visible-reconstruction benchmark. Material-specific hair/lace,
 black-on-black, shadow, transparency, and hand/prop gates run before per-part
-expansion. Per-part review, dependency invalidation, conservative
-anatomy/garment overlap, hidden-only inpainting, identity-locked local
-expressions, and final motion/storage/performance sign-off follow in that order.
+expansion. Automatic per-part validation, dependency invalidation,
+conservative anatomy/garment overlap, hidden-only inpainting, identity-locked
+local expressions, and final motion/storage/performance checks follow in that
+order. Only the final Motion Lab test is a routine user sign-off.
 The existing strict parts-first code remains experimental until the replacement
 has physical evidence.
 
@@ -203,9 +207,10 @@ CC BY GarmentCodeData and BodyParts3D, plus independently authored anime
 proportion presets. Modern drawing books and tutorials are human references
 only and may not be scanned, trained on, conditioned into a model, or bundled
 without permission. Hidden fill is the minimum clothed overlap needed for an
-approved motion range and is always disclosed to the reviewer.
+approved motion range and is recorded in the final diagnostics.
 
-P2 is accepted. The Animagine XL 4.0 Opt prompt-only run framed 17/20 samples.
+The internal character-lock implementation is accepted; it is no longer a
+user-facing phase. The Animagine XL 4.0 Opt prompt-only run framed 17/20 samples.
 The verified OpenPose SDXL control improved the first controlled run to 18/20
 and the final tuned run to 19/20, with 40/40 controlled jobs completing without
 OOM or an abandoned queue. The final run still produced one top crop, one halo,
@@ -214,8 +219,9 @@ failed and the workflow is not production-approved. P3 artifact validation and
 dependency-ordered orchestration are implemented, but P3 art acceptance remains
 blocked for production-quality release pending a passing subject/background
 check and a separately rights-reviewed identity-reference experiment. The
-former one-click draft is historical evidence only; in the revised default,
-pending required reviews block hidden generation, rigging, and export.
+former one-click draft is historical evidence only. In the revised default,
+failed automated gates block hidden generation, rigging, and export and expose
+an exception-focused recovery path.
 See `docs/authoring/controlled-composition-benchmark.md` and
 `docs/phase-status/phase-p3.md`. The local one-click draft pipeline now passes
 physically: one prompt and one action produced a downloadable 24-layer project

@@ -265,9 +265,13 @@ Acceptance:
   by prompt text;
 - cancellation and failure clean up all temporary state.
 
-## Wave P2 - Character bible and project model
+## Internal character lock - folded into the automatic build
 
-### P2-A - Private authoring project
+This is not a user-facing phase. After the user accepts the neutral master,
+Studio creates the private specification and continues without landmark,
+manifest, or character-bible forms.
+
+### LOCK-A - Private authoring project
 
 Owner role: project/schema agent
 
@@ -293,43 +297,45 @@ Acceptance:
 - unknown major versions and hostile paths/files are rejected;
 - no executable provider workflow or secret is serialized.
 
-### P2-B - Design approval UX
+### LOCK-B - Automatic identity/specification derivation
 
 Owner role: Studio UX agent
 
-Depends on: `P2-A`
+Depends on: `LOCK-A`
 
 Write scope: `apps/studio/` and its tests
 
 Deliverables:
 
-- concept variant comparison;
-- explicit Accept design action;
-- editable character-bible fields and landmark review;
-- part-plan and missing-capability review.
+- concept variant comparison and explicit Accept design action;
+- automatic private character specification, orientation, landmarks, and
+  prompt-aware part plan;
+- automatic capability and motion-envelope validation;
+- direct continuation into the build after acceptance or explicit resume.
 
 Acceptance:
 
-- no part job starts before design acceptance;
+- no part job starts before neutral-master acceptance;
 - changing identity-locked fields produces a new reviewed revision;
-- project reload preserves the exact accepted concept and plan.
+- project reload preserves the exact accepted concept and plan;
+- no user landmark marking or intermediate Phase P2 form is required.
 
-### P2-C - P2 integration and contract approval
+### LOCK-C - Internal-lock integration
 
 Owner role: root agent
 
-Depends on: `P2-A`, `P2-B`
+Depends on: `LOCK-A`, `LOCK-B`
 
 Deliverables:
 
 - approve the private project boundary;
 - verify it does not leak into unrelated public control contracts;
 - run CI and hostile-project tests;
-- record Phase P2 status.
+- record the automatic character-lock status.
 
 ## Wave P3 - Purpose-generated part artwork
 
-After `P2-C`, `P3-A` and `P3-B` may proceed in parallel. `P3-C` integrates.
+After `LOCK-C`, `P3-A` and `P3-B` may proceed in parallel. `P3-C` integrates.
 
 ### P3-A - Part generation orchestrator
 
@@ -363,15 +369,15 @@ Acceptance:
 - retries cannot mutate accepted parts;
 - all required roles and concealed overlaps are measurable.
 
-### P3-B - Layer review and correction UI
+### P3-B - Automatic diagnostics and recovery UI
 
 Owner role: authoring UX agent
 
 Progress on 2026-08-01: the explicit persisted front-reference
 accept/reject/regenerate gate is complete, including immutable acceptance,
 rejection notes, candidate history, reload/resume, and downstream blocking.
-Authoring-constraint diagnostics, technical-pack status, and per-part review
-remain pending.
+Authoring-constraint diagnostics, technical-pack status, automatic per-part
+gates, and final Motion Lab handoff remain pending.
 
 Write scope: `apps/studio/` and its tests
 
@@ -380,20 +386,21 @@ Deliverables:
 - explicit front-reference accept/reject/regenerate gate;
 - authoring-constraint preview and immutable neutral-master/reference-pack
   status;
-- part list, solo/visibility/opacity/draw-order controls;
+- final/recovery part list, solo/visibility/opacity/draw-order controls;
 - registered false-color/edge/pose/landmark guide views, checkerboard,
   source/mask overlay, isolated visible RGBA, assembled context,
   reconstruction wipe, coverage/duplicate/seam heatmaps, and neutral composite;
-- per-part confidence/diagnostics plus compare, accept, reject, retry, replace,
-  merge, bake, rigid-group, motion-reduction, and bounded correction tools;
-- visible-only, generated-hidden-only, and completed-part review;
+- automatic per-part confidence/diagnostics, retry and candidate selection;
+- exception-only replace, merge, bake, rigid-group, motion-reduction, and
+  bounded correction tools;
+- visible-only, generated-hidden-only, and completed-part diagnostics;
 - accessible undo/redo.
 
 Acceptance:
 
 - active part and revision are always visible;
 - users can identify alpha, alignment, overlap, and draw-order errors;
-- required pending decisions block hidden generation, rigging, and export;
+- failed automated gates block hidden generation, rigging, and export;
 - accepted edits invalidate dependent hidden fill and motion checks;
 - original references and accepted revisions remain recoverable.
 
@@ -412,7 +419,7 @@ Deliverables:
   duplicate, z-order, hidden-art, expression-isolation, and motion-sweep checks;
 - 40-layer storage round-trip, cancellation/recovery, corrupt/quota, 60-second
   FPS/memory soak, and deterministic export/import evidence;
-- human art-quality decision record.
+- final Motion Lab user-test record.
 
 Acceptance:
 

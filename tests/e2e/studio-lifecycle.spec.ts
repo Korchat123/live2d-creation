@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("renders the Builder with reference review before manual part tools", async ({
+test("renders the Builder without the retired Phase P2 controls", async ({
   page,
 }) => {
   await page.goto("/");
@@ -12,7 +12,7 @@ test("renders the Builder with reference review before manual part tools", async
   ).toBeVisible();
   await expect(page.locator("#automatic-progress li")).toHaveCount(4);
   await expect(page.locator("#layer-lab")).toBeHidden();
-  await expect(page.locator("#project-review")).toBeHidden();
+  await expect(page.locator("#project-review")).toHaveCount(0);
 });
 
 test("keeps the prompt workspace usable when ComfyUI is not configured", async ({
