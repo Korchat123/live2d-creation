@@ -8,32 +8,37 @@ Cubism-ready layered PSD is the optional handoff to Live2D Cubism Editor.
 
 ## Default product flow
 
-The user-facing phase UI has been retired. The default flow is:
+The default is a guided reference-first workflow:
 
-1. enter one character prompt;
-2. create a private character specification and explicit part manifest before
-   generating artwork;
-3. generate a controlled identity reference and every declared part in
-   dependency order on the same full transparent canvas;
-4. reconstruct and validate the neutral character from those parts;
-5. generate expression states and the conservative Open Avatar motion setup;
-6. validate and download the generated project or open it in Motion Lab; and
-7. upload a previously generated project into the same screen.
+1. enter one character prompt and generate coherent front-reference variants;
+2. accept, reject, or regenerate the front reference;
+3. confirm the prompt-aware part manifest, hierarchy, character-relative
+   left/right, and supported motion envelope;
+4. review every semantic mask and visible extracted part on checkerboard,
+   source overlay, and assembled context;
+5. accept the visible reconstruction after coverage, duplicate, edge, and
+   difference review;
+6. review proposed concealed regions, then accept, retry, correct, replace, or
+   reduce motion for every generated hidden overlap;
+7. inspect the final assembly and min/neutral/max Motion Lab controls;
+8. sign off and download the generated project or optional handoff; and
+9. upload a previously generated project to continue its immutable revisions.
 
-Character-bible fields, landmarks, masks, and manual painting remain internal
-metadata or recovery tools. They must not block the one-click happy path. The
-optional Cubism route remains an Editor handoff; automatic output is labelled
-Open Avatar rather than an Editor-exported Cubism model.
+Review is part of the product, not a hidden recovery tool. Automation may
+prioritize exceptions and preselect candidates, but it cannot approve the
+reference, uncertain anatomy, visible reconstruction, motion extremes, rights,
+or export. The optional Cubism route remains an Editor handoff; automatic
+output is labelled Open Avatar rather than an Editor-exported Cubism model.
 
-## Part-first artifact contract
+## Reference-first material-separation contract
 
-The accepted source of truth is a manifest plus separate full-canvas RGBA
-images. The default flow does not generate a complete portrait first. It starts
-with a transparent canonical canvas, bounded part regions, and a character
-specification; each job receives only its declared dependency composite as
-visual context. The first complete character image is assembled from accepted
-parts. A generated atlas or contact sheet is only a derived review preview; it
-is never split to create project art.
+The accepted source of truth is one coherent front reference, a reviewed
+semantic manifest, and separate aligned full-canvas RGBA layers. Exact accepted
+reference pixels may form the visible portion of a semantic layer; this is not
+a rectangular crop. Concealed overlap is generated separately, marked as
+generated during review, and limited to the accepted motion envelope. A
+generated atlas or contact sheet is only a derived review/export preview and is
+never split to create project art.
 
 Every character requires a clean face base beneath hair and facial features,
 independent eye and mouth components, front and rear hair groups, neck, torso,
@@ -47,8 +52,9 @@ Reject an output when it contains a painted checkerboard, label text, alignment
 guides in the art, a missing face base, combined eye components, duplicated
 assembled clothing, unrelated coordinates, opaque background, or a flattened
 character. The Studio may use an identity reference, masks, segmentation, and
-inpainting internally, but accepted part art cannot be a crop from that
-reference.
+inpainting internally. Accepted visible art must come from reviewed semantic
+masks in canonical coordinates; rectangular crops and atlas-cell extraction
+are prohibited.
 
 ## Risk-resolution matrix
 
@@ -59,7 +65,7 @@ reference.
 | Natural-language prompts are inconsistent        | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                         | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                                                                                   |
 | Identity changes between parts                   | Lock one accepted concept into a character bible. Condition every part job on its concept, normalized landmarks, palette, approved tags, and seed family.                                                                                                                | Face shape, eyes, hairline, proportions, palette, and line treatment remain recognizable across all accepted parts.                                                                                                        |
 | Multiple characters or incorrect poses           | Use strict single-character/front-pose conditioning and automatically reject multiple faces, bodies, or major pose deviations before design approval.                                                                                                                    | Only one centered character in the approved neutral pose reaches the character-bible gate.                                                                                                                                 |
-| Diffusion does not reliably produce transparency | Generate a contextual part, segment it, reconstruct concealed pixels by inpainting, and place it on the canonical full-canvas transparent layer. Accepted parts are generated artwork, not source crops.                                                                 | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                                                                                |
+| Diffusion does not reliably produce transparency | Segment reviewed visible pixels into full-canvas semantic RGBA layers, then inpaint only the concealed overlap required by approved motion. Never use rectangular crops or atlas cells as parts.                                                                         | Every part is aligned full-canvas RGBA with valid alpha, no background, and the required concealed overlap.                                                                                                                |
 | Missing concealed artwork                        | Explicitly generate scalp, full face beneath hair, eye contents beneath lids, mouth cavity, neck beneath the head, and torso beneath clothing.                                                                                                                           | Motion-extreme overlays reveal no holes, duplicated outlines, or crop edges.                                                                                                                                               |
 | Part alignment drift                             | Freeze normalized face/body landmarks and canonical 2048 by 2048 coordinates. Reject artifacts outside anchor tolerances.                                                                                                                                                | The neutral composite matches the accepted concept at viewing resolution and every anchor is within approved tolerance.                                                                                                    |
 | Hands and large turns are unreliable             | Keep v1 conservative: modest head X/Y, gaze, blink, brows, mouth, breathing, hair, and clothing physics. Treat hands and large turns as optional additional-art sets.                                                                                                    | Unsupported motion is disabled with a clear limitation instead of being approximated badly.                                                                                                                                |
@@ -161,11 +167,20 @@ concealed artwork, reconstruct the reference from completed layers, and then
 rig or pack derived outputs. See
 `docs/authoring/reference-first-material-separation-plan.md`.
 
-The immediate implementation order is coherent-reference restoration, semantic
-mask records and left/right disambiguation, visible-layer reconstruction, then
-hidden-area-only inpainting. The existing strict parts-first code remains an
-experimental path until it can be safely retired after the replacement has
-physical evidence.
+The immediate implementation order is front-reference review and persistence,
+then a five-group semantic-mask/reconstruction benchmark, per-part review and
+dependency invalidation, conservative anatomy/garment overlap planning,
+hidden-area-only inpainting, and final motion-extreme sign-off. The existing
+strict parts-first code remains an experimental path until it can be safely
+retired after the replacement has physical evidence.
+
+Anatomy sources constrain plausibility but cannot recover the true unseen
+design. Use licensed geometry/ontology sources such as CC0 MakeHuman exports,
+CC BY GarmentCodeData and BodyParts3D, plus independently authored anime
+proportion presets. Modern drawing books and tutorials are human references
+only and may not be scanned, trained on, conditioned into a model, or bundled
+without permission. Hidden fill is the minimum clothed overlap needed for an
+approved motion range and is always disclosed to the reviewer.
 
 P2 is accepted. The Animagine XL 4.0 Opt prompt-only run framed 17/20 samples.
 The verified OpenPose SDXL control improved the first controlled run to 18/20

@@ -349,7 +349,9 @@ Deliverables:
 
 Acceptance:
 
-- accepted parts are not cropped source patches;
+- accepted parts are full-canvas semantic layers, not rectangular source
+  crops; their visible portion may preserve exact accepted-reference pixels,
+  while concealed overlap is separately generated and validated;
 - retries cannot mutate accepted parts;
 - all required roles and concealed overlaps are measurable.
 
@@ -361,15 +363,21 @@ Write scope: `apps/studio/` and its tests
 
 Deliverables:
 
+- explicit front-reference accept/reject/regenerate gate;
 - part list, solo/visibility/opacity/draw-order controls;
-- checkerboard, reference overlay, and neutral composite;
-- compare, accept, reject, replace, and bounded correction tools;
+- checkerboard, source/mask overlay, isolated visible RGBA, assembled context,
+  reconstruction wipe, coverage/duplicate/seam heatmaps, and neutral composite;
+- per-part confidence/diagnostics plus compare, accept, reject, retry, replace,
+  motion-reduction, and bounded correction tools;
+- visible-only, generated-hidden-only, and completed-part review;
 - accessible undo/redo.
 
 Acceptance:
 
 - active part and revision are always visible;
 - users can identify alpha, alignment, overlap, and draw-order errors;
+- required pending decisions block hidden generation, rigging, and export;
+- accepted edits invalidate dependent hidden fill and motion checks;
 - original references and accepted revisions remain recoverable.
 
 ### P3-C - Art-quality integration
