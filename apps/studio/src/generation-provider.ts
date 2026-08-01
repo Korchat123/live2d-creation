@@ -1,6 +1,6 @@
 const MAX_PROMPT_BYTES = 16 * 1024;
 const MAX_ARTIFACT_BYTES = 4 * 1024 * 1024;
-const MAX_ARTIFACT_EDGE = 1024;
+const MAX_ARTIFACT_EDGE = 1152;
 const POLL_LIMIT = 180;
 
 export const conceptTemplateId = "open-avatar-concept-v1";
@@ -54,7 +54,7 @@ export type ConceptProvenance = {
   readonly seed: number;
   readonly artifactSha256: string;
   readonly compositionControl?: Readonly<{
-    templateId: typeof compositionControlVersion;
+    templateId: CompositionControlVersion;
     controlNet: string;
   }>;
 };
@@ -211,13 +211,13 @@ export const createConceptPromptPlan = (
   const clothing = "clothing and accessories exactly as described";
   const palette = "consistent color palette";
   const pose =
-    "looking at viewer, front view, full body, standing, zoomed out, centered composition, neutral pose, head fully inside frame, complete head, complete hair, generous margin above hair, visible neck, visible shoulders, isolated on a blank pure white background, no props";
+    "looking at viewer, front view, full body, standing, zoomed out, centered composition, neutral pose, entire character silhouette fully inside frame, character occupies about 75 percent of canvas height, complete head, complete hair, generous margin above hair, both legs fully visible, complete shoes, generous margin below shoes, no body part touching the image edge, visible neck, visible shoulders, isolated on a blank pure white background, no props";
   const quality = animagine
     ? "masterpiece, high score, great score, absurdres"
     : "high quality";
   const negative = animagine
-    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
-    : "cropped head, cropped hair, cropped shoulders, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic";
+    ? "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, close-up, extreme close-up, head out of frame, hair out of frame, feet out of frame, legs out of frame, cut off shoes, body touching frame, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, multiple people, duplicate face, side view, border, frame, halo, sunburst, rays, background object, colored background, gradient background, abstract background, scenery"
+    : "cropped head, cropped hair, cropped shoulders, cropped legs, feet out of frame, body touching frame, side view, text, watermark, signature, logo, extra limbs, duplicate face, photorealistic";
   return {
     profile: animagine ? "animagine-xl-4" : "generic",
     identity,
@@ -261,8 +261,8 @@ export const createConceptWorkflow = (
     "4": {
       class_type: "EmptyLatentImage",
       inputs: {
-        width: animagine ? 1024 : 768,
-        height: animagine ? 1024 : 768,
+        width: animagine ? 896 : 768,
+        height: animagine ? 1152 : 1024,
         batch_size: 1,
       },
     },
@@ -358,7 +358,7 @@ export const validateImageArtifact = async (
     decoded.width > MAX_ARTIFACT_EDGE ||
     decoded.height > MAX_ARTIFACT_EDGE
   )
-    throw new Error("The provider image exceeds the 1024-pixel edge limit.");
+    throw new Error("The provider image exceeds the 1152-pixel edge limit.");
   if (requireAlpha && !decoded.hasAlpha)
     throw new Error("This generated part requires a transparent image.");
   return decoded;
@@ -967,4 +967,5 @@ export const mountPromptWorkspace = (
 import {
   compositionControlVersion,
   createCompositionControlPng,
+  type CompositionControlVersion,
 } from "./composition-control.js";

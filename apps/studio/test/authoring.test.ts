@@ -1,5 +1,7 @@
 import { expect, it } from "vitest";
+import { partDefinitions } from "../src/authoring-project.js";
 import {
+  automaticLayerRegions,
   automaticallySuggestedLayers,
   createInpaintWorkflow,
   createSegmentWorkflow,
@@ -7,8 +9,10 @@ import {
   eyeRegionsFromGuide,
   expressionLayers,
   findMissingArtwork,
+  findMissingRequiredMotionLayers,
   isProjectReady,
   motionMouthLayerOrder,
+  requiredMotionLayers,
 } from "../src/authoring.js";
 
 it("keeps expression generation constrained to the relevant editable layers", () => {
@@ -37,6 +41,19 @@ it("only auto-suggests pixel-detectable face and eye layers", () => {
   expect(automaticallySuggestedLayers).toContain("left pupil iris");
   expect(automaticallySuggestedLayers).not.toContain("torso");
   expect(automaticallySuggestedLayers).not.toContain("front hair");
+});
+
+it("defines a deterministic fallback region for every required motion layer", () => {
+  for (const layer of requiredMotionLayers)
+    expect(automaticLayerRegions[layer]).toBeDefined();
+});
+
+it("keeps the recovery-layer names aligned with the part-first manifest", () => {
+  for (const { id } of partDefinitions)
+    expect(automaticLayerRegions[id]).toBeDefined();
+  expect(findMissingArtwork({})).toContain("outfit front");
+  expect(findMissingArtwork({})).toContain("left arm and hand");
+  expect(findMissingArtwork({})).not.toContain("left hand arm");
 });
 
 it("creates a SAM3 workflow that saves one editable mask", () => {
@@ -100,6 +117,9 @@ it("finds the smallest rectangle enclosing an authored crop mask", () => {
 it("identifies missing production parts and requires the eye rig before Motion Lab can open", () => {
   const incomplete = { "face base": "mask", "left eye white": "mask" };
   expect(isProjectReady(incomplete)).toBe(false);
+  expect(findMissingRequiredMotionLayers(incomplete)).toContain(
+    "right eye white",
+  );
   expect(findMissingArtwork(incomplete)).toContain("right pupil iris");
   expect(
     isProjectReady({

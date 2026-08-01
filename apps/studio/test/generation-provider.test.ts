@@ -58,7 +58,7 @@ describe("prompt generation policy", () => {
     expect(workflow["1"]?.inputs.ckpt_name).toBe("approved.safetensors");
     expect(workflow["4"]?.inputs).toEqual({
       width: 768,
-      height: 768,
+      height: 1024,
       batch_size: 1,
     });
     expect(workflow["5"]?.inputs.steps).toBe(20);
@@ -79,14 +79,16 @@ describe("prompt generation policy", () => {
     });
     expect(plan.positive).toContain("1girl, original character, solo");
     expect(plan.pose).toContain("margin above hair");
+    expect(plan.pose).toContain("complete shoes");
+    expect(plan.pose).toContain("75 percent");
     expect(plan.negative).toContain("multiple people");
     expect(plan.negative).toContain("close-up");
     const workflow = createConceptWorkflow(request);
     expect(workflow["2"]?.inputs.text).toBe(plan.positive);
     expect(workflow["3"]?.inputs.text).toBe(plan.negative);
     expect(workflow["4"]?.inputs).toEqual({
-      width: 1024,
-      height: 1024,
+      width: 896,
+      height: 1152,
       batch_size: 1,
     });
     expect(workflow["5"]?.inputs).toMatchObject({
@@ -170,7 +172,7 @@ describe("prompt generation policy", () => {
         height: 768,
         hasAlpha: true,
       })),
-    ).rejects.toThrow("1024-pixel");
+    ).rejects.toThrow("1152-pixel");
     await expect(
       validateImageArtifact(
         pngBlob(),
@@ -338,7 +340,7 @@ describe("ComfyUI adapter", () => {
       if (url === "/comfy/upload/image")
         return new Response(
           JSON.stringify({
-            name: "open-avatar-openpose-v1.png",
+            name: "open-avatar-openpose-v2.png",
             subfolder: "",
             type: "input",
           }),
@@ -382,7 +384,7 @@ describe("ComfyUI adapter", () => {
       { signal: new AbortController().signal },
     );
     expect(result.provenance.compositionControl).toEqual({
-      templateId: "open-avatar-openpose-v1",
+      templateId: "open-avatar-openpose-v2",
       controlNet: "pose.safetensors",
     });
     const submission = fetcher.mock.calls.find(

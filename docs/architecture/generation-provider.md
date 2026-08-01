@@ -30,7 +30,7 @@ memory reported by the selected inference stack.
 
 - one active generation job and no client-side job queue;
 - one candidate output per request;
-- at most 1024 by 1024 pixels and 4 MiB encoded image bytes;
+- at most 1024 pixels wide by 1152 pixels high and 4 MiB encoded image bytes;
 - PNG or WebP input/output only; transparent part jobs require decoded alpha;
 - at most 16 KiB of prompt text after UTF-8 encoding;
 - 180-second job timeout with user cancellation;
@@ -40,10 +40,11 @@ memory reported by the selected inference stack.
 - no custom workflow graph or provider endpoint is read from a project; and
 - candidate output is temporary until explicit acceptance.
 
-These are spike ceilings, not a promise that every 1024-pixel workflow fits in
-6 GB VRAM. A physical run may lower the workflow resolution or use a tiled or
-low-memory template. Raising a ceiling requires measured evidence and a policy
-update.
+These are spike ceilings, not a promise that every allowed shape fits in 6 GB
+VRAM. The reviewed Animagine workflow uses a 896 by 1152 portrait canvas,
+which has slightly fewer total pixels than the former 1024 by 1024 square.
+A physical run may lower the workflow resolution or use a tiled or low-memory
+template. Raising a ceiling requires measured evidence and a policy update.
 
 ## Required private provider behavior
 

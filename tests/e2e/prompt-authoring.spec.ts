@@ -28,6 +28,35 @@ const generatedProject = JSON.stringify({
   limitations: [],
 });
 
+test("keeps a portrait concept preview inside its safe stage", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("#concept-output").evaluate((element) => {
+    const imageElement = element as HTMLImageElement;
+    imageElement.src =
+      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='896' height='1152'%3E%3Crect width='896' height='1152' fill='white'/%3E%3C/svg%3E";
+    imageElement.hidden = false;
+  });
+  const stage = await page.locator(".concept-image-stage").boundingBox();
+  const imageBox = await page.locator("#concept-output").boundingBox();
+  const candidate = await page.locator(".concept-candidate").boundingBox();
+  expect(stage).not.toBeNull();
+  expect(imageBox).not.toBeNull();
+  expect(candidate).not.toBeNull();
+  expect(imageBox!.x).toBeGreaterThanOrEqual(stage!.x);
+  expect(imageBox!.y).toBeGreaterThanOrEqual(stage!.y);
+  expect(imageBox!.x + imageBox!.width).toBeLessThanOrEqual(
+    stage!.x + stage!.width + 1,
+  );
+  expect(imageBox!.y + imageBox!.height).toBeLessThanOrEqual(
+    stage!.y + stage!.height + 1,
+  );
+  expect(stage!.x + stage!.width).toBeLessThanOrEqual(
+    candidate!.x + candidate!.width + 1,
+  );
+});
+
 test("presents one-click generation and restores a generated project", async ({
   page,
 }) => {

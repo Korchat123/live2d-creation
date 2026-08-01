@@ -1,5 +1,8 @@
 import type { ConceptProvenance } from "./generation-provider.js";
-import { compositionControlVersion } from "./composition-control.js";
+import {
+  compositionControlVersion,
+  legacyCompositionControlVersion,
+} from "./composition-control.js";
 
 const MAX_CONCEPT_DATA_URL_LENGTH = 6 * 1024 * 1024;
 const MAX_PROJECT_LENGTH = MAX_CONCEPT_DATA_URL_LENGTH + 96 * 1024;
@@ -146,7 +149,7 @@ const validateConcept = (concept: AcceptedConcept): void => {
     concept.width < 1 ||
     concept.height < 1 ||
     concept.width > 1024 ||
-    concept.height > 1024
+    concept.height > 1152
   )
     throw new Error("The accepted concept dimensions are invalid.");
   boundedText(concept.prompt, "concept prompt", 16 * 1024);
@@ -163,7 +166,9 @@ const validateConcept = (concept: AcceptedConcept): void => {
   if (concept.provenance.compositionControl) {
     if (
       concept.provenance.compositionControl.templateId !==
-      compositionControlVersion
+        compositionControlVersion &&
+      concept.provenance.compositionControl.templateId !==
+        legacyCompositionControlVersion
     )
       throw new Error("The composition control provenance is invalid.");
     boundedText(

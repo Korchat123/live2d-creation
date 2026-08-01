@@ -78,6 +78,30 @@ it("rejects unknown versions, oversized concepts, and invalid dimensions", () =>
   ).toThrow("image limit");
 });
 
+it("accepts the portrait concept canvas without rejecting legacy projects", () => {
+  expect(() =>
+    createAuthoringProject(
+      { ...concept, width: 896, height: 1152 },
+      { projectId: "portrait-project", createdAt: 100 },
+    ),
+  ).not.toThrow();
+  expect(() =>
+    createAuthoringProject(
+      {
+        ...concept,
+        provenance: {
+          ...concept.provenance,
+          compositionControl: {
+            templateId: "open-avatar-openpose-v1" as const,
+            controlNet: "pose.safetensors",
+          },
+        },
+      },
+      { projectId: "legacy-project", createdAt: 100 },
+    ),
+  ).not.toThrow();
+});
+
 it("rejects unknown composition-control provenance", () => {
   const project = createAuthoringProject(concept, {
     projectId: "project-1",

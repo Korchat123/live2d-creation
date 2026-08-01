@@ -70,6 +70,25 @@ root.innerHTML = `
   </main>
   <div id="announce" class="sr" role="status" aria-live="polite"></div>`;
 
+for (const [legacy, canonical] of [
+  ["left hand arm", "left arm and hand"],
+  ["right hand arm", "right arm and hand"],
+] as const) {
+  const button = document.querySelector<HTMLButtonElement>(
+    `[data-layer="${legacy}"]`,
+  );
+  if (button) button.dataset.layer = canonical;
+}
+const recoveryLayerButtons =
+  document.querySelector<HTMLElement>(".layer-buttons");
+if (recoveryLayerButtons) {
+  const outfitButton = document.createElement("button");
+  outfitButton.type = "button";
+  outfitButton.dataset.layer = "outfit front";
+  outfitButton.textContent = "Outfit front";
+  recoveryLayerButtons.append(outfitButton);
+}
+
 const arrangeAuthoringPanels = (): void => {
   const rail = document.querySelector<HTMLElement>(".tool-panel");
   const imagePicker = document

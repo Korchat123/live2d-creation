@@ -1,5 +1,10 @@
-export const compositionControlVersion = "open-avatar-openpose-v1";
-export const compositionControlSize = 1024;
+export const compositionControlVersion = "open-avatar-openpose-v2";
+export const legacyCompositionControlVersion = "open-avatar-openpose-v1";
+export type CompositionControlVersion =
+  | typeof compositionControlVersion
+  | typeof legacyCompositionControlVersion;
+export const compositionControlWidth = 896;
+export const compositionControlHeight = 1152;
 
 export type PoseJointName =
   | "nose"
@@ -35,24 +40,24 @@ export type PoseSegment = Readonly<{
 
 export const compositionPoseJoints: Readonly<Record<PoseJointName, PoseJoint>> =
   {
-    nose: { x: 0.5, y: 0.22, color: "#ff0000" },
-    neck: { x: 0.5, y: 0.315, color: "#ff5500" },
-    leftShoulder: { x: 0.39, y: 0.34, color: "#ffaa00" },
-    leftElbow: { x: 0.345, y: 0.455, color: "#aaff00" },
-    leftWrist: { x: 0.325, y: 0.57, color: "#00ff00" },
-    rightShoulder: { x: 0.61, y: 0.34, color: "#ffff00" },
-    rightElbow: { x: 0.655, y: 0.455, color: "#00ff55" },
-    rightWrist: { x: 0.675, y: 0.57, color: "#00ffaa" },
+    nose: { x: 0.5, y: 0.245, color: "#ff0000" },
+    neck: { x: 0.5, y: 0.335, color: "#ff5500" },
+    leftShoulder: { x: 0.39, y: 0.36, color: "#ffaa00" },
+    leftElbow: { x: 0.35, y: 0.47, color: "#aaff00" },
+    leftWrist: { x: 0.335, y: 0.575, color: "#00ff00" },
+    rightShoulder: { x: 0.61, y: 0.36, color: "#ffff00" },
+    rightElbow: { x: 0.65, y: 0.47, color: "#00ff55" },
+    rightWrist: { x: 0.665, y: 0.575, color: "#00ffaa" },
     leftHip: { x: 0.445, y: 0.59, color: "#00ffff" },
-    leftKnee: { x: 0.435, y: 0.76, color: "#0055ff" },
-    leftAnkle: { x: 0.425, y: 0.91, color: "#0000ff" },
+    leftKnee: { x: 0.435, y: 0.735, color: "#0055ff" },
+    leftAnkle: { x: 0.425, y: 0.87, color: "#0000ff" },
     rightHip: { x: 0.555, y: 0.59, color: "#00aaff" },
-    rightKnee: { x: 0.565, y: 0.76, color: "#5500ff" },
-    rightAnkle: { x: 0.575, y: 0.91, color: "#aa00ff" },
-    leftEye: { x: 0.48, y: 0.21, color: "#ff00ff" },
-    rightEye: { x: 0.52, y: 0.21, color: "#ff0055" },
-    leftEar: { x: 0.455, y: 0.225, color: "#ff00aa" },
-    rightEar: { x: 0.545, y: 0.225, color: "#ff0000" },
+    rightKnee: { x: 0.565, y: 0.735, color: "#5500ff" },
+    rightAnkle: { x: 0.575, y: 0.87, color: "#aa00ff" },
+    leftEye: { x: 0.48, y: 0.235, color: "#ff00ff" },
+    rightEye: { x: 0.52, y: 0.235, color: "#ff0055" },
+    leftEar: { x: 0.455, y: 0.25, color: "#ff00aa" },
+    rightEar: { x: 0.545, y: 0.25, color: "#ff0000" },
   };
 
 export const compositionPoseSegments: readonly PoseSegment[] = [
@@ -85,8 +90,8 @@ const canvasBlob = (canvas: HTMLCanvasElement): Promise<Blob> =>
 
 export const createCompositionControlPng = async (): Promise<Blob> => {
   const canvas = document.createElement("canvas");
-  canvas.width = compositionControlSize;
-  canvas.height = compositionControlSize;
+  canvas.width = compositionControlWidth;
+  canvas.height = compositionControlHeight;
   const context = canvas.getContext("2d");
   if (!context)
     throw new Error("Could not create the composition control canvas.");

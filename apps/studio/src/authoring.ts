@@ -204,7 +204,7 @@ export const motionMouthLayerOrder = [
   "mouth closed lips",
 ] as const;
 
-const requiredLayers = [
+export const requiredMotionLayers = [
   "face base",
   "left eye white",
   "right eye white",
@@ -217,7 +217,7 @@ const requiredLayers = [
   "mouth closed lips",
   "mouth interior",
   "torso",
-];
+] as const;
 const layerNames = [
   "front hair",
   "accessory",
@@ -239,11 +239,48 @@ const layerNames = [
   "tongue",
   "mouth interior",
   "neck",
-  "left hand arm",
-  "right hand arm",
+  "left arm and hand",
+  "right arm and hand",
+  "outfit front",
   "torso",
   "back hair",
 ];
+
+export const automaticLayerRegions: Readonly<
+  Record<string, readonly [number, number, number, number]>
+> = {
+  "face base": [0.28, 0.08, 0.44, 0.5],
+  "left eye white": [0.39, 0.17, 0.12, 0.06],
+  "right eye white": [0.5, 0.17, 0.12, 0.06],
+  "left pupil iris": [0.425, 0.172, 0.045, 0.055],
+  "right pupil iris": [0.535, 0.172, 0.045, 0.055],
+  "left eye highlight": [0.435, 0.178, 0.018, 0.018],
+  "right eye highlight": [0.545, 0.178, 0.018, 0.018],
+  "left upper eyelid": [0.385, 0.157, 0.13, 0.025],
+  "right upper eyelid": [0.495, 0.157, 0.13, 0.025],
+  "left lower eyelid": [0.39, 0.22, 0.12, 0.018],
+  "right lower eyelid": [0.5, 0.22, 0.12, 0.018],
+  "left eyebrow": [0.385, 0.125, 0.12, 0.025],
+  "right eyebrow": [0.5, 0.125, 0.12, 0.025],
+  "mouth closed lips": [0.44, 0.27, 0.12, 0.028],
+  "mouth interior": [0.445, 0.275, 0.11, 0.055],
+  teeth: [0.455, 0.278, 0.09, 0.02],
+  tongue: [0.46, 0.305, 0.08, 0.02],
+  neck: [0.43, 0.4, 0.14, 0.15],
+  torso: [0.25, 0.48, 0.5, 0.4],
+  "front hair": [0.2, 0.04, 0.6, 0.25],
+  "back hair": [0.15, 0.04, 0.7, 0.52],
+  accessory: [0.7, 0.12, 0.1, 0.13],
+  "left arm and hand": [0.15, 0.45, 0.18, 0.4],
+  "right arm and hand": [0.67, 0.45, 0.18, 0.4],
+  "outfit front": [0.25, 0.48, 0.5, 0.4],
+};
+
+const canonicalLayerName = (name: string): string => {
+  if (name === "left hand arm") return "left arm and hand";
+  if (name === "right hand arm") return "right arm and hand";
+  return name;
+};
 
 export const automaticallySuggestedLayers = [
   "face base",
@@ -282,7 +319,11 @@ export const cropBoundsFromAlpha = (
 
 export const isProjectReady = (
   layers: Readonly<Record<string, string>>,
-): boolean => requiredLayers.every((layer) => Boolean(layers[layer]));
+): boolean => findMissingRequiredMotionLayers(layers).length === 0;
+
+export const findMissingRequiredMotionLayers = (
+  layers: Readonly<Record<string, string>>,
+): readonly string[] => requiredMotionLayers.filter((layer) => !layers[layer]);
 
 export const findMissingArtwork = (
   layers: Readonly<Record<string, string>>,
@@ -759,8 +800,9 @@ export const mountLayerLab = (
           if (draft) {
             await Promise.all(
               Object.entries(draft.layers).map(
-                ([name, maskSource]) =>
+                ([legacyName, maskSource]) =>
                   new Promise<void>((resolve) => {
+                    const name = canonicalLayerName(legacyName);
                     const restored = new Image();
                     restored.onload = () => {
                       getMask(name).getContext("2d")?.drawImage(restored, 0, 0);
@@ -772,7 +814,7 @@ export const mountLayerLab = (
               ),
             );
             Object.entries(draft.generatedArtwork).forEach(([name, artwork]) =>
-              generatedArtwork.set(name, artwork),
+              generatedArtwork.set(canonicalLayerName(name), artwork),
             );
             Object.entries(draft.expressionArtwork).forEach(
               ([name, artwork]) => {
@@ -807,32 +849,13 @@ export const mountLayerLab = (
       };
       next.src = nextSource;
     });
-  const suggestedRegions: Record<string, [number, number, number, number]> = {
-    "face base": [0.28, 0.08, 0.44, 0.5],
-    "left eye white": [0.39, 0.17, 0.12, 0.06],
-    "right eye white": [0.5, 0.17, 0.12, 0.06],
-    "left pupil iris": [0.425, 0.172, 0.045, 0.055],
-    "right pupil iris": [0.535, 0.172, 0.045, 0.055],
-    "left eye highlight": [0.435, 0.178, 0.018, 0.018],
-    "right eye highlight": [0.545, 0.178, 0.018, 0.018],
-    "left upper eyelid": [0.385, 0.157, 0.13, 0.025],
-    "right upper eyelid": [0.495, 0.157, 0.13, 0.025],
-    "left lower eyelid": [0.39, 0.22, 0.12, 0.018],
-    "right lower eyelid": [0.5, 0.22, 0.12, 0.018],
-    "left eyebrow": [0.385, 0.125, 0.12, 0.025],
-    "right eyebrow": [0.5, 0.125, 0.12, 0.025],
-    "mouth closed lips": [0.44, 0.27, 0.12, 0.028],
-    "mouth interior": [0.445, 0.275, 0.11, 0.055],
-    teeth: [0.455, 0.278, 0.09, 0.02],
-    tongue: [0.46, 0.305, 0.08, 0.02],
-    neck: [0.43, 0.4, 0.14, 0.15],
-    torso: [0.25, 0.48, 0.5, 0.4],
-    "front hair": [0.2, 0.04, 0.6, 0.25],
-    "back hair": [0.15, 0.04, 0.7, 0.52],
-    accessory: [0.7, 0.12, 0.1, 0.13],
-    "left hand arm": [0.15, 0.45, 0.18, 0.4],
-    "right hand arm": [0.67, 0.45, 0.18, 0.4],
-  };
+  const suggestedRegions: Record<string, [number, number, number, number]> =
+    Object.fromEntries(
+      Object.entries(automaticLayerRegions).map(([name, region]) => [
+        name,
+        [...region],
+      ]),
+    );
   const applyEyeGuide = (side: "left" | "right", guide: EyeGuide) => {
     const regions = eyeRegionsFromGuide(guide, canvas.width, canvas.height);
     suggestedRegions[`${side} eye white`] = regions.white;
@@ -1108,6 +1131,62 @@ export const mountLayerLab = (
         height * canvas.height,
       );
     }
+  };
+  const maskBounds = (name: string): CropBounds | undefined => {
+    const mask = masks.get(name);
+    const maskContext = mask?.getContext("2d");
+    if (!mask || !maskContext) return undefined;
+    return cropBoundsFromAlpha(
+      maskContext.getImageData(0, 0, mask.width, mask.height).data,
+      mask.width,
+      mask.height,
+    );
+  };
+  const paintBoundedFallback = (name: string): boolean => {
+    const region = suggestedRegions[name];
+    const maskContext = getMask(name).getContext("2d");
+    if (!region || !maskContext) return false;
+    const [x, y, width, height] = region;
+    const left = Math.max(0, x * canvas.width);
+    const top = Math.max(0, y * canvas.height);
+    const regionWidth = Math.max(
+      1,
+      Math.min(canvas.width - left, width * canvas.width),
+    );
+    const regionHeight = Math.max(
+      1,
+      Math.min(canvas.height - top, height * canvas.height),
+    );
+    maskContext.save();
+    maskContext.fillStyle = "#ffffff";
+    maskContext.beginPath();
+    if (
+      name === "face base" ||
+      name.includes("eye white") ||
+      name.includes("pupil iris") ||
+      name.includes("highlight") ||
+      name === "mouth interior"
+    )
+      maskContext.ellipse(
+        left + regionWidth / 2,
+        top + regionHeight / 2,
+        regionWidth / 2,
+        regionHeight / 2,
+        0,
+        0,
+        Math.PI * 2,
+      );
+    else
+      maskContext.roundRect(
+        left,
+        top,
+        regionWidth,
+        regionHeight,
+        Math.min(regionWidth, regionHeight) * 0.35,
+      );
+    maskContext.fill();
+    maskContext.restore();
+    return Boolean(maskBounds(name));
   };
   const clearMask = (name: string) => {
     const mask = getMask(name);
@@ -1434,8 +1513,8 @@ export const mountLayerLab = (
       suggest.disabled = false;
     }
   };
-  const generateRepair = async () => {
-    if (!image) return;
+  const generateRepair = async (): Promise<string | undefined> => {
+    if (!image) return undefined;
     const currentMask = getMask();
     const bounds = cropBoundsFromAlpha(
       currentMask
@@ -1447,9 +1526,12 @@ export const mountLayerLab = (
     if (!bounds) {
       repairStatus.textContent =
         "Paint or create a mask for the selected part before generating.";
-      return;
+      return undefined;
     }
     repair.disabled = true;
+    repairOutput.removeAttribute("src");
+    repairOutput.hidden = true;
+    applyRepair.disabled = true;
     repairStatus.textContent =
       "Uploading the local portrait and mask to ComfyUI…";
     try {
@@ -1495,16 +1577,19 @@ export const mountLayerLab = (
       const queued = (await response.json()) as { prompt_id?: unknown };
       if (typeof queued.prompt_id !== "string")
         throw new Error("ComfyUI did not return a job id.");
-      repairOutput.src = await toDataUrl(
+      const generated = await toDataUrl(
         await waitForComfyOutput(queued.prompt_id),
       );
+      repairOutput.src = generated;
       repairOutput.hidden = false;
       applyRepair.disabled = false;
       repairStatus.textContent =
         "Draft repair complete. Compare it with the portrait before using it as artwork.";
+      return generated;
     } catch (error) {
       repairStatus.textContent =
         error instanceof Error ? error.message : "Local repair failed.";
+      return undefined;
     } finally {
       repair.disabled = false;
     }
@@ -1694,6 +1779,8 @@ export const mountLayerLab = (
           `Preparing motion part ${index + 1} of ${motionParts.length}: ${name}…`,
         );
         await suggestSelectedPart();
+        if (!maskBounds(name) && paintBoundedFallback(name))
+          announce(`Added a bounded motion fallback for ${name}.`);
       }
       for (const name of ["left eye white", "right eye white"]) {
         const mask = masks.get(name);
@@ -1784,9 +1871,13 @@ export const mountLayerLab = (
               `SAM3 returned no ${name} pixels. Using the bounded automatic fallback region…`,
             );
         }
+        if (!hasMask && paintBoundedFallback(name)) {
+          hasMask = maskBounds(name);
+          announce(`Added a deterministic bounded fallback for ${name}.`);
+        }
         if (!hasMask) continue;
-        await generateRepair();
-        if (repairOutput.src) generatedArtwork.set(name, repairOutput.src);
+        const generated = await generateRepair();
+        if (generated) generatedArtwork.set(name, generated);
         saveDraft();
       }
       announce(
@@ -2116,9 +2207,10 @@ export const mountLayerLab = (
       await completeAllMissing();
       await makeAvatarMotionReady();
       const project = buildProject();
-      if (!isProjectReady(project.layers))
+      const missingRequired = findMissingRequiredMotionLayers(project.layers);
+      if (missingRequired.length)
         throw new Error(
-          "Automatic part generation did not produce every required motion layer.",
+          `Automatic part generation is missing required motion layers: ${missingRequired.join(", ")}.`,
         );
       openMotion.disabled = false;
       exportProject.disabled = false;
