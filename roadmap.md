@@ -183,6 +183,15 @@ opaque, parts were packed at unrelated atlas coordinates, and several riggable
 components remained combined. Those reference images remain outside the
 repository.
 
+The first dependency-driven physical build now passes the structural gate: 25
+separate transparent artworks, 25 masks, four expressions, a fully transparent
+source canvas, and a parts-only Motion Lab reconstruction. The exported project
+was 3,978,279 bytes with SHA-256
+`336d6f56ce39c09b9711f32cf331f0ef2256a14976d7613ca6820495e845a787`.
+The visual gate remains failed because the generic accessory layer oversized
+the witch hat and the coarse outfit/body groups lost separately controllable
+lower-body detail. See `docs/authoring/part-first-physical-smoke.md`.
+
 ## Primary references
 
 - [Animagine XL 4.0 model card](https://huggingface.co/cagliostrolab/animagine-xl-4.0)

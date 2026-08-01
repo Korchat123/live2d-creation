@@ -12,6 +12,16 @@ const DATABASE_NAME = "open-avatar-generated";
 const STORE_NAME = "projects";
 const ACTIVE_KEY = "active";
 
+export const hasCompleteGeneratedArtwork = (
+  layers: Readonly<Record<string, string>>,
+  generatedArtwork: Readonly<Record<string, string>>,
+): boolean => {
+  const names = Object.keys(layers);
+  return (
+    names.length > 0 && names.every((name) => Boolean(generatedArtwork[name]))
+  );
+};
+
 const embeddedImage = (value: unknown, label: string): string => {
   if (
     typeof value !== "string" ||

@@ -4,7 +4,10 @@ import {
   type ExpressionName,
   type ExportedProject,
 } from "./authoring.js";
-import { loadAutomaticAvatarProject } from "./automatic-avatar.js";
+import {
+  hasCompleteGeneratedArtwork,
+  loadAutomaticAvatarProject,
+} from "./automatic-avatar.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -134,6 +137,10 @@ if (!canvas || !status || !readiness || !project) {
           artwork.set(name, await loadImage(source));
         }),
       );
+      const assembledFromParts = hasCompleteGeneratedArtwork(
+        project.layers,
+        project.generatedArtwork,
+      );
       const control = (id: string): HTMLInputElement => {
         const element = document.querySelector<HTMLInputElement>(`#${id}`);
         if (!element) throw new Error(`Missing ${id}`);
@@ -233,19 +240,31 @@ if (!canvas || !status || !readiness || !project) {
         context.save();
         context.translate(0, canvas.height * -breathing);
         context.scale(1, 1 + breathing);
-        context.drawImage(image, 0, 0);
-        [
-          "left eye white",
-          "right eye white",
-          "left pupil iris",
-          "right pupil iris",
-          "left eye highlight",
-          "right eye highlight",
-          "left upper eyelid",
-          "right upper eyelid",
-          "left lower eyelid",
-          "right lower eyelid",
-        ].forEach(eraseMask);
+        if (assembledFromParts) {
+          [
+            "back hair",
+            "torso",
+            "outfit front",
+            "left arm and hand",
+            "right arm and hand",
+            "neck",
+            "face base",
+          ].forEach((name) => drawMasked(name));
+        } else {
+          context.drawImage(image, 0, 0);
+          [
+            "left eye white",
+            "right eye white",
+            "left pupil iris",
+            "right pupil iris",
+            "left eye highlight",
+            "right eye highlight",
+            "left upper eyelid",
+            "right upper eyelid",
+            "left lower eyelid",
+            "right lower eyelid",
+          ].forEach(eraseMask);
+        }
         if (!expressionEyes)
           ["left eye white", "right eye white"].forEach((name) => {
             if (artwork.has(name)) drawMasked(name);
@@ -258,7 +277,7 @@ if (!canvas || !status || !readiness || !project) {
             "left eye highlight",
             "right eye highlight",
           ].forEach((name) => drawMasked(name, dx, dy));
-        drawMasked("face base");
+        if (!assembledFromParts) drawMasked("face base");
         if (!expressionEyes)
           ["left upper eyelid", "right upper eyelid"].forEach((name) =>
             drawMasked(name, 0, blinkAmount * canvas.height * 0.025),
@@ -267,6 +286,8 @@ if (!canvas || !status || !readiness || !project) {
           ["left lower eyelid", "right lower eyelid"].forEach((name) =>
             drawMasked(name, 0, -blinkAmount * canvas.height * 0.012),
           );
+        if (!expressionMouth && mouthAmount === 0)
+          drawMasked("mouth closed lips");
         if (!expressionMouth && mouthAmount > 0) {
           motionMouthLayerOrder.forEach(eraseMask);
           const mouthDrop = mouthAmount * canvas.height * 0.012;
@@ -276,6 +297,11 @@ if (!canvas || !status || !readiness || !project) {
           drawMasked("mouth closed lips", 0, mouthDrop * 0.5, 1 - mouthAmount);
         }
         if (expression !== "none") drawExpression(expression);
+        if (assembledFromParts) {
+          ["left eyebrow", "right eyebrow", "front hair", "accessory"].forEach(
+            (name) => drawMasked(name),
+          );
+        }
         context.restore();
         output("gaze-x-value").value = gazeX.value;
         output("gaze-y-value").value = gazeY.value;

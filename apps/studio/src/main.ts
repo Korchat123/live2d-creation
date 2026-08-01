@@ -1,6 +1,10 @@
 import portraitUrl from "../../../assets/source/reference-avatar/generated-test-avatar-v1/layers/portrait.png?url";
 import { mountLayerLab, type ExportedProject } from "./authoring.js";
 import {
+  createAuthoringProject,
+  updateCharacterBible,
+} from "./authoring-project.js";
+import {
   parseAutomaticAvatarProject,
   saveAutomaticAvatarProject,
   serializeAutomaticAvatarProject,
@@ -10,6 +14,7 @@ import {
   mountPromptWorkspace,
   type AcceptedConceptDetail,
 } from "./generation-provider.js";
+import { createPartGenerationJobs } from "./part-generation.js";
 import "./style.css";
 
 const root = document.querySelector<HTMLDivElement>("#app");
@@ -329,8 +334,27 @@ promptWorkspace.addEventListener("avatarconceptgenerated", (event) => {
     automaticStatus.textContent =
       "Generating and extracting transparent layers. Keep ComfyUI open…";
     try {
+      let authoringProject = createAuthoringProject(concept, {
+        projectId: crypto.randomUUID(),
+        createdAt: Date.now(),
+      });
+      authoringProject = updateCharacterBible(authoringProject, {
+        displayName: "Generated avatar",
+        style: "clean Japanese anime line art with consistent cel shading",
+        palette: concept.prompt,
+        outfit: concept.prompt,
+        identityNotes: concept.prompt,
+      });
+      authoringProject = {
+        ...authoringProject,
+        partPlan: authoringProject.partPlan.map((entry) => ({
+          ...entry,
+          enabled: true,
+        })),
+      };
+      const partJobs = createPartGenerationJobs(authoringProject);
       await labController.loadSource(concept.image);
-      const project = await labController.buildAutomatically();
+      const project = await labController.buildAutomatically(partJobs);
       stage("parts", "complete");
       stage("rig", "complete");
       stage("project", "complete");

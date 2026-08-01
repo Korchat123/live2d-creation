@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  hasCompleteGeneratedArtwork,
   parseAutomaticAvatarProject,
   serializeAutomaticAvatarProject,
 } from "../src/automatic-avatar.js";
@@ -32,6 +33,16 @@ const project = {
 };
 
 describe("automatic Open Avatar projects", () => {
+  it("uses generated artwork only when every declared layer has an image", () => {
+    expect(hasCompleteGeneratedArtwork(project.layers, {})).toBe(false);
+    expect(
+      hasCompleteGeneratedArtwork(
+        project.layers,
+        Object.fromEntries(requiredLayers.map((name) => [name, image])),
+      ),
+    ).toBe(true);
+  });
+
   it("round-trips a bounded generated project", () => {
     expect(
       parseAutomaticAvatarProject(serializeAutomaticAvatarProject(project)),

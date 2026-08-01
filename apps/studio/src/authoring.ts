@@ -1,3 +1,6 @@
+import { partDefinitions } from "./authoring-project.js";
+import type { PartGenerationJob } from "./part-generation.js";
+
 export type CropBounds = {
   readonly x: number;
   readonly y: number;
@@ -218,33 +221,7 @@ export const requiredMotionLayers = [
   "mouth interior",
   "torso",
 ] as const;
-const layerNames = [
-  "front hair",
-  "accessory",
-  "left upper eyelid",
-  "right upper eyelid",
-  "left lower eyelid",
-  "right lower eyelid",
-  "left eyebrow",
-  "right eyebrow",
-  "face base",
-  "left pupil iris",
-  "right pupil iris",
-  "left eye highlight",
-  "right eye highlight",
-  "left eye white",
-  "right eye white",
-  "mouth closed lips",
-  "teeth",
-  "tongue",
-  "mouth interior",
-  "neck",
-  "left arm and hand",
-  "right arm and hand",
-  "outfit front",
-  "torso",
-  "back hair",
-];
+const layerNames = partDefinitions.map(({ id }) => id);
 
 export const automaticLayerRegions: Readonly<
   Record<string, readonly [number, number, number, number]>
@@ -352,7 +329,9 @@ const download = (name: string, contents: string): void => {
 
 export type LayerLabController = Readonly<{
   loadSource(source: string): Promise<void>;
-  buildAutomatically(): Promise<ExportedProject>;
+  buildAutomatically(
+    jobs?: readonly PartGenerationJob[],
+  ): Promise<ExportedProject>;
   loadProject(project: ExportedProject): Promise<void>;
 }>;
 
@@ -813,8 +792,35 @@ export const mountLayerLab = (
                   }),
               ),
             );
-            Object.entries(draft.generatedArtwork).forEach(([name, artwork]) =>
-              generatedArtwork.set(canonicalLayerName(name), artwork),
+            await Promise.all(
+              Object.entries(draft.generatedArtwork).map(
+                ([legacyName, artwork]) =>
+                  new Promise<void>((resolve) => {
+                    const name = canonicalLayerName(legacyName);
+                    generatedArtwork.set(name, artwork);
+                    const restored = new Image();
+                    restored.onload = () => {
+                      const target = getArtwork(name);
+                      const targetContext = target.getContext("2d");
+                      targetContext?.clearRect(
+                        0,
+                        0,
+                        target.width,
+                        target.height,
+                      );
+                      targetContext?.drawImage(
+                        restored,
+                        0,
+                        0,
+                        target.width,
+                        target.height,
+                      );
+                      resolve();
+                    };
+                    restored.onerror = () => resolve();
+                    restored.src = artwork;
+                  }),
+              ),
             );
             Object.entries(draft.expressionArtwork).forEach(
               ([name, artwork]) => {
@@ -1233,10 +1239,18 @@ export const mountLayerLab = (
     const everyVisibleLayerGenerated = Object.keys(exported).every((name) =>
       generatedArtwork.has(name),
     );
+    const projectSource = everyVisibleLayerGenerated
+      ? (() => {
+          const transparent = document.createElement("canvas");
+          transparent.width = canvas.width;
+          transparent.height = canvas.height;
+          return transparent.toDataURL("image/png");
+        })()
+      : source;
     return {
       version: 1,
       updatedAt: Date.now(),
-      source,
+      source: projectSource,
       layers: exported,
       generatedArtwork: Object.fromEntries(generatedArtwork),
       expressionArtwork: Object.fromEntries(expressionArtwork) as Partial<
@@ -1299,6 +1313,24 @@ export const mountLayerLab = (
     return asDataUrl(
       new File([blob], "generated-art.png", { type: "image/png" }),
     );
+  };
+  const transparentPartArtwork = async (
+    artworkSource: string,
+    name: string,
+  ): Promise<string> => {
+    const generated = await loadImage(artworkSource);
+    const target = document.createElement("canvas");
+    target.width = canvas.width;
+    target.height = canvas.height;
+    const targetContext = target.getContext("2d");
+    if (!targetContext)
+      throw new Error("Could not create transparent part artwork.");
+    targetContext.drawImage(generated, 0, 0, target.width, target.height);
+    targetContext.globalCompositeOperation = "destination-in";
+    targetContext.drawImage(getMask(name), 0, 0, target.width, target.height);
+    targetContext.globalCompositeOperation = "source-over";
+    artworkCanvases.set(name, target);
+    return target.toDataURL("image/png");
   };
   const waitForComfyOutput = async (promptId: string): Promise<string> => {
     for (let attempt = 0; attempt < 90; attempt += 1) {
@@ -1436,7 +1468,10 @@ export const mountLayerLab = (
     if (!targetContext) return false;
     targetContext.clearRect(0, 0, target.width, target.height);
     targetContext.drawImage(segmented, 0, 0);
-    generatedArtwork.set(targetLayer, artworkSource);
+    generatedArtwork.set(
+      targetLayer,
+      await transparentPartArtwork(artworkSource, targetLayer),
+    );
     return true;
   };
   const suggestSelectedPart = async (): Promise<void> => {
@@ -1804,7 +1839,15 @@ export const mountLayerLab = (
       ] as const) {
         if (expressionArtwork.has(name)) continue;
         announce(`Generating ${name} for Motion Lab…`);
-        await generateExpression(name);
+        for (
+          let attempt = 1;
+          attempt <= 2 && !expressionArtwork.has(name);
+          attempt += 1
+        ) {
+          if (attempt > 1)
+            announce(`Retrying ${name} expression (attempt 2/2).`);
+          await generateExpression(name);
+        }
       }
       renderLayers();
       saveDraft();
@@ -1822,8 +1865,12 @@ export const mountLayerLab = (
       completeAll.disabled = false;
     }
   };
-  const completeAllMissing = async (): Promise<void> => {
-    const missing = layerNames.filter((name) => {
+  const completeAllMissing = async (
+    jobs?: readonly PartGenerationJob[],
+  ): Promise<void> => {
+    const orderedNames = jobs?.map(({ partId }) => partId) ?? layerNames;
+    const prompts = new Map(jobs?.map((job) => [job.partId, job.prompt]));
+    const missing = orderedNames.filter((name) => {
       const mask = masks.get(name);
       if (!mask) return true;
       const context = mask.getContext("2d");
@@ -1876,8 +1923,19 @@ export const mountLayerLab = (
           announce(`Added a deterministic bounded fallback for ${name}.`);
         }
         if (!hasMask) continue;
-        const generated = await generateRepair();
-        if (generated) generatedArtwork.set(name, generated);
+        repairPrompt.value =
+          prompts.get(name) ?? `Generate complete ${name} artwork.`;
+        let generated: string | undefined;
+        for (let attempt = 1; attempt <= 2 && !generated; attempt += 1) {
+          if (attempt > 1)
+            announce(`Retrying transparent ${name} artwork (attempt 2/2).`);
+          generated = await generateRepair();
+        }
+        if (generated)
+          generatedArtwork.set(
+            name,
+            await transparentPartArtwork(generated, name),
+          );
         saveDraft();
       }
       announce(
@@ -2062,11 +2120,16 @@ export const mountLayerLab = (
   });
   repair.addEventListener("click", () => void generateRepair());
   applyRepair.addEventListener("click", () => {
-    if (!repairOutput.src) return;
-    generatedArtwork.set(selectedLayer, repairOutput.src);
-    applyRepair.disabled = true;
-    repairStatus.textContent = `Applied the local repair to ${selectedLayer}. It will be included in Motion Lab and export.`;
-    saveDraft();
+    void (async () => {
+      if (!repairOutput.src) return;
+      generatedArtwork.set(
+        selectedLayer,
+        await transparentPartArtwork(repairOutput.src, selectedLayer),
+      );
+      applyRepair.disabled = true;
+      repairStatus.textContent = `Applied the local repair to ${selectedLayer}. It will be included in Motion Lab and export.`;
+      saveDraft();
+    })();
   });
   completeAll.addEventListener("click", () => void completeAllMissing());
   makeMotionReady.addEventListener("click", () => void makeAvatarMotionReady());
@@ -2203,14 +2266,29 @@ export const mountLayerLab = (
   return {
     loadSource: (nextSource) => load(nextSource),
     loadProject: (project) => load(project.source, project),
-    buildAutomatically: async () => {
-      await completeAllMissing();
+    buildAutomatically: async (jobs) => {
+      await completeAllMissing(jobs);
       await makeAvatarMotionReady();
       const project = buildProject();
       const missingRequired = findMissingRequiredMotionLayers(project.layers);
       if (missingRequired.length)
         throw new Error(
           `Automatic part generation is missing required motion layers: ${missingRequired.join(", ")}.`,
+        );
+      const expectedGenerated = jobs?.map(({ partId }) => partId) ?? [];
+      const missingGenerated = expectedGenerated.filter(
+        (name) => !project.generatedArtwork[name],
+      );
+      if (missingGenerated.length)
+        throw new Error(
+          `Automatic part generation is missing transparent artwork: ${missingGenerated.join(", ")}.`,
+        );
+      const missingExpressions = (
+        Object.keys(expressionLayers) as ExpressionName[]
+      ).filter((name) => !project.expressionArtwork[name]);
+      if (missingExpressions.length)
+        throw new Error(
+          `Automatic part generation is missing expression artwork: ${missingExpressions.join(", ")}.`,
         );
       openMotion.disabled = false;
       exportProject.disabled = false;
