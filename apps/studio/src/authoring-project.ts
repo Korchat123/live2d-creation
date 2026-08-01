@@ -1,6 +1,7 @@
 import {
   conceptTemplateId,
   partsFirstTemplateId,
+  zImageTurboConceptTemplateId,
   type ConceptProvenance,
 } from "./generation-provider.js";
 import {
@@ -227,9 +228,11 @@ export const validateAcceptedConcept = (concept: AcceptedConcept): void => {
   boundedText(concept.prompt, "concept prompt", 16 * 1024);
   if (
     !["comfyui", "fake"].includes(concept.provenance.provider) ||
-    ![conceptTemplateId, partsFirstTemplateId].includes(
-      concept.provenance.templateId,
-    ) ||
+    ![
+      conceptTemplateId,
+      zImageTurboConceptTemplateId,
+      partsFirstTemplateId,
+    ].includes(concept.provenance.templateId) ||
     !/^[a-f0-9]{64}$/u.test(concept.provenance.artifactSha256) ||
     !Number.isSafeInteger(concept.provenance.seed) ||
     concept.provenance.seed < 0 ||
@@ -237,6 +240,15 @@ export const validateAcceptedConcept = (concept: AcceptedConcept): void => {
   )
     throw new Error("The accepted concept provenance is invalid.");
   boundedText(concept.provenance.checkpoint, "checkpoint", 256);
+  if (concept.provenance.partCheckpoint !== undefined)
+    boundedText(concept.provenance.partCheckpoint, "part checkpoint", 256);
+  if (
+    concept.provenance.templateId === zImageTurboConceptTemplateId &&
+    !concept.provenance.partCheckpoint
+  )
+    throw new Error(
+      "The Z-Image concept requires an approved part checkpoint.",
+    );
   if (concept.provenance.compositionControl) {
     if (
       concept.provenance.compositionControl.templateId !==

@@ -57,6 +57,47 @@ test("keeps a portrait concept preview inside its safe stage", async ({
   );
 });
 
+test("restores and displays a pending Z-Image reference candidate", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(
+    async ({ embeddedImage }) => {
+      const modulePath = "/src/reference-review.ts";
+      const review = await import(modulePath);
+      const hash = "b".repeat(64);
+      const state = review.addReferenceCandidate(
+        review.createReferenceReviewState(1),
+        {
+          image: embeddedImage,
+          width: 768,
+          height: 1152,
+          prompt: "front-facing anime catgirl",
+          provenance: {
+            provider: "comfyui",
+            templateId: "open-avatar-z-image-turbo-v1",
+            checkpoint: "z_image_turbo_bf16.safetensors",
+            partCheckpoint: "animagine-xl-4.0-opt.safetensors",
+            seed: 42,
+            artifactSha256: hash,
+          },
+        },
+        2,
+      );
+      await new review.IndexedDbReferenceReviewStore().save(state);
+    },
+    { embeddedImage: image },
+  );
+
+  await page.reload();
+  await expect(page.locator("#concept-output")).toBeVisible();
+  await expect(page.locator("#concept-provenance")).toHaveAttribute(
+    "data-hash",
+    "b".repeat(64),
+  );
+  await expect(page.locator("#accept-concept")).toBeEnabled();
+});
+
 test("restores an accepted neutral master and starts the automatic build only on resume", async ({
   page,
 }) => {

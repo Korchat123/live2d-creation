@@ -41,3 +41,17 @@ expressions, rigging, or Motion Lab export. Z-Image Turbo remains a distinct
 split-model concept profile. Animagine remains the separately recorded
 checkpoint for SD inpainting until hidden-only generation is implemented and
 physically validated.
+
+## Studio display follow-up
+
+On 2026-08-02, a generated Z-Image PNG appeared in ComfyUI but not in Studio.
+The provider had completed correctly; Studio rejected the new
+`open-avatar-z-image-turbo-v1` provenance identifier before persisting and
+rendering the candidate. The accepted-concept validator now includes that
+reviewed template and requires its separately approved classic part
+checkpoint.
+
+The follow-up browser-driven physical smoke completed in approximately 39.8
+seconds. Studio displayed `1 candidate saved` and revealed the candidate for
+review. The external 413,204-byte PNG had SHA-256
+`8bce04059d711f0e1d4ec95439515083c39ab80d153798990ab9a1bcd81f274f`.

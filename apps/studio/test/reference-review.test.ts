@@ -48,6 +48,30 @@ it("persists pending, rejected, selected, and regenerated references", async () 
   expect(parseReferenceReview(serializeReferenceReview(state))).toEqual(state);
 });
 
+it("persists and renders candidates from the reviewed Z-Image template", async () => {
+  const base = concept("1");
+  const zImageConcept: AcceptedConcept = {
+    ...base,
+    width: 768,
+    provenance: {
+      ...base.provenance,
+      provider: "comfyui",
+      templateId: "open-avatar-z-image-turbo-v1",
+      checkpoint: "z_image_turbo_bf16.safetensors",
+      partCheckpoint: "animagine-xl-4.0-opt.safetensors",
+      artifactSha256: "a".repeat(64),
+    },
+  };
+  const state = addReferenceCandidate(
+    createReferenceReviewState(1),
+    zImageConcept,
+    2,
+  );
+  const store = new MemoryReferenceReviewStore();
+  await store.save(state);
+  await expect(store.load()).resolves.toEqual(state);
+});
+
 it("makes the accepted neutral master immutable", () => {
   const pending = addReferenceCandidate(
     createReferenceReviewState(1),

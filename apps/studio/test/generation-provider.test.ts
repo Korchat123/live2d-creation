@@ -361,6 +361,39 @@ describe("ComfyUI adapter", () => {
     const fetcher = vi.fn<typeof fetch>(async (input) => {
       const url = String(input);
       if (url === "/comfy/system_stats") return new Response("{}");
+      if (url === "/comfy/models/checkpoints")
+        return new Response(JSON.stringify(["part.safetensors"]));
+      if (url === "/comfy/models/diffusion_models")
+        return new Response(JSON.stringify([assets.diffusionModel]));
+      if (url === "/comfy/models/text_encoders")
+        return new Response(JSON.stringify([assets.textEncoder]));
+      if (url === "/comfy/models/vae")
+        return new Response(JSON.stringify([assets.vae]));
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    const provider = new ComfyGenerationProvider(
+      ["part.safetensors"],
+      fetcher,
+      undefined,
+      [],
+      undefined,
+      assets,
+    );
+    await expect(provider.health()).resolves.toMatchObject({
+      state: "ready",
+      approvedCheckpoints: ["part.safetensors", assets.diffusionModel],
+    });
+  });
+
+  it("blocks Z-Image when no classic part checkpoint is installed", async () => {
+    const assets = {
+      diffusionModel: "z_image_turbo_bf16.safetensors",
+      textEncoder: "qwen_3_4b.safetensors",
+      vae: "ae.safetensors",
+    } as const;
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = String(input);
+      if (url === "/comfy/system_stats") return new Response("{}");
       if (url === "/comfy/models/diffusion_models")
         return new Response(JSON.stringify([assets.diffusionModel]));
       if (url === "/comfy/models/text_encoders")
@@ -378,8 +411,9 @@ describe("ComfyUI adapter", () => {
       assets,
     );
     await expect(provider.health()).resolves.toMatchObject({
-      state: "ready",
-      approvedCheckpoints: [assets.diffusionModel],
+      state: "misconfigured",
+      message:
+        "Z-Image Turbo requires an installed allowlisted part checkpoint.",
     });
   });
 

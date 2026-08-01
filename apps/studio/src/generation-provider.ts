@@ -566,6 +566,7 @@ export class ComfyGenerationProvider implements GenerationProvider {
   readonly #sleep: Sleeper;
   readonly #createCompositionControl: () => Promise<Blob>;
   readonly #zImageAssets: ZImageTurboAssets | undefined;
+  #partCheckpoint: string | undefined;
   #active = false;
 
   constructor(
@@ -613,6 +614,7 @@ export class ComfyGenerationProvider implements GenerationProvider {
   }
 
   async health(signal?: AbortSignal): Promise<ProviderHealth> {
+    this.#partCheckpoint = undefined;
     if (this.#approvedCheckpoints.size === 0)
       return {
         state: "misconfigured",
@@ -662,6 +664,7 @@ export class ComfyGenerationProvider implements GenerationProvider {
           typeof value === "string" &&
           this.#approvedClassicCheckpoints.has(value),
       );
+      this.#partCheckpoint = approved[0];
       const zInventories = await Promise.all(
         [diffusionModels, textEncoders, vaes].map(async (response) =>
           response ? ((await response.json()) as unknown) : [],
@@ -678,7 +681,15 @@ export class ComfyGenerationProvider implements GenerationProvider {
           this.#zImageAssets.textEncoder,
         ) &&
         (zInventories[2] as unknown[]).includes(this.#zImageAssets.vae);
-      if (zReady) approved.push(this.#zImageAssets.diffusionModel);
+      if (zReady && this.#partCheckpoint)
+        approved.push(this.#zImageAssets.diffusionModel);
+      if (zReady && !this.#partCheckpoint)
+        return {
+          state: "misconfigured",
+          approvedCheckpoints: [],
+          message:
+            "Z-Image Turbo requires an installed allowlisted part checkpoint.",
+        };
       if (approved.length === 0)
         return {
           state: "misconfigured",
@@ -853,9 +864,6 @@ export class ComfyGenerationProvider implements GenerationProvider {
       const imageBlob = await artifactResponse.blob();
       if (imageBlob.size === 0 || imageBlob.size > MAX_ARTIFACT_BYTES)
         throw new Error("The provider image exceeds the 4 MiB artifact limit.");
-      const partCheckpoint = this.#approvedClassicCheckpoints
-        .values()
-        .next().value;
       return {
         image: imageBlob,
         provenance: {
@@ -864,8 +872,8 @@ export class ComfyGenerationProvider implements GenerationProvider {
             ? zImageTurboConceptTemplateId
             : conceptTemplateId,
           checkpoint: request.checkpoint,
-          ...(isZImageTurbo && typeof partCheckpoint === "string"
-            ? { partCheckpoint }
+          ...(isZImageTurbo && this.#partCheckpoint
+            ? { partCheckpoint: this.#partCheckpoint }
             : {}),
           seed: request.seed,
           artifactSha256: await sha256(imageBlob),
