@@ -194,10 +194,12 @@ alters an identity-locked field must say so and trigger broader review.
 ### Required avatar sets and internal generated parts
 
 The user-visible v1 minimum is six compatible sets: body/proportion, face,
-paired eyes, mouth, hair, and outfit. Studio selects defaults automatically;
-the user may choose a reviewed shape, recolor it, or prompt only that set when
-the automatic result is poor. These are canonical registered assemblies, not
-independent unconditioned images.
+paired eyes, mouth, hair, and outfit. Studio deterministically selects saved
+defaults using the project seed, anatomy/anchor profile, style, and prompt tags;
+the user may choose another reviewed shape or recolor a declared palette
+channel. ComfyUI is called only when the saved library has no compatible
+requested set. These are canonical registered assemblies, not independent
+unconditioned images.
 
 The sets may expand internally into:
 
@@ -225,6 +227,13 @@ Open Avatar build. Likewise, an art style with no catchlight, no visible lower
 lid line, or no visible teeth/tongue is valid. Basic completion is judged at the
 set/capability level rather than by forcing nonexistent pixels into every
 possible semantic slot.
+
+Every saved set records its immutable catalog revision, anatomy/anchor profile,
+compatible profiles, topology version, style and feature tags, recolorable
+channel masks, internal layer roles, draw order, safe motion envelope,
+provenance, and rights state. A generated catalog miss is conditioned on the
+selected neighboring sets and cannot enter the library until alignment,
+reconstruction, overlap, motion, provenance, and rights checks pass.
 
 ### ComfyUI adapter
 
@@ -364,13 +373,17 @@ provider metadata, and rights state. No separate Phase P2 screen blocks users.
 
 ### Phase P3 - Purpose-generated part artwork
 
-- [ ] Add the six-set avatar-kit chooser with prompt-selected compatible
-      defaults, per-set shape/palette controls, and a bounded per-set prompt.
+- [ ] Add the versioned anatomy-aware saved-part catalog and the six-set
+      avatar-kit chooser with seeded prompt-selected compatible defaults and
+      per-set shape/palette controls.
+- [ ] Apply recoloring only through declared channel masks while preserving
+      alpha, outlines, shading, and protected pixels.
 - [ ] Expand accepted sets into required internal rig roles; keep teeth,
       tongue, catchlights, sparse lower lids, animal features, props, and other
       details capability-conditional.
-- [ ] Generate/adapt required sets in dependency order using shared anchors and
-      the accepted design as conditioning.
+- [ ] Generate only catalog misses in dependency order using shared anchors,
+      neighboring saved sets, and the accepted design as conditioning; admit a
+      result to the saved catalog only after review and validation.
 - [ ] Produce full-canvas transparent layers with hidden overlap.
 - [ ] Add automatic per-set variants, retry, selection, compatible-preset
       substitution, and bounded hidden-art inpainting.

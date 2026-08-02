@@ -17,11 +17,12 @@ canonical avatar-part kit:
 3. after acceptance, automatically create a registered non-exported authoring
    pack from the neutral master: false-color ownership, edges, pose, landmarks,
    and local masked expression candidates;
-4. automatically choose compatible defaults for the six minimum sets: body,
-   face, paired eyes, mouth, hair, and outfit; each set expands to registered
-   internal rig layers and may be replaced, recolored, or prompted separately;
-5. generate or adapt those sets against shared anchors and the accepted design,
-   then inpaint only concealed overlap and expression-only artwork; validate
+4. deterministically choose anatomy-compatible saved assets for the six minimum
+   sets: body, face, paired eyes, mouth, hair, and outfit; each set expands to
+   registered internal rig layers and may be replaced or recolored separately;
+5. send only catalog misses to a bounded per-set ComfyUI job, register reviewed
+   results against the same anchors, then inpaint only concealed overlap and
+   expression-only artwork; validate
    reconstruction, concealed overlaps, expressions, and rigging, retrying,
    substituting a compatible preset, or reducing unsupported motion when a
    blocking gate fails;
@@ -38,7 +39,7 @@ uses a compatible part-set preset, merges, bakes, keeps rigid, reduces motion,
 or stops with a precise recovery option. The optional Cubism route remains an Editor handoff; automatic output
 is labelled Open Avatar rather than an Editor-exported Cubism model.
 
-## Minimum avatar-kit decision
+## Anatomy-aware saved-part library decision
 
 The product no longer requires every possible semantic micro-part to be found
 in one generated neutral portrait. A build requires six user-visible sets:
@@ -50,11 +51,20 @@ in one generated neutral portrait. A build requires six user-visible sets:
 5. a registered hairstyle assembly; and
 6. an outfit assembly fitted to the selected body.
 
-Studio preselects compatible defaults from the prompt, so the normal path still
-continues with one click. If prompt generation or extraction fails, the user can
-open the affected set, choose a reviewed shape, change its palette, or prompt
-only that set. Set templates share canonical anchors, character-relative
-left/right, canvas size, draw order, and concealed-overlap requirements; a
+Studio preselects compatible saved parts from the prompt, so the normal path
+still continues with one click and normally requires no ComfyUI call. Selection
+is pseudo-random but seeded per project and constrained by anatomy profile,
+style, attachment anchors, and requested feature tags. The same prompt, catalog
+revision, and seed therefore select the same parts. An eye color such as amber
+recolors the approved iris channel; black hair recolors the approved hair
+channel without repainting its alpha or line art.
+
+If the library lacks a requested shape or feature, Studio sends only that set to
+a bounded ComfyUI workflow. The generated candidate must be aligned, reviewed,
+validated, and assigned compatibility metadata before it can be used or added
+to the saved library. Set assets share canonical anchors, character-relative
+left/right, canvas size, draw order, concealed-overlap requirements, palette
+channels, style tags, topology version, provenance, and rights information. A
 random independently generated part is not accepted merely because it is
 transparent.
 
@@ -73,6 +83,12 @@ content as scalp beneath bangs, face beneath hair, continuous sclera beneath an
 iris/lid, neck beneath clothing, garment overlap, and the reviewed open-mouth
 cavity. If hidden art cannot be validated, Studio reduces that motion or uses a
 compatible preset instead of inventing anatomy and claiming success.
+
+Library entries are immutable revisions. Adding a new face, eye shape,
+hairstyle, outfit, animal feature, or expression creates a reviewed catalog
+revision; it cannot silently change existing projects. Future creator tools may
+generate or draw one new set, define recolorable channels and anchors, run the
+compatibility/motion tests, and then save it for reuse.
 
 ## Reference-first material-separation contract
 
@@ -114,6 +130,9 @@ are prohibited.
 | Poor SD 1.5 character quality                                            | Keep Animagine XL 4.0 as the reviewed SDXL/inpainting checkpoint and evaluate Z-Image Turbo as a separate split-model reference generator. Never treat its Qwen3 text encoder as the diffusion model.                                                                                         | The production suite reaches 20/20 complete front-facing characters inside safe margins, with no severe anatomy, unrequested scene, watermark, or GPU-memory failure. |
 | RTX 3050 has only 6 GB VRAM                                              | Run one job at a time and batch size one. Use a 896 by 1152 portrait concept canvas: it gives full-body framing more vertical room while using slightly fewer pixels than 1024 by 1024. Use ComfyUI offloading and enable explicit low-VRAM mode if instability appears.                      | Ten consecutive jobs complete without out-of-memory errors, a frozen UI, or abandoned provider jobs.                                                                  |
 | Natural-language prompts are inconsistent                                | Add a private prompt planner that produces reviewed identity, appearance, clothing, palette, pose, quality, and negative fields. Show the interpreted request before generation.                                                                                                              | Identical accepted input, workflow version, and seed produce identical provider requests and provenance.                                                              |
+| Random saved parts do not fit together                                   | Select only within a shared anatomy/anchor profile and style family; validate eye containment, hairline, neck, body, garment, and optional-feature attachment points before assembly. Seed selection per project and record the catalog revision.                                             | The same project reconstructs deterministically and every attachment/motion sweep stays inside its compatible bounds.                                                 |
+| Recoloring damages line art or shading                                   | Store explicit recolorable channels per catalog entry and apply bounded palette transforms only inside those masks. Preserve alpha, outlines, highlights, and protected pixels.                                                                                                               | Color changes alter only declared channel pixels and pass neutral/motion comparisons.                                                                                 |
+| A requested part is absent from saved data                               | Generate only the missing set with the selected anatomy profile, neighboring silhouettes, style, and palette as conditioning. Require review and validation before use; save it as a new catalog revision only after provenance and rights checks.                                            | Existing selected sets remain byte-identical and the new set passes alignment, reconstruction, overlap, and motion gates.                                             |
 | A tiny or neutral-hidden facial part cannot be segmented                 | Route macro regions to semantic segmentation, visible facial features to landmark/local analysis, and mouth internals to the generated open-mouth state. Substitute compatible eye or mouth set artwork when confidence fails; do not ask a text segmenter to find invisible tongue or teeth. | The six minimum sets complete; optional micro-parts may be absent, while every enabled layer has source-phase evidence and passes containment/reconstruction checks.  |
 | Separately prompted parts drift in direction or style                    | Generate or adapt each part set against frozen anchors, palette, line treatment, accepted-reference context, and neighboring-set silhouettes. Reject incompatible standalone output and offer reviewed canonical shapes.                                                                      | Neutral assembly preserves one front direction, identity, scale, palette, and attachment geometry.                                                                    |
 | Body, hair, and clothing colors bleed together                           | Build in registered stages: opaque adult base suit and anatomy envelope, facial identity, hair, clothing, then accessories. Freeze anchors and protected pixels between stages; garment jobs cannot repaint skin, face, or hair.                                                              | The final composite matches the accepted dressed reference while each garment/accessory remains an independent aligned layer and skin tone stays consistent.          |

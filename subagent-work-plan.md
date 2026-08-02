@@ -348,11 +348,13 @@ Write scope:
 
 Deliverables:
 
-- private canonical avatar-kit catalog for body, face, paired-eye, mouth, hair,
-  and outfit sets, including compatibility, anchors, palettes, internal roles,
-  and optional capabilities;
-- prompt-to-set planning plus per-set bounded prompting and reviewed-preset
-  substitution when generation cannot satisfy geometry or style gates;
+- private immutable canonical avatar-kit catalog for body, face, paired-eye,
+  mouth, hair, and outfit sets, including catalog revision, anatomy profile,
+  compatibility, anchors, palette-channel masks, topology, internal roles,
+  provenance, rights, and optional capabilities;
+- seeded prompt-to-saved-set planning, bounded recoloring, plus per-set ComfyUI
+  generation only for catalog misses and reviewed-preset substitution when a
+  candidate cannot satisfy geometry or style gates;
 - immutable neutral-master and non-exported authoring-reference-pack jobs;
 - separate false-color ownership, edge, pose, landmark, expression-candidate,
   and concealed-candidate records with registration and provenance;
@@ -368,6 +370,11 @@ Acceptance:
 
 - the six minimum sets always have compatible defaults and expand into the
   conservative basic-motion inventory;
+- the same prompt, catalog revision, and seed choose the same saved entries;
+  selection cannot cross incompatible anatomy profiles;
+- a palette change cannot modify alpha, protected outlines, or undeclared
+  channels, and a generated catalog miss cannot mutate accepted neighboring
+  sets;
 - teeth, tongue, absent catchlights/lower-lid strokes, animal features, props,
   and other optional capabilities cannot block a basic avatar;
 - accepted parts are full-canvas semantic layers, not rectangular source
