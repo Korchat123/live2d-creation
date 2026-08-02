@@ -168,17 +168,17 @@ test("presents gated reference review and restores a generated project", async (
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "Prompt, review, then build your 2D avatar.",
+      name: "Prompt, combine saved parts, then test your 2D avatar.",
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Generate reference" }),
   ).toBeVisible();
   await expect(page.locator('[data-stage="concept"]')).toHaveText(
-    "Generate and approve one coherent neutral master",
+    "Interpret the prompt or approve a generated reference",
   );
   await expect(page.locator('[data-stage="parts"]')).toHaveText(
-    "Build base body, face, hair, clothing, and accessories",
+    "Select compatible saved sets and generate only catalog misses",
   );
   await expect(page.locator("#project-review")).toHaveCount(0);
   await expect(page.locator("#layer-lab")).toBeHidden();
@@ -218,5 +218,38 @@ test("presents gated reference review and restores a generated project", async (
     "Motion preview is live",
   );
   await expect(page.locator("#readiness li")).toHaveCount(1);
+  await expect(page.locator("#readiness li strong")).toHaveText("review");
+});
+
+test("assembles a recolored anatomy-compatible saved kit without ComfyUI", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByLabel("Character description")
+    .fill("cat girl with amber eyes and long black hair wearing a hoodie");
+  await page.locator("#avatar-style").selectOption("vtuber");
+  await page.locator("#avatar-kit-seed").fill("42");
+  await page.locator("#plan-avatar-kit").click();
+
+  await expect(page.locator("#avatar-kit-preview")).toBeVisible();
+  await expect(page.locator("#avatar-kit-status")).toContainText(
+    "Saved avatar assembled",
+  );
+  await expect(page.getByLabel("Hairstyle saved shape")).toHaveValue(
+    "hair-long",
+  );
+  await expect(page.getByLabel("Animal ears saved shape")).toHaveValue(
+    "ears-cat",
+  );
+
+  await page.locator("#use-avatar-kit").click();
+  await expect(page.locator("#automatic-state")).toHaveText("Ready");
+  await expect(page.locator("#open-automatic-motion")).toBeEnabled();
+  await page.locator("#open-automatic-motion").click();
+  await expect(page).toHaveURL(/\/motion\.html$/u);
+  await expect(page.locator("#motion-status")).toContainText(
+    "Motion preview is live",
+  );
   await expect(page.locator("#readiness li strong")).toHaveText("review");
 });

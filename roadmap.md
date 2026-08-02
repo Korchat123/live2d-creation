@@ -381,6 +381,30 @@ direction, silhouette, lighting, or clothing construction, and bounded
 fallbacks could hide semantic failure. The path is not the production default;
 see `docs/authoring/parts-first-startup-smoke.md`.
 
+## Saved avatar-kit implementation evidence
+
+The first `standard-front-v1` saved catalog and Builder workspace are now
+integrated. The catalog contains multiple compatible body, face, paired-eye,
+mouth, hair, and outfit choices plus common animal features. Prompt colors use
+declared channel recoloring; seeded selection is reproducible; malformed or
+duplicate catalog metadata is rejected. The assembled project contains aligned
+PNG masks, artwork, blink/wink/open-mouth states, local persistence, download,
+and a working Motion Lab handoff without a ComfyUI call.
+
+The physical Chromium flow passed for `cat girl with amber eyes and long black
+hair wearing a hoodie`: it selected the long-hair and cat-ear sets, applied the
+palette overrides, assembled and saved the avatar, then reached a live Motion
+Lab preview. The starter art is deterministic Canvas2D artwork owned by this
+repository; no unreviewed external-AI output was admitted. Per-set ComfyUI
+generation and assembled-context review are integrated for catalog misses, with
+difference-derived alpha and rectangle/broad-change rejection. A physical
+Animagine prop test still failed visual review because the model produced a
+character/contact-sheet composition instead of an isolated aligned prop; the
+output remains outside the repository. Immutable admission of accepted
+generated assets and production-quality catalog art expansion remain open.
+
+See `docs/authoring/avatar-kit-catalog.md`.
+
 ## Primary references
 
 - [Animagine XL 4.0 model card](https://huggingface.co/cagliostrolab/animagine-xl-4.0)

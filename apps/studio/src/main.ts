@@ -10,6 +10,8 @@ import {
   saveAutomaticAvatarProject,
   serializeAutomaticAvatarProject,
 } from "./automatic-avatar.js";
+import { mountAvatarKitWorkspace } from "./avatar-kit-ui.js";
+import { generateMissingCatalogSets } from "./avatar-kit-comfy.js";
 import {
   ComfyGenerationProvider,
   mountPromptWorkspace,
@@ -34,7 +36,7 @@ root.innerHTML = `
         <div>
           <p class="eyebrow">Default workflow</p>
           <h2 id="prompt-workspace-title">Generate your avatar</h2>
-          <p>One generation can take several minutes because every motion part is created and checked locally.</p>
+          <p>Start with anatomy-compatible saved parts. Local ComfyUI is used only when you request a set that is not in the catalog.</p>
         </div>
         <div class="prompt-controls">
           <label>Character description<textarea id="character-prompt" rows="5" maxlength="16384" placeholder="Original anime librarian with shoulder-length blue hair, round glasses, navy jacket, warm expression, neutral front pose"></textarea></label>
@@ -211,12 +213,12 @@ if (
   throw new Error("Missing automatic avatar controls");
 
 document.querySelector<HTMLElement>("#builder-title")!.textContent =
-  "Prompt, review, then build your 2D avatar.";
+  "Prompt, combine saved parts, then test your 2D avatar.";
 const heroDescription =
   document.querySelector<HTMLElement>(".hero p:last-child");
 if (heroDescription)
   heroDescription.textContent =
-    "Describe the character. Studio locks one coherent design, separates its visible parts, completes hidden artwork, and assembles the Open Avatar on this computer.";
+    "Describe the character. Studio selects compatible saved anatomy, recolors approved channels, and asks ComfyUI only for a missing set.";
 document.querySelector<HTMLElement>("#prompt-workspace-title")!.textContent =
   "Generate your avatar";
 const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
@@ -224,7 +226,7 @@ const workspaceDescription = promptWorkspace.querySelector<HTMLElement>(
 );
 if (workspaceDescription)
   workspaceDescription.textContent =
-    "One coherent reference keeps the face, direction, outfit, and lighting consistent. Visible pixels are separated and only concealed motion artwork is generated.";
+    "The saved-part path is fastest. Generate a coherent reference only when you want a design that the local catalog cannot assemble.";
 generate.textContent = "Generate reference";
 check.hidden = true;
 lab.hidden = true;
@@ -235,8 +237,8 @@ automaticPanel.className = "automatic-avatar";
 automaticPanel.innerHTML = `
   <div class="section-heading"><div><p class="eyebrow">Automatic build</p><h2>Avatar project</h2></div><span id="automatic-state" class="status">Waiting for prompt</span></div>
   <ol id="automatic-progress" class="automatic-progress" aria-live="polite">
-    <li data-stage="concept">Generate and approve one coherent neutral master</li>
-    <li data-stage="parts">Build base body, face, hair, clothing, and accessories</li>
+    <li data-stage="concept">Interpret the prompt or approve a generated reference</li>
+    <li data-stage="parts">Select compatible saved sets and generate only catalog misses</li>
     <li data-stage="rig">Create blink, mouth, gaze, and motion setup</li>
     <li data-stage="project">Validate and package Open Avatar project</li>
   </ol>
@@ -291,6 +293,24 @@ const makeProjectAvailable = async (
   downloadProject.disabled = false;
   openAvatar.disabled = false;
 };
+
+mountAvatarKitWorkspace(
+  promptWorkspace,
+  async (project) => {
+    resetStages();
+    stage("concept", "complete");
+    stage("parts", "complete");
+    stage("rig", "complete");
+    stage("project", "complete");
+    await labController.loadProject(project);
+    await makeProjectAvailable(project);
+    automaticState.textContent = "Ready";
+    automaticStatus.textContent =
+      "Saved-part avatar is validated and ready for Motion Lab.";
+  },
+  (project, kitPlan) =>
+    generateMissingCatalogSets(project, kitPlan, approvedCheckpoints[0] ?? ""),
+);
 const download = (): void => {
   if (!activeProject) return;
   const url = URL.createObjectURL(

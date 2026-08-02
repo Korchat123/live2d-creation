@@ -132,6 +132,26 @@ const requestedFeatures = (
     add(/\bfox tail\b/u, "fox");
     add(/\b(?:dog|wolf) tail\b/u, "canine");
   }
+  if (kind === "headwear") {
+    add(/\bwitch hat\b/u, "witch");
+    add(/\bcrown\b/u, "crown");
+    add(/\btiara\b/u, "tiara");
+  }
+  if (kind === "prop") {
+    add(/\bcane\b/u, "cane");
+    add(/\bstaff\b/u, "staff");
+    add(/\bwand\b/u, "wand");
+    add(/\bsword\b/u, "sword");
+    add(/\bspear\b/u, "spear");
+    add(/\bumbrella\b/u, "umbrella");
+    add(/\baxe\b/u, "axe");
+    add(/\bscythe\b/u, "scythe");
+  }
+  if (kind === "accessory") {
+    add(/\bglasses\b/u, "glasses");
+    add(/\bchoker\b/u, "choker");
+    add(/\bnecklace\b/u, "necklace");
+  }
   return tags;
 };
 
@@ -147,7 +167,7 @@ const requestedKinds = (prompt: string): readonly AvatarSetKind[] => {
   );
   add("tail", /\b(cat|fox|dog|wolf) tail\b/u);
   add("headwear", /\b(hat|cap|crown|tiara|headwear)\b/u);
-  add("prop", /\b(cane|staff|wand|sword|spear|umbrella)\b/u);
+  add("prop", /\b(cane|staff|wand|sword|spear|umbrella|axe|scythe)\b/u);
   add("accessory", /\b(glasses|choker|necklace|earrings?|brooch|jewelry)\b/u);
   return result;
 };

@@ -7,7 +7,7 @@ test("renders the Builder without the retired Phase P2 controls", async ({
 
   await expect(
     page.getByRole("heading", {
-      name: "Prompt, review, then build your 2D avatar.",
+      name: "Prompt, combine saved parts, then test your 2D avatar.",
     }),
   ).toBeVisible();
   await expect(page.locator("#automatic-progress li")).toHaveCount(4);
