@@ -11,7 +11,10 @@ import {
   serializeAutomaticAvatarProject,
 } from "./automatic-avatar.js";
 import { mountAvatarKitWorkspace } from "./avatar-kit-ui.js";
-import { generateMissingCatalogSets } from "./avatar-kit-comfy.js";
+import {
+  generateMissingCatalogSets,
+  selectCatalogCheckpoint,
+} from "./avatar-kit-comfy.js";
 import {
   ComfyGenerationProvider,
   mountPromptWorkspace,
@@ -309,7 +312,11 @@ mountAvatarKitWorkspace(
       "Saved-part avatar is validated and ready for Motion Lab.";
   },
   (project, kitPlan) =>
-    generateMissingCatalogSets(project, kitPlan, approvedCheckpoints[0] ?? ""),
+    generateMissingCatalogSets(
+      project,
+      kitPlan,
+      selectCatalogCheckpoint(approvedCheckpoints),
+    ),
 );
 const download = (): void => {
   if (!activeProject) return;

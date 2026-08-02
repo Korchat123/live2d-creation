@@ -82,6 +82,9 @@ export const mountAvatarKitWorkspace = (
   const state = section.querySelector<HTMLElement>("#avatar-kit-state")!;
   let plan = planAvatarKit("", 1, starterAvatarCatalog, style.value);
   let project: ExportedProject | undefined;
+  const generatedKinds = new Set<AvatarSetKind>();
+  const unresolvedKinds = (): readonly AvatarSetKind[] =>
+    missingCatalogKinds(plan).filter((kind) => !generatedKinds.has(kind));
 
   const renderControls = (): void => {
     setList.replaceChildren();
@@ -111,6 +114,7 @@ export const mountAvatarKitWorkspace = (
       generate.selected = set.source === "generate";
       select.append(generate);
       select.addEventListener("change", () => {
+        generatedKinds.delete(set.kind);
         plan = {
           ...plan,
           sets: plan.sets.map((current) => {
@@ -138,7 +142,7 @@ export const mountAvatarKitWorkspace = (
         project = undefined;
         use.disabled = true;
         generateMissing.disabled =
-          !onGenerateMissing || missingCatalogKinds(plan).length === 0;
+          !onGenerateMissing || unresolvedKinds().length === 0;
         status.textContent = "Selection changed. Assemble again to review it.";
       });
       row.append(heading, select);
@@ -164,6 +168,7 @@ export const mountAvatarKitWorkspace = (
               : "#405b91",
         );
         color.addEventListener("input", () => {
+          generatedKinds.delete(set.kind);
           plan = replaceSet(plan, set.kind, {
             colorOverrides: { ...set.colorOverrides, [channel]: color.value },
           });
@@ -181,13 +186,14 @@ export const mountAvatarKitWorkspace = (
   const createPlan = (): void => {
     const seed = Number(seedInput.value) >>> 0;
     plan = planAvatarKit(prompt.value, seed, starterAvatarCatalog, style.value);
+    generatedKinds.clear();
     project = undefined;
     use.disabled = true;
     renderControls();
-    const missing = missingCatalogKinds(plan);
+    const missing = unresolvedKinds();
     generateMissing.disabled = !onGenerateMissing || missing.length === 0;
     status.textContent = missing.length
-      ? `Saved parts selected. ComfyUI is needed only for: ${missing.join(", ")}. A compatible fallback can be previewed first.`
+      ? `Saved anatomy selected. Generate and review the fitted ${missing.join(", ")} before using this avatar.`
       : "Every requested set is available locally. Assemble without ComfyUI.";
   };
 
@@ -207,6 +213,7 @@ export const mountAvatarKitWorkspace = (
       "torso",
       "left arm and hand",
       "right arm and hand",
+      "outfit front",
       "neck",
       "face base",
       "left eye white",
@@ -222,7 +229,6 @@ export const mountAvatarKitWorkspace = (
       "left eyebrow",
       "right eyebrow",
       "mouth closed lips",
-      "outfit front",
       "front hair",
       "headwear",
     ];
@@ -251,10 +257,10 @@ export const mountAvatarKitWorkspace = (
     try {
       project = await buildStarterAvatarProject(plan);
       await renderProjectPreview(project);
-      use.disabled = false;
+      use.disabled = unresolvedKinds().length > 0;
       state.textContent = "Ready";
-      status.textContent = missingCatalogKinds(plan).length
-        ? "Preview uses compatible saved fallbacks for missing requested sets. Generate those sets before production export."
+      status.textContent = unresolvedKinds().length
+        ? "The neutral fitting suit is only an anatomy guide. Generate and review the outfit before continuing."
         : "Saved avatar assembled. Review it, adjust any set, or continue to Motion Lab.";
       return project;
     } finally {
@@ -279,11 +285,13 @@ export const mountAvatarKitWorkspace = (
     shuffle.disabled = true;
     use.disabled = true;
     state.textContent = "Generating";
+    const pending = unresolvedKinds();
     status.textContent =
       "ComfyUI is generating only the missing set inside its registered mask…";
     void (project ? Promise.resolve(project) : buildStarterAvatarProject(plan))
       .then((baseline) => onGenerateMissing(baseline, plan))
       .then(async (generated) => {
+        pending.forEach((kind) => generatedKinds.add(kind));
         project = generated;
         await renderProjectPreview(generated);
         use.disabled = false;
@@ -301,7 +309,8 @@ export const mountAvatarKitWorkspace = (
       .finally(() => {
         choose.disabled = false;
         shuffle.disabled = false;
-        generateMissing.disabled = false;
+        generateMissing.disabled =
+          !onGenerateMissing || unresolvedKinds().length === 0;
       });
   });
   style.addEventListener("change", () => {

@@ -221,7 +221,7 @@ test("presents gated reference review and restores a generated project", async (
   await expect(page.locator("#readiness li strong")).toHaveText("review");
 });
 
-test("assembles a recolored anatomy-compatible saved kit without ComfyUI", async ({
+test("assembles saved anatomy and requires a newly fitted outfit", async ({
   page,
 }) => {
   await page.goto("/");
@@ -234,7 +234,7 @@ test("assembles a recolored anatomy-compatible saved kit without ComfyUI", async
 
   await expect(page.locator("#avatar-kit-preview")).toBeVisible();
   await expect(page.locator("#avatar-kit-status")).toContainText(
-    "Saved avatar assembled",
+    "neutral fitting suit",
   );
   await expect(page.getByLabel("Hairstyle saved shape")).toHaveValue(
     "hair-long",
@@ -242,14 +242,9 @@ test("assembles a recolored anatomy-compatible saved kit without ComfyUI", async
   await expect(page.getByLabel("Animal ears saved shape")).toHaveValue(
     "ears-cat",
   );
-
-  await page.locator("#use-avatar-kit").click();
-  await expect(page.locator("#automatic-state")).toHaveText("Ready");
-  await expect(page.locator("#open-automatic-motion")).toBeEnabled();
-  await page.locator("#open-automatic-motion").click();
-  await expect(page).toHaveURL(/\/motion\.html$/u);
-  await expect(page.locator("#motion-status")).toContainText(
-    "Motion preview is live",
+  await expect(page.getByLabel("Outfit saved shape")).toHaveValue(
+    "__generate__",
   );
-  await expect(page.locator("#readiness li strong")).toHaveText("review");
+  await expect(page.locator("#generate-avatar-kit-misses")).toBeEnabled();
+  await expect(page.locator("#use-avatar-kit")).toBeDisabled();
 });

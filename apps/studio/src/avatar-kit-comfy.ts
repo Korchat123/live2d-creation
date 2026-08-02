@@ -9,7 +9,7 @@ export const catalogSetRegions: Readonly<Record<AvatarSetKind, Region>> = {
   eyes: [0.36, 0.19, 0.28, 0.1],
   mouth: [0.43, 0.28, 0.14, 0.09],
   hair: [0.22, 0.03, 0.56, 0.58],
-  outfit: [0.25, 0.36, 0.5, 0.42],
+  outfit: [0.18, 0.35, 0.64, 0.5],
   "animal-ears": [0.3, 0.01, 0.4, 0.18],
   tail: [0.58, 0.48, 0.3, 0.38],
   headwear: [0.22, 0.01, 0.56, 0.22],
@@ -31,6 +31,11 @@ export const catalogSetLayer: Readonly<Record<AvatarSetKind, string>> = {
   accessory: "accessory",
 };
 
+export const selectCatalogCheckpoint = (
+  checkpoints: readonly string[],
+): string =>
+  checkpoints.find((checkpoint) => !/z_image_turbo/iu.test(checkpoint)) ?? "";
+
 export const createCatalogSetWorkflow = (
   checkpoint: string,
   sourceName: string,
@@ -39,15 +44,19 @@ export const createCatalogSetWorkflow = (
   prompt: string,
   seed: number,
 ) => {
+  const instruction =
+    kind === "outfit"
+      ? "create one complete outfit fitted exactly over the visible opaque base-suit body; include coordinated torso, skirt or trousers, and both sleeves; preserve the visible head, hair, hands, legs, pose, proportions, and attachment anchors"
+      : `create only the ${kind} set inside the mask`;
   const workflow = createInpaintWorkflow(
     checkpoint,
     sourceName,
     maskName,
     [
-      `same registered anime VTuber, create only the ${kind} set inside the mask`,
+      `same registered anime VTuber, ${instruction}`,
       prompt,
       "match the visible line weight, palette, front direction, anatomy anchors, and neighboring silhouettes",
-      "draw one clean isolated object silhouette on the white canvas, do not repaint pixels outside the mask, no complete character, no contact sheet, no text, no rectangle, no frame, no background fill",
+      "draw clean garment pixels only inside the body-aligned garment mask, do not repaint pixels outside the mask, no complete character, no contact sheet, no text, no rectangle, no frame, no background fill",
     ].join(", "),
     seed,
   ) as Record<
@@ -187,6 +196,36 @@ const maskForKind = (kind: AvatarSetKind): HTMLCanvasElement => {
   if (!context) throw new Error("Could not create the catalog-set mask.");
   const [x, y, width, height] = catalogSetRegions[kind];
   context.fillStyle = "#ffffff";
+  if (kind === "outfit") {
+    const fillPolygon = (points: readonly (readonly [number, number])[]) => {
+      context.beginPath();
+      context.moveTo(points[0]![0], points[0]![1]);
+      points
+        .slice(1)
+        .forEach(([pointX, pointY]) => context.lineTo(pointX, pointY));
+      context.closePath();
+      context.fill();
+    };
+    fillPolygon([
+      [290, 410],
+      [606, 410],
+      [650, 850],
+      [246, 850],
+    ]);
+    fillPolygon([
+      [278, 425],
+      [365, 452],
+      [325, 716],
+      [238, 690],
+    ]);
+    fillPolygon([
+      [618, 425],
+      [531, 452],
+      [571, 716],
+      [658, 690],
+    ]);
+    return canvas;
+  }
   context.beginPath();
   context.roundRect(
     x * canvas.width,
@@ -197,6 +236,35 @@ const maskForKind = (kind: AvatarSetKind): HTMLCanvasElement => {
   );
   context.fill();
   return canvas;
+};
+
+export const validateCatalogSetCandidateMetrics = (
+  kind: AvatarSetKind,
+  coverage: number,
+  occupancy: number,
+  outsideCoverage: number,
+): void => {
+  if (outsideCoverage > 0.08)
+    throw new Error(
+      "ComfyUI repainted the character outside the fitted set mask.",
+    );
+  if (coverage < 0.002)
+    throw new Error("ComfyUI did not draw a visible catalog-set candidate.");
+  if (kind === "outfit" && coverage < 0.12)
+    throw new Error(
+      "ComfyUI did not draw enough fitted garment artwork to replace the neutral suit.",
+    );
+  if (
+    kind !== "outfit" &&
+    (coverage > 0.72 || (coverage > 0.35 && occupancy > 0.9))
+  )
+    throw new Error(
+      "ComfyUI produced a background rectangle instead of an isolated catalog set.",
+    );
+  if (kind === "prop" && occupancy > 0.52)
+    throw new Error(
+      "ComfyUI changed a broad character region instead of creating an isolated prop.",
+    );
 };
 
 const extractChangedArtwork = async (
@@ -242,22 +310,26 @@ const extractChangedArtwork = async (
   );
   let allowedPixels = 0;
   let changedPixels = 0;
+  let outsidePixels = 0;
+  let outsideChangedPixels = 0;
   let left = canvas.width;
   let top = canvas.height;
   let right = -1;
   let bottom = -1;
   for (let offset = 0; offset < generated.data.length; offset += 4) {
-    if ((allowed[offset + 3] ?? 0) === 0) {
-      generated.data[offset + 3] = 0;
-      continue;
-    }
-    allowedPixels += 1;
     const difference =
       Math.abs((generated.data[offset] ?? 0) - (original[offset] ?? 0)) +
       Math.abs(
         (generated.data[offset + 1] ?? 0) - (original[offset + 1] ?? 0),
       ) +
       Math.abs((generated.data[offset + 2] ?? 0) - (original[offset + 2] ?? 0));
+    if ((allowed[offset + 3] ?? 0) === 0) {
+      outsidePixels += 1;
+      if (difference >= 48) outsideChangedPixels += 1;
+      generated.data[offset + 3] = 0;
+      continue;
+    }
+    allowedPixels += 1;
     if (difference < 48) {
       generated.data[offset + 3] = 0;
       continue;
@@ -276,21 +348,20 @@ const extractChangedArtwork = async (
     maskPixels.data[offset + 3] = 255;
   }
   const coverage = allowedPixels ? changedPixels / allowedPixels : 0;
+  const outsideCoverage = outsidePixels
+    ? outsideChangedPixels / outsidePixels
+    : 0;
   const boundsArea =
     right >= left && bottom >= top
       ? (right - left + 1) * (bottom - top + 1)
       : 0;
   const occupancy = boundsArea ? changedPixels / boundsArea : 0;
-  if (coverage < 0.002)
-    throw new Error("ComfyUI did not draw a visible catalog-set candidate.");
-  if (coverage > 0.72 || (coverage > 0.35 && occupancy > 0.9))
-    throw new Error(
-      "ComfyUI produced a background rectangle instead of an isolated catalog set.",
-    );
-  if (kind === "prop" && occupancy > 0.52)
-    throw new Error(
-      "ComfyUI changed a broad character region instead of creating an isolated prop.",
-    );
+  validateCatalogSetCandidateMetrics(
+    kind,
+    coverage,
+    occupancy,
+    outsideCoverage,
+  );
   context.putImageData(generated, 0, 0);
   extractedContext.putImageData(maskPixels, 0, 0);
   return {
@@ -328,7 +399,12 @@ export const generateMissingCatalogSets = async (
           sourceName,
           maskName,
           set.kind,
-          set.generationPrompt ?? set.requestedFeatures.join(", "),
+          [
+            set.generationPrompt ?? set.requestedFeatures.join(", "),
+            ...Object.entries(set.colorOverrides).map(
+              ([channel, color]) => `${channel} color ${color}`,
+            ),
+          ].join(", "),
           (plan.seed + index + 1) >>> 0,
         ),
       }),

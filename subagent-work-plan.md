@@ -349,7 +349,8 @@ Write scope:
 Deliverables:
 
 - private immutable canonical avatar-kit catalog for body, face, paired-eye,
-  mouth, hair, and outfit sets, including catalog revision, anatomy profile,
+  mouth, and hair sets, plus body-conditioned project-local outfit generation,
+  including catalog revision, anatomy profile,
   compatibility, anchors, palette-channel masks, topology, internal roles,
   provenance, rights, and optional capabilities;
 - seeded prompt-to-saved-set planning, bounded recoloring, plus per-set ComfyUI
@@ -368,8 +369,9 @@ Deliverables:
 
 Acceptance:
 
-- the six minimum sets always have compatible defaults and expand into the
-  conservative basic-motion inventory;
+- the five reusable minimum sets always have compatible defaults; the outfit is
+  generated against the selected fitting body and reviewed before all six sets
+  expand into the conservative basic-motion inventory;
 - the same prompt, catalog revision, and seed choose the same saved entries;
   selection cannot cross incompatible anatomy profiles;
 - a palette change cannot modify alpha, protected outlines, or undeclared

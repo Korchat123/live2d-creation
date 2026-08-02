@@ -17,10 +17,11 @@ canonical avatar-part kit:
 3. after acceptance, automatically create a registered non-exported authoring
    pack from the neutral master: false-color ownership, edges, pose, landmarks,
    and local masked expression candidates;
-4. deterministically choose anatomy-compatible saved assets for the six minimum
-   sets: body, face, paired eyes, mouth, hair, and outfit; each set expands to
+4. deterministically choose anatomy-compatible saved assets for the five reusable
+   sets: body, face, paired eyes, mouth, and hair; each set expands to
    registered internal rig layers and may be replaced or recolored separately;
-5. send only catalog misses to a bounded per-set ComfyUI job, register reviewed
+5. generate every outfit against the selected neutral fitting body and send
+   other catalog misses to a bounded per-set ComfyUI job, register reviewed
    results against the same anchors, then inpaint only concealed overlap and
    expression-only artwork; validate
    reconstruction, concealed overlaps, expressions, and rigging, retrying,
@@ -385,23 +386,35 @@ see `docs/authoring/parts-first-startup-smoke.md`.
 
 The first `standard-front-v1` saved catalog and Builder workspace are now
 integrated. The catalog contains multiple compatible body, face, paired-eye,
-mouth, hair, and outfit choices plus common animal features. Prompt colors use
-declared channel recoloring; seeded selection is reproducible; malformed or
+mouth, and hair choices plus common animal features. Saved procedural outfits
+were removed; each requested outfit is generated inside body-aligned torso and
+sleeve masks while the neutral body remains visible as fitting context. Prompt
+colors use declared channel recoloring; seeded selection is reproducible; malformed or
 duplicate catalog metadata is rejected. The assembled project contains aligned
 PNG masks, artwork, blink/wink/open-mouth states, local persistence, download,
-and a working Motion Lab handoff without a ComfyUI call.
+and a gated Motion Lab handoff after outfit review.
 
-The physical Chromium flow passed for `cat girl with amber eyes and long black
-hair wearing a hoodie`: it selected the long-hair and cat-ear sets, applied the
-palette overrides, assembled and saved the avatar, then reached a live Motion
-Lab preview. The starter art is deterministic Canvas2D artwork owned by this
-repository; no unreviewed external-AI output was admitted. Per-set ComfyUI
+The Chromium, Firefox, and WebKit flow passed for `cat girl with amber eyes and
+long black hair wearing a hoodie`: it selected the long-hair and cat-ear sets,
+applied the palette overrides, assembled the neutral fitting preview, required a
+new outfit, and prevented that preview from entering Motion Lab. The starter art
+is deterministic Canvas2D artwork owned by this repository; no unreviewed
+external-AI output was admitted. Per-set ComfyUI
 generation and assembled-context review are integrated for catalog misses, with
 difference-derived alpha and rectangle/broad-change rejection. A physical
 Animagine prop test still failed visual review because the model produced a
 character/contact-sheet composition instead of an isolated aligned prop; the
-output remains outside the repository. Immutable admission of accepted
+output remains outside the repository. A fitted-outfit smoke test similarly
+produced a second misregistered character and background; minimum-garment and
+outside-mask-change gates now reject it. A pose/line-art-conditioned garment
+workflow remains required. Immutable admission of accepted
 generated assets and production-quality catalog art expansion remain open.
+
+The 2026-08-03 face-base catalog PDF was reviewed as a taxonomy reference. Its
+face, eye, mouth, body, hair, animal-feature, and clothing categories may guide
+future registered sets, but its labeled contact sheets fail alpha,
+registration, scale-consistency, provenance, and separated-layer admission
+gates and therefore are not imported as catalog art.
 
 See `docs/authoring/avatar-kit-catalog.md`.
 

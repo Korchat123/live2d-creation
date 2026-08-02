@@ -42,16 +42,6 @@ export const starterAvatarCatalog: readonly StarterAvatarCatalogEntry[] = [
   entry("hair-short", "Short", "hair", ["short"], ["hair"]),
   entry("hair-bob", "Bob", "hair", ["bob", "short"], ["hair"]),
   entry("hair-twin-tail", "Twin tail", "hair", ["twin-tail", "long"], ["hair"]),
-  entry("outfit-simple", "Simple jacket", "outfit", [], ["fabric"]),
-  entry("outfit-hoodie", "Hoodie", "outfit", ["hoodie", "jacket"], ["fabric"]),
-  entry("outfit-dress", "Dress", "outfit", ["dress"], ["fabric"]),
-  entry(
-    "outfit-gothic",
-    "Gothic dress",
-    "outfit",
-    ["gothic", "dress"],
-    ["fabric"],
-  ),
   entry("ears-cat", "Cat ears", "animal-ears", ["cat"], ["fur"]),
   entry("ears-fox", "Fox ears", "animal-ears", ["fox"], ["fur"]),
   entry("ears-rabbit", "Rabbit ears", "animal-ears", ["rabbit"], ["fur"]),
@@ -102,7 +92,7 @@ export const validateAvatarKitCatalog = (
       throw new Error(`Duplicate avatar-kit catalog entry: ${candidate.id}.`);
     ids.add(candidate.id);
   });
-  for (const kind of minimumAvatarSetKinds)
+  for (const kind of minimumAvatarSetKinds.filter((kind) => kind !== "outfit"))
     if (!catalog.some((candidate) => candidate.kind === kind))
       throw new Error(`The avatar-kit catalog is missing ${kind}.`);
 };
@@ -248,12 +238,10 @@ const renderStarterLayers = (
   const skinShadow = "#dfa99f";
   const hair = selectedColor(plan, "hair", "hair", "#25355d");
   const iris = selectedColor(plan, "eyes", "iris", "#45a3cf");
-  const outfit = selectedColor(plan, "outfit", "fabric", "#405b91");
   const bodyId = selectedId(plan, "body");
   const faceId = selectedId(plan, "face");
   const eyeId = selectedId(plan, "eyes");
   const hairId = selectedId(plan, "hair");
-  const outfitId = selectedId(plan, "outfit");
   const petite = bodyId === "body-petite";
   const tall = bodyId === "body-tall";
   const shoulder = petite ? 132 : tall ? 160 : 148;
@@ -345,7 +333,7 @@ const renderStarterLayers = (
         [315, 752],
         [270, 730],
       ],
-      outfit,
+      "#cbd2df",
     );
     ellipse(context, 287, 756, 25, 36, skin);
   });
@@ -358,7 +346,7 @@ const renderStarterLayers = (
         [581, 752],
         [626, 730],
       ],
-      outfit,
+      "#cbd2df",
     );
     ellipse(context, 609, 756, 25, 36, skin);
   });
@@ -449,47 +437,6 @@ const renderStarterLayers = (
     context.strokeStyle = "#9b4e62";
     context.lineWidth = 7;
     context.stroke();
-  });
-  add("outfit front", (context) => {
-    if (outfitId === "outfit-dress" || outfitId === "outfit-gothic") {
-      polygon(
-        context,
-        [
-          [340, 445],
-          [556, 445],
-          [650, 850],
-          [246, 850],
-        ],
-        outfit,
-      );
-      if (outfitId === "outfit-gothic") {
-        context.strokeStyle = "#171923";
-        context.lineWidth = 22;
-        [560, 625, 690, 755].forEach((y) => {
-          context.beginPath();
-          context.moveTo(300, y);
-          context.quadraticCurveTo(448, y + 24, 596, y);
-          context.stroke();
-        });
-      }
-    } else {
-      polygon(
-        context,
-        [
-          [330, 445],
-          [566, 445],
-          [550, 740],
-          [346, 740],
-        ],
-        outfit,
-      );
-      context.strokeStyle = "#e8edf7";
-      context.lineWidth = outfitId === "outfit-hoodie" ? 9 : 5;
-      context.beginPath();
-      context.moveTo(448, 455);
-      context.lineTo(448, 725);
-      context.stroke();
-    }
   });
   add("front hair", (context) => {
     polygon(
@@ -724,9 +671,10 @@ export const buildStarterAvatarProject = async (
     missingArtwork: [],
     limitations: [
       "Starter catalog artwork uses the standard-front-v1 anatomy profile and conservative motion.",
-      ...missingCatalogKinds(plan).map(
-        (kind) =>
-          `No reviewed ${kind} catalog match exists; a compatible saved fallback is shown until that set is generated and approved.`,
+      ...missingCatalogKinds(plan).map((kind) =>
+        kind === "outfit"
+          ? "No reusable outfit is applied; the neutral fitting suit remains visible until a body-matched outfit is generated and reviewed."
+          : `No reviewed ${kind} catalog match exists; a compatible saved fallback is shown until that set is generated and approved.`,
       ),
     ],
   };

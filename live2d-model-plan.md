@@ -195,7 +195,9 @@ alters an identity-locked field must say so and trigger broader review.
 
 The user-visible v1 minimum is six compatible sets: body/proportion, face,
 paired eyes, mouth, hair, and outfit. Studio deterministically selects saved
-defaults using the project seed, anatomy/anchor profile, style, and prompt tags;
+defaults for the first five sets using the project seed, anatomy/anchor profile,
+style, and prompt tags, then generates the outfit against the selected neutral
+fitting body and requires assembled review before Motion Lab;
 the user may choose another reviewed shape or recolor a declared palette
 channel. ComfyUI is called only when the saved library has no compatible
 requested set. These are canonical registered assemblies, not independent
@@ -373,9 +375,9 @@ provider metadata, and rights state. No separate Phase P2 screen blocks users.
 
 ### Phase P3 - Purpose-generated part artwork
 
-- [ ] Add the versioned anatomy-aware saved-part catalog and the six-set
-      avatar-kit chooser with seeded prompt-selected compatible defaults and
-      per-set shape/palette controls.
+- [ ] Add the versioned anatomy-aware saved-part catalog for five reusable sets
+      and the six-set avatar-kit chooser with a body-conditioned generated
+      outfit, seeded prompt-selected compatible defaults, and per-set controls.
 - [ ] Apply recoloring only through declared channel masks while preserving
       alpha, outlines, shading, and protected pixels.
 - [ ] Expand accepted sets into required internal rig roles; keep teeth,
