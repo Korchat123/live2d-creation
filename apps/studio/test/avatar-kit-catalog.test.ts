@@ -10,19 +10,14 @@ import {
   planAvatarKit,
 } from "../src/avatar-kit-planner.js";
 
-it("provides saved anatomy choices but always generates the fitted outfit", () => {
-  for (const kind of minimumAvatarSetKinds.filter(
-    (kind) => kind !== "outfit",
-  )) {
+it("provides multiple compatible saved choices for every minimum set", () => {
+  for (const kind of minimumAvatarSetKinds) {
     const entries = starterAvatarCatalog.filter((entry) => entry.kind === kind);
     expect(entries.length).toBeGreaterThanOrEqual(2);
     expect(
       entries.every((entry) => entry.anchorProfile === "standard-front-v1"),
     ).toBe(true);
   }
-  expect(starterAvatarCatalog.some(({ kind }) => kind === "outfit")).toBe(
-    false,
-  );
 });
 
 it("rejects duplicate or malformed catalog metadata", () => {
@@ -54,7 +49,7 @@ it("reports only requested sets absent from the reviewed catalog", () => {
     starterAvatarCatalog,
     "vtuber",
   );
-  expect(missingCatalogKinds(common)).toEqual(["outfit"]);
+  expect(missingCatalogKinds(common)).toEqual([]);
 
   const savedProp = planAvatarKit(
     "woman holding an ornate cane",
@@ -66,7 +61,7 @@ it("reports only requested sets absent from the reviewed catalog", () => {
     source: "catalog",
     catalogEntryId: "prop-cane",
   });
-  expect(missingCatalogKinds(savedProp)).toEqual(["outfit"]);
+  expect(missingCatalogKinds(savedProp)).toEqual([]);
 
   const unusual = planAvatarKit(
     "woman holding a scythe",
@@ -74,5 +69,5 @@ it("reports only requested sets absent from the reviewed catalog", () => {
     starterAvatarCatalog,
     "vtuber",
   );
-  expect(missingCatalogKinds(unusual)).toEqual(["outfit", "prop"]);
+  expect(missingCatalogKinds(unusual)).toEqual(["prop"]);
 });

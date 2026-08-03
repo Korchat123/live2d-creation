@@ -143,7 +143,8 @@ export const mountAvatarKitWorkspace = (
         use.disabled = true;
         generateMissing.disabled =
           !onGenerateMissing || unresolvedKinds().length === 0;
-        status.textContent = "Selection changed. Assemble again to review it.";
+        status.textContent = "Selection changed. Rebuilding preview…";
+        void rebuild();
       });
       row.append(heading, select);
       const channel =
@@ -174,7 +175,8 @@ export const mountAvatarKitWorkspace = (
           });
           project = undefined;
           use.disabled = true;
-          status.textContent = "Color changed. Assemble again to review it.";
+          status.textContent = "Color changed. Rebuilding preview…";
+          void rebuild();
         });
         colorLabel.append(color);
         row.append(colorLabel);

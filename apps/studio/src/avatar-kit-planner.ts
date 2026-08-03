@@ -104,9 +104,16 @@ const requestedFeatures = (
   if (kind === "body") {
     add(/\bpetite\b/u, "petite");
     add(/\btall\b/u, "tall");
+    add(/\bslender\b|\bslim\b/u, "slender");
+    add(/\bathletic\b/u, "athletic");
+    add(/\bcurvy\b/u, "curvy");
+    add(/\bchibi\b/u, "chibi");
   }
   if (kind === "face") {
     add(/\bround face\b/u, "round");
+    add(/\bheart(?:[ -]shaped)? face\b/u, "heart");
+    add(/\belongated face\b/u, "elongated");
+    add(/\bsquare(?:d)? face\b/u, "square");
     add(/\bsharp face\b|\bpointed chin\b/u, "sharp");
   }
   if (kind === "hair") {
@@ -114,12 +121,20 @@ const requestedFeatures = (
     add(/\bshort\b(?:\s+\w+){0,3}\s+hair\b/u, "short");
     add(/\btwin.?tails?\b/u, "twin-tail");
     add(/\bbob(?: cut)?\b/u, "bob");
+    add(/\bpixie\b/u, "pixie");
+    add(/\blayered\b/u, "layered");
+    add(/\bcurly\b|\bcurls?\b/u, "curly");
   }
   if (kind === "outfit") {
     add(/\bgothic\b/u, "gothic");
     add(/\bhoodie\b/u, "hoodie");
     add(/\bdress\b/u, "dress");
     add(/\bjacket\b/u, "jacket");
+    add(/\b(?:t-?shirt|shirt)\b/u, "shirt");
+    add(/\bsweater\b/u, "sweater");
+    add(/\boveralls?\b/u, "overalls");
+    add(/\bblouse\b/u, "blouse");
+    add(/\bskirt\b/u, "skirt");
   }
   if (kind === "animal-ears") {
     add(/\bcat(?: girl| boy| ears?)?\b/u, "cat");

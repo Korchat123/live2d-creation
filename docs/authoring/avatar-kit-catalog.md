@@ -13,8 +13,8 @@ segmenting a full reference image:
    mouth, and hair sets;
 3. add requested optional saved sets such as cat ears, a tail, or a held prop;
 4. recolor only declared iris and hair channels;
-5. generate a new outfit over the selected neutral fitting body;
-6. review the assembled outfit candidate, then create mask and expression
+5. choose and recolor a compatible saved casual outfit;
+6. review the assembled catalog result, then create mask and expression
    artwork, save the project, and enable Motion Lab.
 
 The same prompt, seed, style, and catalog revision produce the same selection.
@@ -28,9 +28,8 @@ multiple body, face, eye, hair, and mouth choices; animal ears and
 tails; accessories; and common cane, staff, wand, sword, spear, and umbrella
 props. This makes the assembly, recoloring, alpha, storage, project, and Motion
 Lab path testable without accepting unreviewed model output as a production
-asset. The neutral body is a fitting guide, not an exportable outfit. The old
-procedural outfit entries were removed because they did not match requested
-silhouettes or generated art styles.
+asset. The neutral body remains a fitting guide beneath six saved casual outfit
+families derived from the PDF taxonomy.
 
 No generated ComfyUI or external-AI image was committed for this slice. Such an
 image would need full-canvas registration, a declared anatomy profile,
@@ -45,26 +44,38 @@ oval, round, heart, square, and elongated faces; independent sclera, iris,
 pupil, highlight, and lid roles; closed, half-open, and open mouth states; body
 profiles; hair groups; animal features; and casual/fantasy clothing families.
 
-Its generated contact sheets are intentionally not copied or cropped into the
-catalog. They include labels and grid backgrounds, inconsistent registration
+Its generated contact sheets are never admitted as raw rectangular textures.
+Selected silhouettes may be tightly cropped, cleaned, repaired, and registered.
+The source sheets include labels and grid backgrounds, inconsistent registration
 and scale, mixed front/back or close-up views, incomplete alpha separation, and
 occasionally clothing on anatomy references. They also lack per-asset
 provenance and motion-overlap evidence. New catalog artwork must be generated
 or drawn as one registered set at a time and pass the normal review gates.
 
-The clothing pages support the current outfit policy: terms such as blouse,
-hoodie, sweater, skirt, trousers, dress, cape, robe, corset, and armor can guide
-the project-local outfit prompt, but the garment is generated against the
-selected body instead of being cropped from a contact sheet.
+The clothing pages supply six current casual families: T-shirt, hoodie/skirt,
+knit sweater, overalls, blouse/pleated skirt, and A-line dress. Complex armor,
+robes, capes, and corsets remain future reviewed sets.
+
+### First PDF-guided bitmap admission
+
+Studio now exposes 17 private, PDF-guided feminine face bases. Two are Codex
+redraws and fifteen additional usable PDF silhouettes are tightly cropped,
+cleaned of their cell background and facial guides, repaired to retain the full
+chin, converted to true alpha, and registered at `896x1152`. Clearly masculine
+or chiseled cells and mislabeled duplicates remain excluded. The app loads
+these PNGs instead of procedural face ellipses and rebuilds the assembled
+preview immediately when selection changes. ComfyUI is not involved.
+
+The source PDF cells remain references rather than motion layers. Provenance,
+hashes, transformation history, and unresolved release permissions are recorded
+under `assets/avatar-kit/catalog-v1`. Until redistribution and commercial-use
+permissions are confirmed, these assets remain private/local and release
+ineligible.
 
 ## Catalog-miss policy
 
-Every outfit is marked `generate`. Its mask follows the selected torso and both
-sleeves, and its prompt preserves the visible head, hair, hands, legs, pose, and
-body anchors. Studio shows the neutral fitting suit as context but keeps Use
-this avatar disabled until the generated outfit is reviewed. When a prompt
-requests another set absent from saved data, the planner also marks that set as
-`generate`. The
+Saved casual outfits do not call ComfyUI. When a prompt requests a set absent
+from saved data, the planner marks only that set as `generate`. The
 Generate missing sets action submits the assembled context and one bounded set
 mask to the allowlisted ComfyUI workflow, extracts only changed pixels, and
 shows the project-local candidate in assembled context. Rectangle/background

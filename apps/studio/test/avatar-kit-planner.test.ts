@@ -23,6 +23,7 @@ const catalog = [
   entry("body-a", "body"),
   entry("face-a", "face"),
   entry("face-b", "face"),
+  entry("face-heart", "face", ["heart"]),
   entry("eyes-a", "eyes"),
   entry("eyes-b", "eyes"),
   entry("mouth-a", "mouth"),
@@ -58,6 +59,20 @@ it("builds a seeded compatible kit and applies prompt color channels", () => {
   expect(first.sets.find(({ kind }) => kind === "animal-ears")).toMatchObject({
     source: "catalog",
     catalogEntryId: "cat-ears-a",
+  });
+});
+
+it("selects the PDF-derived heart face when the prompt requests it", () => {
+  const plan = planAvatarKit(
+    "anime girl with a heart-shaped face",
+    3,
+    catalog,
+    "vtuber",
+  );
+  expect(plan.sets.find(({ kind }) => kind === "face")).toMatchObject({
+    source: "catalog",
+    catalogEntryId: "face-heart",
+    requestedFeatures: ["heart"],
   });
 });
 

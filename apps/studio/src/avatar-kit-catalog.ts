@@ -30,18 +30,90 @@ export const starterAvatarCatalog: readonly StarterAvatarCatalogEntry[] = [
   entry("body-standard", "Standard", "body"),
   entry("body-petite", "Petite", "body", ["petite"]),
   entry("body-tall", "Tall", "body", ["tall"]),
-  entry("face-oval", "Oval", "face"),
-  entry("face-round", "Round", "face", ["round"]),
-  entry("face-sharp", "Pointed chin", "face", ["sharp"]),
+  entry("body-slender", "Slender", "body", ["slender", "slim"]),
+  entry("body-athletic", "Athletic", "body", ["athletic"]),
+  entry("body-curvy", "Curvy", "body", ["curvy"]),
+  entry("body-chibi", "Chibi", "body", ["chibi"]),
+  entry("face-oval", "Oval redraw", "face", ["oval"]),
+  entry("face-round", "Round redraw", "face", ["round"]),
+  entry("face-heart", "Heart redraw", "face", ["heart", "sharp"]),
+  entry("face-oval-slim", "Oval slim", "face", ["oval", "slim"]),
+  entry("face-round-cute", "Rounded cute", "face", ["round", "cute"]),
+  entry("face-oval-soft", "Oval soft", "face", ["oval", "soft"]),
+  entry("face-round-small", "Rounded small", "face", ["round", "small"]),
+  entry("face-heart-slim", "Heart slim", "face", ["heart", "slim"]),
+  entry("face-rounded-small", "Rounded petite", "face", ["round", "petite"]),
+  entry("face-squared-young", "Squared young", "face", ["square"]),
+  entry("face-elongated", "Elongated", "face", ["elongated"]),
+  entry("face-heart-deep", "Heart deep", "face", ["heart"]),
+  entry("face-oval-pointed", "Oval pointed", "face", ["oval", "sharp"]),
+  entry("face-oval-pointed-soft", "Oval pointed soft", "face", [
+    "oval",
+    "sharp",
+  ]),
+  entry("face-rounded-wide", "Rounded wide", "face", ["round", "wide"]),
+  entry("face-sharp-oval", "Sharp oval", "face", ["oval", "sharp"]),
+  entry("face-elongated-soft", "Elongated soft", "face", ["elongated", "soft"]),
   entry("eyes-almond", "Almond", "eyes", [], ["iris"]),
   entry("eyes-round", "Round", "eyes", [], ["iris"]),
   entry("eyes-upturned", "Upturned", "eyes", [], ["iris"]),
+  entry("eyes-big-round", "Big round", "eyes", ["round"], ["iris"]),
+  entry("eyes-droopy", "Mature droopy", "eyes", ["droopy"], ["iris"]),
+  entry("eyes-soft-oval", "Soft oval", "eyes", ["soft"], ["iris"]),
+  entry("eyes-puppy", "Puppy", "eyes", ["puppy"], ["iris"]),
+  entry("eyes-sly-cat", "Sly cat", "eyes", ["cat"], ["iris"]),
+  entry("eyes-doe", "Wide doe", "eyes", ["doe"], ["iris"]),
+  entry("eyes-gentle", "Gentle elongated", "eyes", ["gentle"], ["iris"]),
   entry("mouth-gentle", "Gentle", "mouth"),
   entry("mouth-cheerful", "Cheerful", "mouth"),
+  entry("mouth-neutral", "Neutral", "mouth", ["neutral"]),
+  entry("mouth-frown", "Frown", "mouth", ["frown"]),
+  entry("mouth-pout", "Pout", "mouth", ["pout"]),
+  entry("mouth-vampire", "Vampire", "mouth", ["vampire"]),
   entry("hair-long", "Long", "hair", ["long"], ["hair"]),
   entry("hair-short", "Short", "hair", ["short"], ["hair"]),
   entry("hair-bob", "Bob", "hair", ["bob", "short"], ["hair"]),
   entry("hair-twin-tail", "Twin tail", "hair", ["twin-tail", "long"], ["hair"]),
+  entry("hair-pixie", "Pixie", "hair", ["pixie", "short"], ["hair"]),
+  entry(
+    "hair-layered-bob",
+    "Layered bob",
+    "hair",
+    ["bob", "layered"],
+    ["hair"],
+  ),
+  entry(
+    "hair-layered-long",
+    "Layered long",
+    "hair",
+    ["long", "layered"],
+    ["hair"],
+  ),
+  entry("hair-tight-curls", "Tight curls", "hair", ["curly"], ["hair"]),
+  entry("outfit-tshirt", "T-shirt", "outfit", ["shirt"], ["fabric"]),
+  entry(
+    "outfit-hoodie",
+    "Hoodie and skirt",
+    "outfit",
+    ["hoodie", "skirt"],
+    ["fabric"],
+  ),
+  entry("outfit-sweater", "Knit sweater", "outfit", ["sweater"], ["fabric"]),
+  entry(
+    "outfit-overalls",
+    "Casual overalls",
+    "outfit",
+    ["overalls"],
+    ["fabric"],
+  ),
+  entry(
+    "outfit-blouse-skirt",
+    "Blouse and pleated skirt",
+    "outfit",
+    ["blouse", "skirt"],
+    ["fabric"],
+  ),
+  entry("outfit-aline-dress", "A-line dress", "outfit", ["dress"], ["fabric"]),
   entry("ears-cat", "Cat ears", "animal-ears", ["cat"], ["fur"]),
   entry("ears-fox", "Fox ears", "animal-ears", ["fox"], ["fur"]),
   entry("ears-rabbit", "Rabbit ears", "animal-ears", ["rabbit"], ["fur"]),
@@ -165,6 +237,48 @@ const paintLayer = (
   };
 };
 
+const faceAssetModules = import.meta.glob<string>(
+  "../../../assets/avatar-kit/catalog-v1/faces/*.png",
+  { eager: true, query: "?url", import: "default" },
+);
+const faceAssetUrls: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(faceAssetModules).map(([path, url]) => [
+    path.slice(path.lastIndexOf("/") + 1, -4),
+    url,
+  ]),
+);
+
+const loadBitmapLayer = async (
+  source: string,
+): Promise<Readonly<{ artwork: string; mask: string }>> => {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const candidate = new Image();
+    candidate.onload = () => resolve(candidate);
+    candidate.onerror = () =>
+      reject(new Error("Could not load catalog artwork."));
+    candidate.src = source;
+  });
+  if (image.naturalWidth !== 896 || image.naturalHeight !== 1152)
+    throw new Error(
+      "Catalog artwork does not use the standard 896x1152 canvas.",
+    );
+  const artwork = createCanvas();
+  const artworkContext = artwork.getContext("2d");
+  const mask = createCanvas();
+  const maskContext = mask.getContext("2d");
+  if (!artworkContext || !maskContext)
+    throw new Error("Could not prepare catalog bitmap artwork.");
+  artworkContext.drawImage(image, 0, 0);
+  maskContext.drawImage(image, 0, 0);
+  maskContext.globalCompositeOperation = "source-in";
+  maskContext.fillStyle = "#ffffff";
+  maskContext.fillRect(0, 0, mask.width, mask.height);
+  return {
+    artwork: artwork.toDataURL("image/png"),
+    mask: mask.toDataURL("image/png"),
+  };
+};
+
 const ellipse = (
   context: CanvasRenderingContext2D,
   x: number,
@@ -224,9 +338,11 @@ const selectedColor = (
     fallback,
   );
 
-const renderStarterLayers = (
+const renderStarterLayers = async (
   plan: AvatarKitPlan,
-): Readonly<Record<string, Readonly<{ artwork: string; mask: string }>>> => {
+): Promise<
+  Readonly<Record<string, Readonly<{ artwork: string; mask: string }>>>
+> => {
   const layers: Record<
     string,
     Readonly<{ artwork: string; mask: string }>
@@ -242,20 +358,48 @@ const renderStarterLayers = (
   const faceId = selectedId(plan, "face");
   const eyeId = selectedId(plan, "eyes");
   const hairId = selectedId(plan, "hair");
+  const outfitId = selectedId(plan, "outfit");
+  const outfit = selectedColor(plan, "outfit", "fabric", "#526da8");
   const petite = bodyId === "body-petite";
   const tall = bodyId === "body-tall";
-  const shoulder = petite ? 132 : tall ? 160 : 148;
+  const shoulder =
+    bodyId === "body-athletic" ? 166 : petite ? 132 : tall ? 160 : 148;
   const faceRx =
-    faceId === "face-round" ? 127 : faceId === "face-sharp" ? 112 : 120;
+    faceId === "face-round" ? 127 : faceId === "face-heart" ? 112 : 120;
   const faceRy =
-    faceId === "face-round" ? 132 : faceId === "face-sharp" ? 151 : 143;
-  const eyeRx = eyeId === "eyes-round" ? 43 : 49;
-  const eyeRy = eyeId === "eyes-round" ? 30 : 24;
+    faceId === "face-round" ? 132 : faceId === "face-heart" ? 151 : 143;
+  const eyeRx = [
+    "eyes-round",
+    "eyes-big-round",
+    "eyes-puppy",
+    "eyes-doe",
+  ].includes(eyeId)
+    ? 42
+    : eyeId === "eyes-sly-cat"
+      ? 53
+      : 49;
+  const eyeRy =
+    eyeId === "eyes-big-round"
+      ? 34
+      : eyeId === "eyes-puppy" || eyeId === "eyes-doe"
+        ? 31
+        : eyeId === "eyes-sly-cat"
+          ? 19
+          : eyeId === "eyes-droopy"
+            ? 27
+            : 24;
   const eyeY = eyeId === "eyes-upturned" ? 258 : 264;
 
   add("back hair", (context) => {
     ellipse(context, 448, 275, faceRx + 47, faceRy + 68, hair);
-    if (hairId === "hair-long" || hairId === "hair-twin-tail") {
+    if (
+      [
+        "hair-long",
+        "hair-twin-tail",
+        "hair-layered-long",
+        "hair-tight-curls",
+      ].includes(hairId)
+    ) {
       ellipse(context, 360, 490, 76, 275, hair);
       ellipse(context, 536, 490, 76, 275, hair);
     }
@@ -428,15 +572,111 @@ const renderStarterLayers = (
   add("mouth closed lips", (context) => {
     context.beginPath();
     context.moveTo(417, 349);
-    context.quadraticCurveTo(
-      448,
-      selectedId(plan, "mouth") === "mouth-cheerful" ? 365 : 357,
-      479,
-      349,
-    );
+    const mouthId = selectedId(plan, "mouth");
+    const curve =
+      mouthId === "mouth-cheerful"
+        ? 365
+        : mouthId === "mouth-frown"
+          ? 337
+          : mouthId === "mouth-neutral"
+            ? 349
+            : 357;
+    context.quadraticCurveTo(448, curve, 479, 349);
+    if (mouthId === "mouth-pout") context.arc(448, 350, 10, 0, Math.PI * 2);
     context.strokeStyle = "#9b4e62";
     context.lineWidth = 7;
     context.stroke();
+  });
+  add("outfit front", (context) => {
+    const dress = outfitId === "outfit-aline-dress";
+    const skirt =
+      dress ||
+      outfitId === "outfit-hoodie" ||
+      outfitId === "outfit-blouse-skirt";
+    polygon(
+      context,
+      [
+        [326, 438],
+        [570, 438],
+        [552, 735],
+        [344, 735],
+      ],
+      outfit,
+    );
+    polygon(
+      context,
+      [
+        [300, 450],
+        [356, 462],
+        [320, 720],
+        [265, 704],
+      ],
+      outfit,
+    );
+    polygon(
+      context,
+      [
+        [596, 450],
+        [540, 462],
+        [576, 720],
+        [631, 704],
+      ],
+      outfit,
+    );
+    if (skirt)
+      polygon(
+        context,
+        [
+          [344, 700],
+          [552, 700],
+          [620, dress ? 875 : 820],
+          [276, dress ? 875 : 820],
+        ],
+        outfit,
+      );
+    if (outfitId === "outfit-overalls") {
+      context.fillStyle = "#526b8e";
+      context.fillRect(370, 520, 156, 230);
+      context.lineWidth = 15;
+      context.strokeStyle = "#526b8e";
+      context.beginPath();
+      context.moveTo(380, 520);
+      context.lineTo(350, 445);
+      context.moveTo(516, 520);
+      context.lineTo(546, 445);
+      context.stroke();
+    }
+    if (outfitId === "outfit-hoodie") {
+      context.strokeStyle = "#e6e8f1";
+      context.lineWidth = 6;
+      context.beginPath();
+      context.moveTo(448, 450);
+      context.lineTo(448, 715);
+      context.stroke();
+      context.strokeRect(382, 610, 132, 72);
+    }
+    if (outfitId === "outfit-sweater") {
+      context.strokeStyle = "#d9deea";
+      context.lineWidth = 5;
+      for (let x = 360; x <= 536; x += 22) {
+        context.beginPath();
+        context.moveTo(x, 470);
+        context.lineTo(x, 710);
+        context.stroke();
+      }
+    }
+    if (outfitId === "outfit-blouse-skirt") {
+      context.fillStyle = "#f1f2f7";
+      context.fillRect(350, 448, 196, 245);
+      context.strokeStyle = "#30384d";
+      context.lineWidth = 4;
+      for (let x = 310; x < 590; x += 35) {
+        context.beginPath();
+        context.moveTo(448, 700);
+        context.lineTo(x, 815);
+        context.stroke();
+      }
+    }
   });
   add("front hair", (context) => {
     polygon(
@@ -455,7 +695,11 @@ const renderStarterLayers = (
       ],
       hair,
     );
-    if (hairId === "hair-bob" || hairId === "hair-short") {
+    if (
+      ["hair-bob", "hair-short", "hair-layered-bob", "hair-pixie"].includes(
+        hairId,
+      )
+    ) {
       ellipse(context, 336, 310, 28, hairId === "hair-bob" ? 100 : 68, hair);
       ellipse(context, 560, 310, 28, hairId === "hair-bob" ? 100 : 68, hair);
     }
@@ -582,6 +826,8 @@ const renderStarterLayers = (
         }
       }
     });
+  const faceAsset = faceAssetUrls[faceId];
+  if (faceAsset) layers["face base"] = await loadBitmapLayer(faceAsset);
   return layers;
 };
 
@@ -642,7 +888,7 @@ export const buildStarterAvatarProject = async (
     )
   )
     throw new Error("The avatar kit is missing a minimum set.");
-  const rendered = renderStarterLayers(plan);
+  const rendered = await renderStarterLayers(plan);
   const transparent = createCanvas().toDataURL("image/png");
   const expressionNames: readonly ExpressionName[] = [
     "open mouth",
