@@ -1,9 +1,0 @@
-{
-  "manifestVersion": "1.0",
-  "id": "unsafe",
-  "name": "Unsafe",
-  "canvas": { "width": 100, "height": 100 },
-  "assets": [{ "id": "face", "type": "image", "path": "../secret.png" }],
-  "parameters": [],
-  "capabilities": {}
-}

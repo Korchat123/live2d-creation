@@ -1,7 +1,0 @@
-{
-  "protocolVersion": "1.0",
-  "id": "gaze-001",
-  "type": "control.set",
-  "payload": { "channel": "gaze", "x": 0.25, "y": -0.5 },
-  "delivery": { "mode": "coalesce", "key": "gaze", "supersedesPending": true }
-}

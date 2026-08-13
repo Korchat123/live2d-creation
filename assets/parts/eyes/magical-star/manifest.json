@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "kind": "eyes",
+  "style": "magical-star",
+  "name": "Magical star",
+  "canvas": [
+    2048,
+    2048
+  ],
+  "source": "source/source.png",
+  "parts": {
+    "brows/brow-left": {
+      "file": "brows/brow-left.png",
+      "region": [
+        591,
+        777,
+        1007,
+        911
+      ]
+    },
+    "eye-whites/eye-white-left": {
+      "file": "eye-whites/eye-white-left.png",
+      "region": [
+        591,
+        888,
+        1007,
+        1170
+      ]
+    },
+    "irises/iris-left": {
+      "file": "irises/iris-left.png",
+      "region": [
+        720,
+        888,
+        878,
+        1170
+      ]
+    },
+    "pupils/pupil-left": {
+      "file": "pupils/pupil-left.png",
+      "region": [
+        762,
+        888,
+        836,
+        1170
+      ]
+    },
+    "upper-lashes/upper-lash-left": {
+      "file": "upper-lashes/upper-lash-left.png",
+      "region": [
+        591,
+        888,
+        1007,
+        1034
+      ]
+    },
+    "lower-lashes/lower-lash-left": {
+      "file": "lower-lashes/lower-lash-left.png",
+      "region": [
+        591,
+        1034,
+        1007,
+        1170
+      ]
+    },
+    "highlights/highlight-left": {
+      "file": "highlights/highlight-left.png",
+      "region": [
+        720,
+        888,
+        878,
+        1034
+      ]
+    },
+    "brows/brow-right": {
+      "file": "brows/brow-right.png",
+      "region": [
+        1044,
+        777,
+        1458,
+        911
+      ]
+    },
+    "eye-whites/eye-white-right": {
+      "file": "eye-whites/eye-white-right.png",
+      "region": [
+        1044,
+        888,
+        1458,
+        1172
+      ]
+    },
+    "irises/iris-right": {
+      "file": "irises/iris-right.png",
+      "region": [
+        1172,
+        888,
+        1329,
+        1172
+      ]
+    },
+    "pupils/pupil-right": {
+      "file": "pupils/pupil-right.png",
+      "region": [
+        1213,
+        888,
+        1288,
+        1172
+      ]
+    },
+    "upper-lashes/upper-lash-right": {
+      "file": "upper-lashes/upper-lash-right.png",
+      "region": [
+        1044,
+        888,
+        1458,
+        1036
+      ]
+    },
+    "lower-lashes/lower-lash-right": {
+      "file": "lower-lashes/lower-lash-right.png",
+      "region": [
+        1044,
+        1036,
+        1458,
+        1172
+      ]
+    },
+    "highlights/highlight-right": {
+      "file": "highlights/highlight-right.png",
+      "region": [
+        1172,
+        888,
+        1329,
+        1036
+      ]
+    }
+  },
+  "registration": {
+    "target": "anime-neutral-v3",
+    "face_scale": 0.58,
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "inward_shift": 100
+  }
+}

@@ -1,0 +1,541 @@
+{
+  "version": 1,
+  "parameters": {
+    "bustSize": {
+      "min": 0,
+      "default": 1,
+      "max": 1.65,
+      "step": 0.05
+    },
+    "bustSpacing": {
+      "min": 0.9,
+      "default": 1,
+      "max": 1.12,
+      "step": 0.01
+    },
+    "bustHeight": {
+      "min": -0.03,
+      "default": 0,
+      "max": 0.03,
+      "step": 0.005
+    },
+    "faceScale": {
+      "min": 0.92,
+      "default": 1,
+      "max": 1.08,
+      "step": 0.01
+    },
+    "headWidth": {
+      "min": 0.92,
+      "default": 1,
+      "max": 1.08,
+      "step": 0.01
+    },
+    "jawWidth": {
+      "min": 0.88,
+      "default": 1,
+      "max": 1.12,
+      "step": 0.01
+    },
+    "jawLength": {
+      "min": 0.94,
+      "default": 1,
+      "max": 1.06,
+      "step": 0.01
+    }
+  },
+  "busts": [
+    {
+      "style": "shojo-grace",
+      "anchor": [
+        1024,
+        553
+      ],
+      "sourceCrop": [
+        901,
+        440,
+        1147,
+        666
+      ],
+      "left": "./assets/parts/bust/shojo-grace/bust-left.png",
+      "right": "./assets/parts/bust/shojo-grace/bust-right.png",
+      "thumbnail": "./assets/parts/bust/shojo-grace/bust-full.png"
+    },
+    {
+      "style": "shonen-athletic",
+      "anchor": [
+        1024,
+        553
+      ],
+      "sourceCrop": [
+        850,
+        440,
+        1198,
+        666
+      ],
+      "left": "./assets/parts/bust/shonen-athletic/bust-left.png",
+      "right": "./assets/parts/bust/shonen-athletic/bust-right.png",
+      "thumbnail": "./assets/parts/bust/shonen-athletic/bust-full.png"
+    },
+    {
+      "style": "chibi-pop",
+      "anchor": [
+        1024,
+        850
+      ],
+      "sourceCrop": [
+        870,
+        737,
+        1178,
+        963
+      ],
+      "left": "./assets/parts/bust/chibi-pop/bust-left.png",
+      "right": "./assets/parts/bust/chibi-pop/bust-right.png",
+      "thumbnail": "./assets/parts/bust/chibi-pop/bust-full.png"
+    },
+    {
+      "style": "bishonen-sleek",
+      "anchor": [
+        1024,
+        532
+      ],
+      "sourceCrop": [
+        901,
+        420,
+        1147,
+        645
+      ],
+      "left": "./assets/parts/bust/bishonen-sleek/bust-left.png",
+      "right": "./assets/parts/bust/bishonen-sleek/bust-right.png",
+      "thumbnail": "./assets/parts/bust/bishonen-sleek/bust-full.png"
+    },
+    {
+      "style": "seinen-heroic",
+      "anchor": [
+        1024,
+        542
+      ],
+      "sourceCrop": [
+        850,
+        430,
+        1198,
+        655
+      ],
+      "left": "./assets/parts/bust/seinen-heroic/bust-left.png",
+      "right": "./assets/parts/bust/seinen-heroic/bust-right.png",
+      "thumbnail": "./assets/parts/bust/seinen-heroic/bust-full.png"
+    },
+    {
+      "style": "josei-elegant",
+      "anchor": [
+        1024,
+        564
+      ],
+      "sourceCrop": [
+        870,
+        451,
+        1178,
+        676
+      ],
+      "left": "./assets/parts/bust/josei-elegant/bust-left.png",
+      "right": "./assets/parts/bust/josei-elegant/bust-right.png",
+      "thumbnail": "./assets/parts/bust/josei-elegant/bust-full.png"
+    },
+    {
+      "style": "genki-compact",
+      "anchor": [
+        1024,
+        584
+      ],
+      "sourceCrop": [
+        870,
+        471,
+        1178,
+        696
+      ],
+      "left": "./assets/parts/bust/genki-compact/bust-left.png",
+      "right": "./assets/parts/bust/genki-compact/bust-right.png",
+      "thumbnail": "./assets/parts/bust/genki-compact/bust-full.png"
+    },
+    {
+      "style": "idol-balanced",
+      "anchor": [
+        1024,
+        553
+      ],
+      "sourceCrop": [
+        870,
+        440,
+        1178,
+        666
+      ],
+      "left": "./assets/parts/bust/idol-balanced/bust-left.png",
+      "right": "./assets/parts/bust/idol-balanced/bust-right.png",
+      "thumbnail": "./assets/parts/bust/idol-balanced/bust-full.png"
+    },
+    {
+      "style": "fantasy-elfin",
+      "anchor": [
+        1024,
+        542
+      ],
+      "sourceCrop": [
+        891,
+        430,
+        1157,
+        655
+      ],
+      "left": "./assets/parts/bust/fantasy-elfin/bust-left.png",
+      "right": "./assets/parts/bust/fantasy-elfin/bust-right.png",
+      "thumbnail": "./assets/parts/bust/fantasy-elfin/bust-full.png"
+    },
+    {
+      "style": "retro-90s",
+      "anchor": [
+        1024,
+        542
+      ],
+      "sourceCrop": [
+        901,
+        430,
+        1147,
+        655
+      ],
+      "left": "./assets/parts/bust/retro-90s/bust-left.png",
+      "right": "./assets/parts/bust/retro-90s/bust-right.png",
+      "thumbnail": "./assets/parts/bust/retro-90s/bust-full.png"
+    }
+  ],
+  "faces": [
+    {
+      "style": "shojo-grace",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/shojo-grace/female.png",
+      "sourceCrop": [
+        922,
+        31,
+        1126,
+        317
+      ]
+    },
+    {
+      "style": "shojo-grace",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/shojo-grace/male.png",
+      "sourceCrop": [
+        922,
+        31,
+        1126,
+        317
+      ]
+    },
+    {
+      "style": "shojo-grace",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/shojo-grace/androgynous.png",
+      "sourceCrop": [
+        922,
+        31,
+        1126,
+        317
+      ]
+    },
+    {
+      "style": "shonen-athletic",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/shonen-athletic/female.png",
+      "sourceCrop": [
+        932,
+        10,
+        1116,
+        317
+      ]
+    },
+    {
+      "style": "shonen-athletic",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/shonen-athletic/male.png",
+      "sourceCrop": [
+        932,
+        10,
+        1116,
+        317
+      ]
+    },
+    {
+      "style": "shonen-athletic",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/shonen-athletic/androgynous.png",
+      "sourceCrop": [
+        932,
+        10,
+        1116,
+        317
+      ]
+    },
+    {
+      "style": "chibi-pop",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/chibi-pop/female.png",
+      "sourceCrop": [
+        758,
+        20,
+        1290,
+        614
+      ]
+    },
+    {
+      "style": "chibi-pop",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/chibi-pop/male.png",
+      "sourceCrop": [
+        758,
+        20,
+        1290,
+        614
+      ]
+    },
+    {
+      "style": "chibi-pop",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/chibi-pop/androgynous.png",
+      "sourceCrop": [
+        758,
+        20,
+        1290,
+        614
+      ]
+    },
+    {
+      "style": "bishonen-sleek",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/bishonen-sleek/female.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        287
+      ]
+    },
+    {
+      "style": "bishonen-sleek",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/bishonen-sleek/male.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        287
+      ]
+    },
+    {
+      "style": "bishonen-sleek",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/bishonen-sleek/androgynous.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        287
+      ]
+    },
+    {
+      "style": "seinen-heroic",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/seinen-heroic/female.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "seinen-heroic",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/seinen-heroic/male.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "seinen-heroic",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/seinen-heroic/androgynous.png",
+      "sourceCrop": [
+        942,
+        31,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "josei-elegant",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/josei-elegant/female.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "josei-elegant",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/josei-elegant/male.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "josei-elegant",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/josei-elegant/androgynous.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "genki-compact",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/genki-compact/female.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        348
+      ]
+    },
+    {
+      "style": "genki-compact",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/genki-compact/male.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        348
+      ]
+    },
+    {
+      "style": "genki-compact",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/genki-compact/androgynous.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        348
+      ]
+    },
+    {
+      "style": "idol-balanced",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/idol-balanced/female.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "idol-balanced",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/idol-balanced/male.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "idol-balanced",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/idol-balanced/androgynous.png",
+      "sourceCrop": [
+        922,
+        41,
+        1126,
+        328
+      ]
+    },
+    {
+      "style": "fantasy-elfin",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/fantasy-elfin/female.png",
+      "sourceCrop": [
+        942,
+        51,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "fantasy-elfin",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/fantasy-elfin/male.png",
+      "sourceCrop": [
+        942,
+        51,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "fantasy-elfin",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/fantasy-elfin/androgynous.png",
+      "sourceCrop": [
+        942,
+        51,
+        1106,
+        328
+      ]
+    },
+    {
+      "style": "retro-90s",
+      "gender": "female",
+      "asset": "./assets/parts/face-base/retro-90s/female.png",
+      "sourceCrop": [
+        942,
+        41,
+        1106,
+        307
+      ]
+    },
+    {
+      "style": "retro-90s",
+      "gender": "male",
+      "asset": "./assets/parts/face-base/retro-90s/male.png",
+      "sourceCrop": [
+        942,
+        41,
+        1106,
+        307
+      ]
+    },
+    {
+      "style": "retro-90s",
+      "gender": "androgynous",
+      "asset": "./assets/parts/face-base/retro-90s/androgynous.png",
+      "sourceCrop": [
+        942,
+        41,
+        1106,
+        307
+      ]
+    }
+  ]
+}

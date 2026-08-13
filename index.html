@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="UI outline for a character parts composer">
+    <title>Live2D Parts Studio</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">◇</span>
+          <span><strong>Parts Studio</strong><small>Character composer</small></span>
+        </div>
+        <div class="top-actions">
+          <span class="draft-state">Unsaved draft</span>
+          <button class="button" id="save-draft">Save draft</button>
+          <button class="button primary" disabled title="Available after the Live2D pipeline is defined">Export model</button>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Character composer">
+        <nav class="category-rail" aria-label="Part categories">
+          <div class="category-list" id="category-list"></div>
+        </nav>
+
+        <aside class="parts-panel">
+          <div class="panel-heading"><h1 id="category-title">Base</h1><span>Choose one</span></div>
+          <input class="search" type="search" placeholder="Search this collection" aria-label="Search parts" disabled>
+          <div class="gender-filter" id="gender-filter" aria-label="Filter anatomy by gender" hidden>
+            <button data-gender="all" aria-pressed="true">All</button>
+            <button data-gender="female" aria-pressed="false">Female</button>
+            <button data-gender="male" aria-pressed="false">Male</button>
+            <button data-gender="androgynous" aria-pressed="false">Androgynous</button>
+          </div>
+          <div class="parts-grid" id="parts-grid"></div>
+        </aside>
+
+        <section class="stage" aria-label="Character preview">
+          <div class="stage-tools" aria-label="Preview controls">
+            <button id="zoom-out" aria-label="Zoom out">−</button>
+            <span id="zoom-label">100%</span>
+            <button id="zoom-in" aria-label="Zoom in">+</button>
+            <button id="reset-view" aria-label="Reset preview">↺</button>
+          </div>
+          <div class="character" id="character" aria-label="Japanese anime face-base preview">
+            <img src="./assets/parts/face-base/anime-neutral-v3.png" alt="Blank Japanese anime-style face base">
+          </div>
+        </section>
+
+        <aside class="inspector">
+          <h2>Your character</h2>
+          <p>Review the active layers. Select a row to edit that category.</p>
+          <div class="inspector-list" id="inspector-list"></div>
+          <section class="adjustment-panel" aria-labelledby="adjustment-title">
+            <div class="adjustment-heading">
+              <h3 id="adjustment-title">Shape controls</h3>
+              <button id="reset-parameters" type="button">Reset defaults</button>
+            </div>
+            <fieldset>
+              <legend>Face</legend>
+              <label>Overall size <output data-output="faceScale">100%</output><input type="range" data-parameter="faceScale"></label>
+              <label>Head width <output data-output="headWidth">100%</output><input type="range" data-parameter="headWidth"></label>
+              <label>Jaw width <output data-output="jawWidth">100%</output><input type="range" data-parameter="jawWidth"></label>
+              <label>Jaw length <output data-output="jawLength">100%</output><input type="range" data-parameter="jawLength"></label>
+            </fieldset>
+            <fieldset>
+              <legend>Covered bust</legend>
+              <label>Volume <output data-output="bustSize">100%</output><input type="range" data-parameter="bustSize"></label>
+              <label>Spacing <output data-output="bustSpacing">100%</output><input type="range" data-parameter="bustSpacing"></label>
+              <label>Height <output data-output="bustHeight">0%</output><input type="range" data-parameter="bustHeight"></label>
+            </fieldset>
+            <p>Controls are limited to art-safe ranges. “Flat” hides the separate bust overlay.</p>
+          </section>
+          <div class="notice"><strong>Anatomy variants ready</strong><br>Choose female, male, or androgynous anatomy. Hair, eyes, mouth, outfits, and accessories remain future registered layers.</div>
+        </aside>
+      </section>
+
+      <footer class="statusbar">
+        <div class="status-group"><span id="selection-count">1 part selected</span><span class="compatible">Art reviewed</span></div>
+        <div class="status-group"><span>Anime asset draft</span><span>Live2D export not connected</span></div>
+      </footer>
+    </main>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

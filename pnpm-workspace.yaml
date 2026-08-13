@@ -1,8 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-
-strictPeerDependencies: true
-
-allowBuilds:
-  esbuild: true

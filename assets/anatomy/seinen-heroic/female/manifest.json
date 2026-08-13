@@ -1,0 +1,507 @@
+{
+  "canvas": [
+    2048,
+    2048
+  ],
+  "profile": "seinen-heroic",
+  "gender": "female",
+  "source": "source.png",
+  "parts": {
+    "facebase/facebase": {
+      "file": "facebase/facebase.png",
+      "crop": [
+        942,
+        31,
+        1106,
+        328
+      ],
+      "offset": [
+        942,
+        31
+      ],
+      "size": [
+        164,
+        297
+      ]
+    },
+    "ears/ear-left": {
+      "file": "ears/ear-left.png",
+      "crop": [
+        915,
+        123,
+        952,
+        307
+      ],
+      "offset": [
+        915,
+        123
+      ],
+      "size": [
+        37,
+        184
+      ]
+    },
+    "ears/ear-right": {
+      "file": "ears/ear-right.png",
+      "crop": [
+        1096,
+        123,
+        1133,
+        307
+      ],
+      "offset": [
+        1096,
+        123
+      ],
+      "size": [
+        37,
+        184
+      ]
+    },
+    "upper-body/upper-body": {
+      "file": "upper-body/upper-body.png",
+      "crop": [
+        778,
+        287,
+        1270,
+        860
+      ],
+      "offset": [
+        778,
+        287
+      ],
+      "size": [
+        492,
+        573
+      ]
+    },
+    "lower-body/lower-body": {
+      "file": "lower-body/lower-body.png",
+      "crop": [
+        748,
+        737,
+        1300,
+        1085
+      ],
+      "offset": [
+        748,
+        737
+      ],
+      "size": [
+        552,
+        348
+      ]
+    },
+    "shoulders/shoulder-left": {
+      "file": "shoulders/shoulder-left.png",
+      "crop": [
+        686,
+        256,
+        860,
+        645
+      ],
+      "offset": [
+        686,
+        256
+      ],
+      "size": [
+        174,
+        389
+      ]
+    },
+    "shoulders/shoulder-right": {
+      "file": "shoulders/shoulder-right.png",
+      "crop": [
+        1188,
+        256,
+        1362,
+        645
+      ],
+      "offset": [
+        1188,
+        256
+      ],
+      "size": [
+        174,
+        389
+      ]
+    },
+    "upper-arms/upper-arm-left": {
+      "file": "upper-arms/upper-arm-left.png",
+      "crop": [
+        475,
+        307,
+        836,
+        594
+      ],
+      "offset": [
+        475,
+        307
+      ],
+      "size": [
+        361,
+        287
+      ]
+    },
+    "upper-arms/upper-arm-right": {
+      "file": "upper-arms/upper-arm-right.png",
+      "crop": [
+        1212,
+        307,
+        1573,
+        594
+      ],
+      "offset": [
+        1212,
+        307
+      ],
+      "size": [
+        361,
+        287
+      ]
+    },
+    "elbows/elbow-left": {
+      "file": "elbows/elbow-left.png",
+      "crop": [
+        440,
+        276,
+        584,
+        625
+      ],
+      "offset": [
+        440,
+        276
+      ],
+      "size": [
+        144,
+        349
+      ]
+    },
+    "elbows/elbow-right": {
+      "file": "elbows/elbow-right.png",
+      "crop": [
+        1464,
+        276,
+        1608,
+        625
+      ],
+      "offset": [
+        1464,
+        276
+      ],
+      "size": [
+        144,
+        349
+      ]
+    },
+    "lower-arms/lower-arm-left": {
+      "file": "lower-arms/lower-arm-left.png",
+      "crop": [
+        229,
+        307,
+        549,
+        594
+      ],
+      "offset": [
+        229,
+        307
+      ],
+      "size": [
+        320,
+        287
+      ]
+    },
+    "lower-arms/lower-arm-right": {
+      "file": "lower-arms/lower-arm-right.png",
+      "crop": [
+        1499,
+        307,
+        1819,
+        594
+      ],
+      "offset": [
+        1499,
+        307
+      ],
+      "size": [
+        320,
+        287
+      ]
+    },
+    "wrists/wrist-left": {
+      "file": "wrists/wrist-left.png",
+      "crop": [
+        209,
+        283,
+        324,
+        618
+      ],
+      "offset": [
+        209,
+        283
+      ],
+      "size": [
+        115,
+        335
+      ]
+    },
+    "wrists/wrist-right": {
+      "file": "wrists/wrist-right.png",
+      "crop": [
+        1724,
+        283,
+        1839,
+        618
+      ],
+      "offset": [
+        1724,
+        283
+      ],
+      "size": [
+        115,
+        335
+      ]
+    },
+    "hands/hand-left": {
+      "file": "hands/hand-left.png",
+      "crop": [
+        102,
+        236,
+        303,
+        666
+      ],
+      "offset": [
+        102,
+        236
+      ],
+      "size": [
+        201,
+        430
+      ]
+    },
+    "hands/hand-right": {
+      "file": "hands/hand-right.png",
+      "crop": [
+        1745,
+        236,
+        1946,
+        666
+      ],
+      "offset": [
+        1745,
+        236
+      ],
+      "size": [
+        201,
+        430
+      ]
+    },
+    "upper-legs/upper-leg-left": {
+      "file": "upper-legs/upper-leg-left.png",
+      "crop": [
+        778,
+        950,
+        1014,
+        1425
+      ],
+      "offset": [
+        778,
+        950
+      ],
+      "size": [
+        236,
+        475
+      ]
+    },
+    "upper-legs/upper-leg-right": {
+      "file": "upper-legs/upper-leg-right.png",
+      "crop": [
+        1034,
+        950,
+        1270,
+        1425
+      ],
+      "offset": [
+        1034,
+        950
+      ],
+      "size": [
+        236,
+        475
+      ]
+    },
+    "knees/knee-left": {
+      "file": "knees/knee-left.png",
+      "crop": [
+        778,
+        1290,
+        1014,
+        1454
+      ],
+      "offset": [
+        778,
+        1290
+      ],
+      "size": [
+        236,
+        164
+      ]
+    },
+    "knees/knee-right": {
+      "file": "knees/knee-right.png",
+      "crop": [
+        1034,
+        1290,
+        1270,
+        1454
+      ],
+      "offset": [
+        1034,
+        1290
+      ],
+      "size": [
+        236,
+        164
+      ]
+    },
+    "lower-legs/lower-leg-left": {
+      "file": "lower-legs/lower-leg-left.png",
+      "crop": [
+        778,
+        1319,
+        1014,
+        1835
+      ],
+      "offset": [
+        778,
+        1319
+      ],
+      "size": [
+        236,
+        516
+      ]
+    },
+    "lower-legs/lower-leg-right": {
+      "file": "lower-legs/lower-leg-right.png",
+      "crop": [
+        1034,
+        1319,
+        1270,
+        1835
+      ],
+      "offset": [
+        1034,
+        1319
+      ],
+      "size": [
+        236,
+        516
+      ]
+    },
+    "ankles/ankle-left": {
+      "file": "ankles/ankle-left.png",
+      "crop": [
+        758,
+        1710,
+        1034,
+        1853
+      ],
+      "offset": [
+        758,
+        1710
+      ],
+      "size": [
+        276,
+        143
+      ]
+    },
+    "ankles/ankle-right": {
+      "file": "ankles/ankle-right.png",
+      "crop": [
+        1014,
+        1710,
+        1290,
+        1853
+      ],
+      "offset": [
+        1014,
+        1710
+      ],
+      "size": [
+        276,
+        143
+      ]
+    },
+    "feet/foot-left": {
+      "file": "feet/foot-left.png",
+      "crop": [
+        727,
+        1729,
+        1014,
+        2007
+      ],
+      "offset": [
+        727,
+        1729
+      ],
+      "size": [
+        287,
+        278
+      ]
+    },
+    "feet/foot-right": {
+      "file": "feet/foot-right.png",
+      "crop": [
+        1034,
+        1729,
+        1321,
+        2007
+      ],
+      "offset": [
+        1034,
+        1729
+      ],
+      "size": [
+        287,
+        278
+      ]
+    },
+    "other/neck": {
+      "file": "other/neck.png",
+      "crop": [
+        881,
+        276,
+        1167,
+        399
+      ],
+      "offset": [
+        881,
+        276
+      ],
+      "size": [
+        286,
+        123
+      ]
+    },
+    "bust/bust": {
+      "file": "bust/bust.png",
+      "crop": [
+        850,
+        430,
+        1198,
+        655
+      ],
+      "offset": [
+        850,
+        430
+      ],
+      "size": [
+        348,
+        225
+      ]
+    }
+  },
+  "dressed_preview": {
+    "hands": "hands/hands-registered.png"
+  }
+}
