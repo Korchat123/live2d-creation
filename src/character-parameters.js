@@ -5,7 +5,15 @@ export const parameterContract = Object.freeze({
   faceScale: Object.freeze({ min: 0.92, default: 1, max: 1.08, step: 0.01 }),
   headWidth: Object.freeze({ min: 0.92, default: 1, max: 1.08, step: 0.01 }),
   jawWidth: Object.freeze({ min: 0.88, default: 1, max: 1.12, step: 0.01 }),
-  jawLength: Object.freeze({ min: 0.94, default: 1, max: 1.06, step: 0.01 })
+  jawLength: Object.freeze({ min: 0.94, default: 1, max: 1.06, step: 0.01 }),
+  mouthWidth: Object.freeze({ min: 0.85, default: 1, max: 1.15, step: 0.01 }),
+  mouthHeight: Object.freeze({ min: 0.85, default: 1, max: 1.15, step: 0.01 }),
+  mouthY: Object.freeze({ min: -0.03, default: 0, max: 0.03, step: 0.005 }),
+  eyeScale: Object.freeze({ min: 0.88, default: 1, max: 1.12, step: 0.01 }),
+  eyeY: Object.freeze({ min: -0.03, default: 0, max: 0.03, step: 0.005 }),
+  previewHeadScale: Object.freeze({ min: 0.94, default: 1.08, max: 1.2, step: 0.01 }),
+  previewHeadWidth: Object.freeze({ min: 0.94, default: 1.05, max: 1.14, step: 0.01 }),
+  previewHandScale: Object.freeze({ min: 0.8, default: 0.88, max: 1.05, step: 0.01 })
 });
 
 export function defaultParameters() {

@@ -144,5 +144,10 @@
       0.5
     ],
     "inward_shift": 100
+  },
+  "color_masks": {
+    "sclera": "color-masks/sclera.png",
+    "iris": "color-masks/iris.png",
+    "pupil": "color-masks/pupil.png"
   }
 }

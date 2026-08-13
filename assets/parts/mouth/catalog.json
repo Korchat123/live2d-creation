@@ -1,0 +1,34 @@
+[
+  {
+    "style": "neutral-closed",
+    "name": "Neutral closed"
+  },
+  {
+    "style": "gentle-smile",
+    "name": "Gentle smile"
+  },
+  {
+    "style": "small-open",
+    "name": "Small open"
+  },
+  {
+    "style": "wide-happy",
+    "name": "Wide happy"
+  },
+  {
+    "style": "surprised-o",
+    "name": "Surprised O"
+  },
+  {
+    "style": "frown",
+    "name": "Frown"
+  },
+  {
+    "style": "teeth-smile",
+    "name": "Teeth smile"
+  },
+  {
+    "style": "tongue-smile",
+    "name": "Tongue smile"
+  }
+]

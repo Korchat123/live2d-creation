@@ -20,12 +20,13 @@ test("unknown parts are rejected", () => {
 
 test("selectedParts resolves the approved defaults", () => {
   const result = selectedParts(initialSelection);
-  assert.equal(result.length, 6);
+  assert.equal(result.length, 7);
   assert.equal(result.find((part) => part.category === "base").asset, "./assets/parts/face-base/idol-balanced/androgynous.png");
   assert.equal(result.find((part) => part.category === "anatomy").id, "anatomy-idol-balanced-androgynous");
   assert.equal(result.find((part) => part.category === "bust").id, "bust-idol-balanced");
   assert.equal(result.find((part) => part.category === "hair").id, "hair-long-straight");
   assert.equal(result.find((part) => part.category === "eyes").id, "eyes-classic-blue");
+  assert.equal(result.find((part) => part.category === "mouth").id, "mouth-gentle-smile");
   assert.equal(result.find((part) => part.category === "outfit").id, "outfit-academy-blazer");
   assert.deepEqual(new Set(result.map((part) => part.category)), new Set(Object.keys(initialSelection)));
 });
@@ -61,8 +62,9 @@ test("hair picker exposes all registered hairstyles", () => {
   );
 });
 
-test("eye and outfit pickers expose their registered catalogs", () => {
+test("eye, mouth, and outfit pickers expose their registered catalogs", () => {
   assert.equal(partsForCategory("eyes").length, 10);
+  assert.equal(partsForCategory("mouth").length, 8);
   assert.equal(partsForCategory("outfit").length, 10);
 });
 

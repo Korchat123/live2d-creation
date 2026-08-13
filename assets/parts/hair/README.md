@@ -32,3 +32,5 @@ Styles add semantic extras only when present:
 - `twin-tails/twin-tail-left` and `twin-tail-right`
 
 Suggested draw order is back hair and tails behind the face, then the face, followed by side locks, front hair, crown details, ahoge, and accessories. These generated separations use overlapping feathered regions so they are suitable as registration and rig-planning drafts, not final Cubism ArtMeshes. Repaint occluded roots and overlap margins before production deformation.
+
+The studio mixer can choose different styles for the back and front groups, combine any optional bun/ahoge/braid/tail layers, and apply one shared tint color while retaining the source shading.

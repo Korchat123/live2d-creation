@@ -5,6 +5,7 @@ export const categories = [
   { id: "bust", label: "Bust", icon: "◡", ready: true },
   { id: "hair", label: "Hair", icon: "≈", ready: true },
   { id: "eyes", label: "Eyes", icon: "◉", ready: true },
+  { id: "mouth", label: "Mouth", icon: "⌣", ready: true },
   { id: "outfit", label: "Outfit", icon: "♢", ready: true },
   { id: "accessory", label: "Extras", icon: "+", ready: false }
 ];
@@ -42,17 +43,48 @@ const bustAnchorY = {
 };
 
 const headFit = {
-  "shojo-grace": { left: 0.427, top: 0.009, width: 0.146 },
-  "shonen-athletic": { left: 0.435, top: 0, width: 0.13 },
-  "chibi-pop": { left: 0.315, top: 0, width: 0.37 },
-  "bishonen-sleek": { left: 0.443, top: 0.01, width: 0.114 },
-  "seinen-heroic": { left: 0.443, top: 0.01, width: 0.114 },
-  "josei-elegant": { left: 0.428, top: 0.014, width: 0.144 },
-  "genki-compact": { left: 0.428, top: 0.014, width: 0.144 },
-  "idol-balanced": { left: 0.435, top: 0.004, width: 0.13 },
-  "fantasy-elfin": { left: 0.443, top: 0.01, width: 0.114 },
-  "retro-90s": { left: 0.443, top: 0.01, width: 0.114 }
+  "shojo-grace": { left: 0.4306, top: 0.007, width: 0.1388, height: 0.1619 },
+  "shonen-athletic": { left: 0.4374, top: -0.0039, width: 0.1252, height: 0.1738 },
+  "chibi-pop": { left: 0.319, top: -0.0072, width: 0.3619, height: 0.3364 },
+  "bishonen-sleek": { left: 0.4442, top: 0.0078, width: 0.1116, height: 0.145 },
+  "seinen-heroic": { left: 0.4442, top: 0.0067, width: 0.1116, height: 0.1682 },
+  "josei-elegant": { left: 0.4306, top: 0.0118, width: 0.1388, height: 0.1625 },
+  "genki-compact": { left: 0.4306, top: 0.0113, width: 0.1388, height: 0.1738 },
+  "idol-balanced": { left: 0.4306, top: 0.0118, width: 0.1388, height: 0.1625 },
+  "fantasy-elfin": { left: 0.4442, top: 0.017, width: 0.1116, height: 0.1569 },
+  "retro-90s": { left: 0.4442, top: 0.0124, width: 0.1116, height: 0.1506 }
 };
+
+const handAnchors = {
+  "shojo-grace": { leftX: 385 / 2048, rightX: 1663 / 2048, y: 430 / 2048 },
+  "shonen-athletic": { leftX: 303 / 2048, rightX: 1745 / 2048, y: 430 / 2048 },
+  "chibi-pop": { leftX: 385 / 2048, rightX: 1663 / 2048, y: 686 / 2048 },
+  "bishonen-sleek": { leftX: 324 / 2048, rightX: 1724 / 2048, y: 420 / 2048 },
+  "seinen-heroic": { leftX: 303 / 2048, rightX: 1745 / 2048, y: 451 / 2048 },
+  "josei-elegant": { leftX: 344 / 2048, rightX: 1704 / 2048, y: 471 / 2048 },
+  "genki-compact": { leftX: 344 / 2048, rightX: 1704 / 2048, y: 482 / 2048 },
+  "idol-balanced": { leftX: 344 / 2048, rightX: 1704 / 2048, y: 440 / 2048 },
+  "fantasy-elfin": { leftX: 344 / 2048, rightX: 1704 / 2048, y: 450 / 2048 },
+  "retro-90s": { leftX: 344 / 2048, rightX: 1704 / 2048, y: 420 / 2048 }
+};
+
+const faceCrop = {
+  "shojo-grace": [922, 31, 1126, 317],
+  "shonen-athletic": [932, 10, 1116, 317],
+  "chibi-pop": [758, 20, 1290, 614],
+  "bishonen-sleek": [942, 31, 1106, 287],
+  "seinen-heroic": [942, 31, 1106, 328],
+  "josei-elegant": [922, 41, 1126, 328],
+  "genki-compact": [922, 41, 1126, 348],
+  "idol-balanced": [922, 41, 1126, 328],
+  "fantasy-elfin": [942, 51, 1106, 328],
+  "retro-90s": [942, 41, 1106, 307]
+};
+
+function cropFit(style) {
+  const [left, top, right, bottom] = faceCrop[style];
+  return { left: left / 2048, top: top / 2048, width: (right - left) / 2048, height: (bottom - top) / 2048 };
+}
 
 const anatomyParts = anatomyStyles.flatMap(([style, name, detail, swatch]) =>
   genders.map(([gender, genderLabel]) => ({
@@ -63,6 +95,7 @@ const anatomyParts = anatomyStyles.flatMap(([style, name, detail, swatch]) =>
     gender,
     style,
     headFit: headFit[style],
+    handAnchors: handAnchors[style],
     swatch,
     asset: `./assets/anatomy/${style}/${gender}/source/source.png`,
     handAsset: `./assets/anatomy/${style}/${gender}/hands/hands-registered.png`
@@ -77,6 +110,8 @@ const faceParts = anatomyStyles.flatMap(([style, name, , swatch]) =>
     detail: "Matched face base",
     gender,
     style,
+    headFit: headFit[style],
+    faceFit: cropFit(style),
     swatch,
     asset: `./assets/parts/face-base/${style}/${gender}.png`
   }))
@@ -96,7 +131,7 @@ const bustParts = anatomyStyles.map(([style, name, , swatch]) => ({
 }));
 
 const hairStyles = [
-  ["long-straight", "Long straight", "Black · center curtain", 1.08],
+  ["long-straight", "Long straight", "Black · center curtain", 1.2],
   ["short-bob", "Short bob", "Chestnut · rounded", 1],
   ["hime-cut", "Hime cut", "Indigo · blunt fringe", 1.08],
   ["high-ponytail", "High ponytail", "Auburn · flowing tail", 1.1],
@@ -165,6 +200,27 @@ const outfitParts = outfitStyles.map(([style, name, detail]) => ({
   asset: `./assets/parts/outfits/${style}/source/source.png`
 }));
 
+const mouthStyles = [
+  ["neutral-closed", "Neutral closed", "Calm resting line"],
+  ["gentle-smile", "Gentle smile", "Soft closed smile"],
+  ["small-open", "Small open", "Talking vowel"],
+  ["wide-happy", "Wide happy", "Cheerful open smile"],
+  ["surprised-o", "Surprised O", "Round surprised vowel"],
+  ["frown", "Frown", "Sad closed curve"],
+  ["teeth-smile", "Teeth smile", "Bright toothy grin"],
+  ["tongue-smile", "Tongue smile", "Playful open smile"]
+];
+
+const mouthParts = mouthStyles.map(([style, name, detail]) => ({
+  id: `mouth-${style}`,
+  category: "mouth",
+  name,
+  detail,
+  style,
+  swatch: "#9e4b56",
+  asset: `./assets/parts/mouth/${style}/source/source.png`
+}));
+
 export const parts = [
   {
     id: "base-anime-neutral-v3",
@@ -172,6 +228,8 @@ export const parts = [
     name: "Anime neutral",
     detail: "Face base 01",
     swatch: "#f7c8ad",
+    headFit: headFit["idol-balanced"],
+    faceFit: cropFit("idol-balanced"),
     asset: "./assets/parts/face-base/anime-neutral-v3.png"
   },
   ...faceParts,
@@ -179,6 +237,7 @@ export const parts = [
   ...bustParts,
   ...hairParts,
   ...eyeParts,
+  ...mouthParts,
   ...outfitParts
 ];
 
@@ -188,6 +247,7 @@ export const initialSelection = Object.freeze({
   bust: "bust-idol-balanced",
   hair: "hair-long-straight",
   eyes: "eyes-classic-blue",
+  mouth: "mouth-gentle-smile",
   outfit: "outfit-academy-blazer"
 });
 

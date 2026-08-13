@@ -11,3 +11,5 @@ Ten registered anime eye styles align with `anime-neutral-v3`. Each style keeps 
 - left/right lower lashes
 
 The geometric regions intentionally overlap. In Cubism, replace these draft masks with clean painted sclera, iris, pupil, highlight, and lash ArtMeshes before adding blink, smile-eye, and gaze parameters.
+
+Each style also includes precise `color-masks/sclera.png`, `iris.png`, and `pupil.png` layers. The studio uses these masks to change eye-white, iris, and pupil colors independently without recoloring lashes or highlights.
