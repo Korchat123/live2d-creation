@@ -1,33 +1,35 @@
-# Live2D Parts Studio
+# Live2D Anime Character Studio
 
-An early, dependency-free UI outline for assembling a character from prepared visual parts.
+An interactive 60 FPS Live2D anime character composer with real-time physics, gaze tracking, auto-blinking, expression morphing, high-res PNG export, and Live2D Cubism model JSON manifest generation.
 
 ## Run locally
 
-Start the local preview server, then open `http://localhost:4173`:
+Start the local studio preview server, then open `http://localhost:4173`:
 
 ```sh
-corepack pnpm run dev
+node tools/serve.mjs
 ```
 
-The current prototype does not load or export Live2D files.
+## Features
 
-The Anatomy category contains ten Japanese-anime human proportion styles with female, male, and androgynous variants—30 kits total. Male and androgynous kits have 28 registered layers; female kits add a covered bust-motion layer for 29. See [assets/anatomy/README.md](assets/anatomy/README.md).
+- **60 FPS Live2D Physics Engine:** Real-time mouse gaze tracking (`ParamEyeBallX`, `ParamEyeBallY`), 2.5D head rotation (`ParamAngleX`, `ParamAngleY`, `ParamAngleZ`), procedural sine breathing (`ParamBreath`), and automatic anime eye blinking.
+- **Human Anime Aesthetics:** Natural arm/hand posture, procedural anime eyebrows, nose bridge/tip line, warm cheek blush gradients, and pupil gloss shine.
+- **Preset Characters:** One-click loaders for *Idol Girl*, *Shonen Hero*, *Gothic Lolita*, and *Cyberpunk*.
+- **Live Expression Triggers:** Smile (Neutral), Happy 😊, Wink 😉, Surprised 😮, Shy / Blush 😳, and Angry 😤.
+- **Studio Backdrops:** Studio Light, Classroom Day, Golden Sunset, Cyberpunk Neon, and Transparent BG.
+- **Export System:** High-resolution PNG image export, Live2D model JSON manifest export, and character preset JSON file save/load.
 
-The composer also exposes independent style-matched covered bust layers and matching face bases. Sliders adjust bust volume/spacing/height and face scale/head width/jaw width/jaw length inside art-safe limits, with a one-click defaults reset.
+## Catalogs & Layers
 
-The Hair category contains ten registered anime hairstyles. Back and front styles can be mixed independently; users can combine ahoge, buns, braid, ponytail, and twin-tail add-ons and choose a shared hair color. See [assets/parts/hair/README.md](assets/parts/hair/README.md).
-
-Eyes and Outfit are now active categories with ten choices each. Eye-white, iris, and pupil colors are independently adjustable. A dedicated Final Preview assembles the outfit, anatomy-matched hands, registered head, eyes, and mixed hair without exposing duplicate body limbs beneath the clothes. Layer details are documented in [assets/parts/eyes/README.md](assets/parts/eyes/README.md) and [assets/parts/outfits/README.md](assets/parts/outfits/README.md).
-
-Mouth provides eight registered expressions with independent width, height, and vertical-position fitting. Semantic mouth layers are documented in [assets/parts/mouth/README.md](assets/parts/mouth/README.md).
-
-The right inspector follows the active category: Face and Bust show bounded shape sliders, Hair shows its layer mixer, Eyes shows color channels, and Anatomy/Outfit show the selected asset details. Clicking any current-layer row opens that category and its controls.
+- **Anatomy:** Ten Japanese-anime human proportion styles with female, male, and androgynous variants (30 kits total). Male and androgynous kits have 28 registered layers; female kits add a covered bust-motion layer. See [assets/anatomy/README.md](assets/anatomy/README.md).
+- **Hair:** Ten registered anime hairstyles with mixable back/front layers, hair color picker, and ahoge/bun/braid add-ons. See [assets/parts/hair/README.md](assets/parts/hair/README.md).
+- **Eyes & Outfit:** Ten eye styles with independent sclera, iris, and pupil color customization. Ten registered outfit garments. See [assets/parts/eyes/README.md](assets/parts/eyes/README.md) and [assets/parts/outfits/README.md](assets/parts/outfits/README.md).
+- **Mouth:** Eight registered mouth expressions with height, width, and position fitting. See [assets/parts/mouth/README.md](assets/parts/mouth/README.md).
 
 ## Verify
 
 ```sh
-corepack pnpm run ci
+node --test
 ```
 
-See [PROJECT_PLAN.md](PROJECT_PLAN.md) for scope and sequencing.
+See [PROJECT_EVALUATION.md](PROJECT_EVALUATION.md) and [PROJECT_PLAN.md](PROJECT_PLAN.md) for architecture standards and roadmap.
