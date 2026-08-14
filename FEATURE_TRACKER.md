@@ -6,8 +6,8 @@ Only an independent evaluator can move work to `passed`. Only a pushed merge com
 
 | ID | Work package | Owner | Branch | Depends on | Gate | Status | Candidate SHA | Evaluator evidence | Merge SHA |
 |---|---|---|---|---|---|---|---|---|---|
-| PLAN-001 | Clean restart and governance baseline | Root coordinator | `plan/clean-restart-governance` | - | Documentation | evaluating | `617a85f` | Prior candidate `4263c82` failed Gate 1 at review commit `576075a`; Gate 2 pending | - |
-| P0-A | Character bible and measurable proportions | Art director | `plan/clean-restart-governance` | PLAN-001 remediation | Gate A | evaluating | `617a85f` | Gate 2 must pass before M0 | - |
+| PLAN-001 | Clean restart and governance baseline | Root coordinator | `plan/clean-restart-governance` | - | Documentation | passed | `617a85f` | Gate 2 PASS: `review/plan-001-gate-2` at `c27721d`; prior candidate `4263c82` failed Gate 1 | pending main merge |
+| P0-A | Character bible geometry and rejection fixtures | Anatomy/art builder | `feat/p0-anime-geometry-spec` | PLAN-001 PASS | Gate A | planned | - | Must pass before M0 | - |
 | M0-A | Canonical bust anatomy graph | Anatomy builder | `feat/m0-anatomy-graph` | P0-A PASS | Gate B | planned | - | - | - |
 | M0-B | Parameter propagation and constraints | Parameter builder | `feat/m0-parameter-propagation` | P0-A PASS, M0-A | Gate B | planned | - | - | - |
 | M0-C | SVG scene and export parity | Renderer builder | `feat/m0-svg-renderer` | M0-A, M0-B | Gate B + provenance | planned | - | - | - |
