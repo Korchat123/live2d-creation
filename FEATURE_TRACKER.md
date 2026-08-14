@@ -6,7 +6,7 @@ Only an independent evaluator can move work to `passed`. Only a pushed merge com
 
 | ID | Work package | Owner | Branch | Depends on | Gate | Status | Candidate SHA | Evaluator evidence | Merge SHA |
 |---|---|---|---|---|---|---|---|---|---|
-| PLAN-001 | Clean restart and governance baseline | Root coordinator | `plan/clean-restart-governance` | - | Documentation | passed | `617a85f` | Gate 2 PASS: `review/plan-001-gate-2` at `c27721d`; prior candidate `4263c82` failed Gate 1 | pending main merge |
+| PLAN-001 | Clean restart and governance baseline | Root coordinator | `plan/clean-restart-governance` | - | Documentation | merged | `617a85f` | Gate 2 PASS: `review/plan-001-gate-2` at `c27721d`; prior candidate `4263c82` failed Gate 1 | `25e5240` |
 | P0-A | Character bible geometry and rejection fixtures | Anatomy/art builder | `feat/p0-anime-geometry-spec` | PLAN-001 PASS | Gate A | planned | - | Must pass before M0 | - |
 | M0-A | Canonical bust anatomy graph | Anatomy builder | `feat/m0-anatomy-graph` | P0-A PASS | Gate B | planned | - | - | - |
 | M0-B | Parameter propagation and constraints | Parameter builder | `feat/m0-parameter-propagation` | P0-A PASS, M0-A | Gate B | planned | - | - | - |
