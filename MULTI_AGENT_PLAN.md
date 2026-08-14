@@ -90,6 +90,8 @@ Reconstructs outputs from a clean launch, records source hashes and state, hides
 
 ## 3. Work packages and dependencies
 
+P0 is a mandatory predecessor to WP-A and WP-B. The pushed `CHARACTER_BIBLE.md` candidate must receive an independent Gate A `PASS` before either builder implements neutral geometry or parameter bounds. WP-B may narrow approved ranges but cannot widen or reinterpret them without a new bible version and Gate A review.
+
 ### WP-A — Canonical anatomy graph
 
 Deliverables:
@@ -158,6 +160,15 @@ Begins after layer-integrity approval. Deliverables include the editable rig, ru
 
 ## 4. Execution waves with four agent slots
 
+### Wave 0 - Character specification
+
+- Slot 1: Art director authors the measurable character bible and rejection fixtures.
+- Slot 2: Anatomy consultant checks construction feasibility without implementing production geometry.
+- Slot 3: Independent evaluator performs Gate A and may veto the specification.
+- Root coordinates scope and cannot override Gate A.
+
+No M0 anatomy, parameter, renderer integration, or decorative art implementation begins before Wave 0 passes.
+
 ### Wave 1 — M0 foundations
 
 - Slot 1: Anatomy graph builder.
@@ -193,6 +204,8 @@ Begins after layer-integrity approval. Deliverables include the editable rig, ru
 - Provenance auditor verifies runtime artifacts match approved source layers.
 
 ## 5. Quality gates
+
+Gate A uses the versioned neutral landmarks, ratios, allowed presentation ranges, ordering invariants, attachment rules, tolerances, and silhouette rejection fixtures in `CHARACTER_BIBLE.md`. Evidence covers neutral, all presets, min/max, and combined extremes. Gate B additionally computes rendered measurements against that exact approved bible version.
 
 ### Gate A — Character specification
 

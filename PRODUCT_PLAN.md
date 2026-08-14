@@ -117,6 +117,14 @@ Every item must be authored from the same base drawing/template and pass all vis
 
 ## 7. Milestones
 
+### P0 - Character specification
+
+- Freeze the measurable `standard-bust-v1` target in [CHARACTER_BIBLE.md](./CHARACTER_BIBLE.md).
+- Define neutral landmarks, presentation envelopes, feature ordering, silhouette rejection, and hair/outfit fit rules.
+- Independently pass Gate A before implementing neutral geometry or parameter bounds.
+
+Exit condition: the evaluator approves the versioned proportion contract and required geometry evidence. M0 is blocked until this passes.
+
 ### M0 — Contracts and wireframe
 
 - Finalize normalized canvas, anatomy graph, sockets, parameter ranges, and manifest schemas.
@@ -231,4 +239,4 @@ Detailed agent ownership, independent review, evidence, veto, repair, recreation
 
 ## 11. Decision gate before coding assets
 
-Implementation must pause after M0 until the neutral anatomy wireframe is reviewed. Decorative art must not be generated or imported before the socket graph and target proportions are accepted.
+Implementation must pause after P0 until the character specification is approved, and again after M0 until the neutral anatomy wireframe is reviewed. Decorative art must not be generated or imported before both target proportions and the socket graph are accepted.
