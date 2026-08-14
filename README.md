@@ -1,35 +1,22 @@
-# Live2D Anime Character Studio
+# Anime Character Creator — clean restart
 
-An interactive 60 FPS Live2D anime character composer with real-time physics, gaze tracking, auto-blinking, expression morphing, high-res PNG export, and Live2D Cubism model JSON manifest generation.
+This repository has been intentionally reset. The previous application, generated assets, screenshots, dependencies, and renderer were deleted because unrelated PNG parts could not produce a coherent character.
 
-## Run locally
+No application is implemented yet. Planning and the anatomy/asset contract come first.
 
-Start the local studio preview server, then open `http://localhost:4173`:
+Read [PRODUCT_PLAN.md](./PRODUCT_PLAN.md) for product scope and UI behavior, [ARCHITECTURE.md](./ARCHITECTURE.md) for the anatomy graph, asset contract, renderer, and validation rules, [MULTI_AGENT_PLAN.md](./MULTI_AGENT_PLAN.md) for independent ownership and evaluator vetoes, and [VERSION_CONTROL.md](./VERSION_CONTROL.md) plus [FEATURE_TRACKER.md](./FEATURE_TRACKER.md) for mandatory branch, commit, push, review, merge, and release tracking.
 
-```sh
-node tools/serve.mjs
-```
+## Product statement
 
-## Features
+Build a polished bust-up anime character creator that behaves like a game character designer:
 
-- **60 FPS Live2D Physics Engine:** Real-time mouse gaze tracking (`ParamEyeBallX`, `ParamEyeBallY`), 2.5D head rotation (`ParamAngleX`, `ParamAngleY`, `ParamAngleZ`), procedural sine breathing (`ParamBreath`), and automatic anime eye blinking.
-- **Human Anime Aesthetics:** Natural arm/hand posture, procedural anime eyebrows, nose bridge/tip line, warm cheek blush gradients, and pupil gloss shine.
-- **Preset Characters:** One-click loaders for *Idol Girl*, *Shonen Hero*, *Gothic Lolita*, and *Cyberpunk*.
-- **Live Expression Triggers:** Smile (Neutral), Happy 😊, Wink 😉, Surprised 😮, Shy / Blush 😳, and Angry 😤.
-- **Studio Backdrops:** Studio Light, Classroom Day, Golden Sunset, Cyberpunk Neon, and Transparent BG.
-- **Export System:** High-resolution PNG image export, Live2D model JSON manifest export, and character preset JSON file save/load.
+- the center always shows the real composed result;
+- the left panel edits anatomy, proportions, colors, gender presentation, and art style;
+- the right panel selects only parts proven compatible with the active anatomy and style pack;
+- every attached part follows named anatomy sockets and parent transforms;
+- preview and export use the same render graph;
+- the app exports honest layered artwork for rigging before claiming Live2D/Inochi model support.
 
-## Catalogs & Layers
+## Current status
 
-- **Anatomy:** Ten Japanese-anime human proportion styles with female, male, and androgynous variants (30 kits total). Male and androgynous kits have 28 registered layers; female kits add a covered bust-motion layer. See [assets/anatomy/README.md](assets/anatomy/README.md).
-- **Hair:** Ten registered anime hairstyles with mixable back/front layers, hair color picker, and ahoge/bun/braid add-ons. See [assets/parts/hair/README.md](assets/parts/hair/README.md).
-- **Eyes & Outfit:** Ten eye styles with independent sclera, iris, and pupil color customization. Ten registered outfit garments. See [assets/parts/eyes/README.md](assets/parts/eyes/README.md) and [assets/parts/outfits/README.md](assets/parts/outfits/README.md).
-- **Mouth:** Eight registered mouth expressions with height, width, and position fitting. See [assets/parts/mouth/README.md](assets/parts/mouth/README.md).
-
-## Verify
-
-```sh
-node --test
-```
-
-See [PROJECT_EVALUATION.md](PROJECT_EVALUATION.md) and [PROJECT_PLAN.md](PROJECT_PLAN.md) for architecture standards and roadmap.
+Planning baseline only. The first implementation milestone is a debug-visible canonical bust anatomy with no decorative art.
