@@ -1,99 +1,162 @@
 # Standard bust v1 character bible
 
-Version: `standard-bust-v1/spec-0.1.0`
+Version: `standard-bust-v1/spec-0.2.0`
 
-Status: planning candidate. M0 anatomy work is blocked until an independent Gate A report passes this exact file version and commit.
+Status: planning candidate. P0-A is blocked until an independent Gate A report passes this exact file version and candidate commit.
 
 ## Visual target
 
-The target is a polished, front-facing anime VTuber bust with young-adult proportions. It must read as one drawn person before hair, clothing detail, color, or motion is added. It is not a realistic portrait, chibi child, super-deformed mascot, fashion sketch, paper doll, or broad-shouldered body with a miniature face.
+The target is a polished, front-facing anime VTuber bust with young-adult apparent age (`18+`). It must read as one anatomically continuous person before hair, clothing detail, color, or motion is added. It is not a realistic portrait, chibi child, super-deformed mascot, fashion sketch, paper doll, rectangular torso with a miniature face, or pasted bust.
 
-The neutral construction is symmetric. Presentation presets may change proportions only inside this contract; they do not select unrelated bodies or faces.
+The neutral construction is symmetric. Feminine, androgynous, and masculine presentation presets are bounded values on this one anatomy; gender presentation, bust, and maturity are independent dimensions.
 
-## Coordinate contract
+## Coordinate and ownership contract
 
-All measurements use a `1000 x 1000` normalized design canvas. The character center line is `x = 500`. The visible bust occupies `x = 120..880`, `y = 55..970`.
+- Design canvas: `1000 x 1000`; origin top-left; positive Y points downward.
+- Character center: `x = 500`; torso crop: `y = 970`.
+- Every point is derived from the center, dimensions, ratios, and parent graph. Fixed neutral X coordinates never survive a dimension change.
+- Face features inherit `head.root` or descendants. Bust and garment geometry inherit the same torso deformation field.
+- No character part may contain a stage-global placement correction.
 
-| Landmark | Coordinate | Allowed neutral tolerance |
-|---|---:|---:|
-| hair envelope top | `(500, 60)` | `y +/- 12` |
-| skull top under hair | `(500, 92)` | `y +/- 10` |
-| brow/upper orbit line | `y = 222` | `+/- 8` |
-| eye center line | `y = 260` | `+/- 8` |
-| left/right eye centers | `(435, 260)`, `(565, 260)` | `x/y +/- 8` |
-| nose base | `(500, 322)` | `x +/- 4`, `y +/- 8` |
-| mouth center | `(500, 365)` | `x +/- 4`, `y +/- 8` |
-| chin | `(500, 425)` | `x +/- 4`, `y +/- 10` |
-| left/right ear centers | `(365, 274)`, `(635, 274)` | `x/y +/- 10` |
-| neck at jaw exit | `(454, 416)`, `(546, 416)` | `x +/- 8` |
-| neck at collar | `(440, 530)`, `(560, 530)` | `x +/- 10` |
-| left/right shoulder tips | `(170, 585)`, `(830, 585)` | `x +/- 18`, `y +/- 14` |
-| sternum/collar center | `(500, 550)` | `x +/- 5`, `y +/- 12` |
-| bust apex line | `y = 690` | `+/- 24` |
-| torso crop baseline | `y = 970` | fixed |
+Canonical neutral landmarks, before allowed preset variation:
 
-The base head silhouette excludes hair. Its maximum width is `270 +/- 12`; skull-top-to-chin height is `333 +/- 12`. The cranium continues behind front hair rather than ending at the hairline.
+| Landmark | Neutral |
+|---|---:|
+| hair envelope top | `(500, 60)` |
+| skull top | `(500, 92)` |
+| center/temple hairline Y | `155 / 178` |
+| brow / eye line | `222 / 260` |
+| eye centers | `(435,260)`, `(565,260)` |
+| nose / mouth | `(500,322)`, `(500,365)` |
+| upper neck at jaw exit | `y = 416` |
+| chin point | `(500,425)` |
+| shoulder roots | approximately `(440,525)`, `(560,525)` |
+| collar center | `(500,550)` |
+| anatomical acromia | approximately `(196,585)`, `(804,585)` |
+| covered bust apex line | approximately `y = 690` |
 
-## Required ratios and ranges
-
-Ratios are computed from landmarks and silhouette bounds, not CSS boxes or declared labels.
-
-| Measurement | Neutral target | Allowed presentation range |
-|---|---:|---:|
-| shoulder span / bare-head width | `2.44` | `2.15..2.65` |
-| bare-head height / bare-head width | `1.23` | `1.16..1.31` |
-| jaw width / cranium width | `0.72` | `0.64..0.80` |
-| neck width / bare-head width | `0.44` | `0.36..0.52` |
-| visible neck length / bare-head height | `0.34` | `0.25..0.42` |
-| inter-eye distance / face width at eyes | `0.48` | `0.43..0.53` |
-| single eye width / inter-eye distance | `0.48` | `0.41..0.56` |
-| eye-to-nose / eye-to-chin | `0.38` | `0.32..0.45` |
-| nose-to-mouth / eye-to-chin | `0.26` | `0.20..0.32` |
-| mouth-to-chin / eye-to-chin | `0.36` | `0.29..0.43` |
-| hair width / bare-head width | `1.20` | `1.12..1.32` |
-| hair height above skull / head height | `0.10` | `0.06..0.15` |
-| covered bust width / shoulder span | `0.54` | `0.42..0.64` |
-
-Outside any allowed range is a hard failure. Combined extremes are clamped or rejected before rendering.
-
-## Landmark ordering invariants
-
-For every supported state:
+Because Y increases downward, the required junction ordering is:
 
 ```text
-hairTop < skullTop < browLine < eyeLine < noseBase < mouthCenter < chin
-chin <= neckJawExit < collarCenter < shoulderLine < bustApex < torsoCrop
-leftShoulder < leftEar < leftEye < centerLine < rightEye < rightEar < rightShoulder
+hairTop < skullTop < browLine < eyeLine < noseBase < mouthCenter
+upperNeckJawExitY <= chinY < collarCenterY < acromionY < bustApexY < torsoCropY
+leftAcromion < leftEar < leftEye < center < rightEye < rightEar < rightAcromion
 ```
 
-Pupils stay inside eyes; brows stay above lids; the mouth keeps `24` units of jaw clearance per side; the neck stays inside jaw and collar; shoulders descend outward `18..70` units; bust centers remain symmetric and inside the torso. Face features inherit `head.root` or a descendant socket and never use stage-global corrections.
+The lateral jaw/neck junction is not forced into a generic centerline sequence.
 
-## Presentation envelopes
+## Global proportions
 
-| Preset | Shoulder/head | Jaw/cranium | Neck/head | Bust/shoulder |
+All ratios are measured from computed silhouette intersections and landmarks, never CSS boxes or labels.
+
+| Measurement | Neutral target | Allowed range |
+|---|---:|---:|
+| anatomical acromion span / cranium width | `2.25` | `2.05..2.48` |
+| bare-head height / cranium width | `1.23` | `1.16..1.31` |
+| jaw-angle width / cranium width | `0.72` | `0.67..0.75` |
+| upper-neck width / cranium width | `0.34` | `0.29..0.40` |
+| collar span / cranium width | `0.44` | `0.38..0.49` |
+| upper-neck width / jaw width | `0.47` | `0.42..0.62` |
+| visible neck length / head height | `0.34` | `0.25..0.42` |
+| hair envelope width / cranium width | `1.20` | `1.12..1.32` |
+| hair rise / head height | `0.10` | `0.06..0.15` |
+| covered bust envelope / acromion span | `0.54` | `0.00..0.64` |
+
+Presentation targets and target envelopes:
+
+| Preset | Acromion/head | Jaw/head | Upper neck/head | Bust/shoulder |
 |---|---:|---:|---:|---:|
-| Feminine | `2.30` | `0.69` | `0.40` | `0.57` |
-| Androgynous | `2.42` | `0.72` | `0.44` | `0.50` |
-| Masculine | `2.56` | `0.77` | `0.49` | `0.44` |
+| Feminine | `2.14` (`2.10..2.18`) | `0.69` | `0.31` | `0.57` |
+| Androgynous | `2.25` (`2.20..2.30`) | `0.72` | `0.34` | `0.50` |
+| Masculine | `2.40` (`2.34..2.46`) | `0.75` | `0.38` | `0.44` |
 
-These are bounded parameter bundles on one anatomy graph, not unrelated replacement images.
+Shoulder span means anatomical acromion span, not clothing padding or an arm/garment bounding box. Garment padding is at most `0.06 * headWidth` per side unless a separate padded family is authored.
 
-## Hair fit
+## Multi-height head silhouette
 
-Hair fits `skull.top`, `temple.left/right`, `ear.left/right`, `nape.left/right`, and `head.root`. Back hair has at least `20` units of hidden overlap. Front hair follows and overlaps the skull arc with no halo gap. A hairstyle is one authored back/side/front set; cross-mixing is disabled without a separately approved edge contract. Fit is checked at every head width/height extreme, without nonuniform force-scaling.
+The cranium width excludes ears. Sample widths are derived symmetrically around the center:
 
-## Neck, bust, and outfit fit
+| Sample | Y region | Width / cranium width |
+|---|---:|---:|
+| temples | near `205` | `0.94..1.00` |
+| cheeks | near `300` | `0.86..0.94` |
+| jaw angle | near `375` | `0.67..0.75` |
+| chin shelf | near `415` | `0.28..0.40` |
 
-The body base owns shoulders, torso, covered bust, and collar sockets. Bust controls deform the covered base and garment together; they never translate a breast image. Outfits attach to shoulder, side-torso, collar, and torso sockets. The collar provides `8..28` units clearance per side. Whole-outfit nonuniform scaling above `3%` means incompatibility and requires recreation.
+The outline narrows monotonically below the cheek. Adjacent sampled half-width changes must not reverse or form an abrupt rectangular angle. Ears run from `y=225..240` to `y=320..340`, and both ear roots intersect the head silhouette.
+
+## Face construction
+
+- Eye-center distance / face width at the eye line: `0.43..0.53` (neutral `0.48`).
+- Eye width: `54..70` (neutral `62`); eye height: `25..37` (neutral `31`).
+- Eye width/height: `1.70..2.35`; left/right dimension delta: at most `2%`.
+- Inner eye gap / eye width: `0.88..1.22`.
+- Visible iris diameter / eye width: `0.52..0.72`; pupils remain inside an inset lid-safe gaze region.
+- Eye-to-nose / eye-to-chin: `0.32..0.45`; nose-to-mouth: `0.20..0.32`; mouth-to-chin: `0.29..0.43`.
+- Nose mark envelope: width `10..26`, height `8..26`.
+- Closed mouth: width `30..56`, height `2..10`; mouth width / eye-center distance `0.23..0.43`.
+- An open mouth width is at most `0.62 * eyeCenterDistance`; its height must preserve explicit nose and chin clearances.
+- Mouth corners keep at least `0.12 * localJawWidth` clearance on both sides.
+
+Correlated maturity rejection is mandatory when all three are true:
+
+```text
+eyeHeight / visibleFaceHeight > 0.115
+jawWidth / craniumWidth < 0.68
+mouthToChin / eyeToChin < 0.32
+```
+
+This rejects a chibi/childlike combination even when each isolated slider is inside its individual range.
+
+## Neck, shoulders, torso, and bust
+
+- Upper neck is narrower than the jaw and widens symmetrically and monotonically to a collar span that is not narrower than the upper neck.
+- Trapezius curves join the collar/shoulder roots to the acromia. Acromion drop is `24..60` units.
+- The torso curves outward/down to the acromia and then down/slightly inward. Outer width at `y=850` is less than garment shoulder width; rectangular shoulder walls are invalid.
+- Covered bust apex offset is `0.13..0.18 * acromionSpan` from the center on each side.
+- Inner sternum clearance is at least `0.08 * acromionSpan`; the outer covered envelope remains at least `12` units inside the torso/arm boundary.
+- Zero/low bust is valid. Bust changes deform one continuous covered body/garment topology; they never translate two breast images.
+
+## Hair fit construction
+
+Hair is still geometry-only at Gate A. The executable fit arc contains center hairline, temple hairlines, crown samples, side-lock roots, front-bang root curve, and nape width/Y.
+
+- Center hairline: `y=145..165`; temple hairline: `y=165..190`.
+- The inner cap intersects or overlaps the sampled skull crown/temple arc; maximum halo gap is `0`.
+- Hidden overlap is at least `maxProjectedDisplacement + 8` safety units.
+- Side-lock and nape roots follow head sockets; they cannot stay at fixed neutral coordinates as the head changes.
+- Hair back/side/front sublayers are one authored set. Cross-mixing remains disabled without an approved edge contract.
+
+## Derived formulas and correlated limits
+
+Representative ownership formulas:
+
+```text
+headLeftRight = centerX +/- headWidth / 2
+acromionLeftRight = centerX +/- shoulderHeadRatio * headWidth / 2
+jawLeftRight = centerX +/- jawRatio * craniumWidth / 2
+upperNeckLeftRight = centerX +/- upperNeckRatio * headWidth / 2
+bustApexLeftRight = centerX +/- bustApexOffsetRatio * acromionSpan
+```
+
+The implementation must reject or reconcile correlated extremes before rendering, including:
+
+- maximum shoulder ratio with a head width that exceeds the safe canvas silhouette;
+- maximum upper-neck width with minimum jaw width when upper-neck/jaw exceeds `0.62`;
+- maximum hair width with shoulder/head negative-space failure;
+- the maturity triple above;
+- any pairwise or worst-valid bundle that breaks containment, ordering, curvature, continuity, or graph ownership.
 
 ## Automatic rejection
 
-Gate A or B fails if the head is detached, miniature, or stretched; shoulders form a rectangular wall; face and sternum center lines disagree; facial features need manual X/Y correction; neck floats or misses the collar; bust is pasted or leaves the torso; hair has a wig gap or wrong crown; an outfit paints over failed anatomy; or any valid preset/combined extreme produces a nonhuman silhouette.
+Gate A fails for a detached or miniature head; rectangular shoulders; face/sternum center disagreement; manual feature X/Y corrections; floating neck; collar discontinuity; pasted/detached bust; wig gap or wrong crown; non-monotonic or angular silhouette; out-of-bounds eye/iris/mouth/ear geometry; disconnected graph point; or any supported combined extreme that produces a nonhuman silhouette.
 
 ## Gate A evidence
 
-Before M0 implementation, an independent evaluator must approve this versioned contract plus a reproducible geometry-only front bust, overlays for neutral and all presets, min/max and pairwise combined extremes, computed ratio output, and rejection fixtures for a miniature head, wig gap, floating neck, misplaced face, rectangular shoulders, and detached bust. A generated finished character or manually adjusted screenshot is invalid evidence.
+An independent evaluator must review the actual geometry app at intended preview scale. Required reproducible evidence includes neutral and all presets, each min/max, pairwise combined extremes, a worst-valid combined bundle, measured silhouette intersections and local containment—not ratios alone—and rejection fixtures for miniature head, wig gap, floating neck, misplaced face, rectangular shoulders, detached bust, correlated maturity, and unsafe combined extremes.
+
+A generated finished character, decorative art, manually corrected screenshot, or result from a renderer other than the inspected geometry app is invalid evidence. Automated success remains `Needs review`; this implementation cannot self-approve Gate A.
 
 ## Change control
 
-After Gate A passes, changing a target, range, tolerance, or invariant requires a new version and new Gate A review. Tests may become stricter without a version change; they cannot be weakened to accept a failed result.
+Changing any target, range, tolerance, formula, or invariant requires a new spec version and independent Gate A review. Tests may become stricter without a version change; they cannot be weakened to accept a failure.
