@@ -1,5 +1,6 @@
 node_modules/
+dist/
+.vite/
 coverage/
-test-results/
-.env
+tmp/
 *.log
