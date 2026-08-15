@@ -1,0 +1,204 @@
+import { NEGATIVE_FIXTURES, PARAMETER_DEFINITIONS, buildGeometry, evidenceStates, fixtureGeometry, presetParameters } from "./geometry.js";
+import { validateGeometry } from "./validation.js";
+import { buildAnatomyPaths } from "./anatomy-paths.js";
+
+const controls = document.querySelector("#controls");
+const presetSelect = document.querySelector("#preset-select");
+const evidenceSelect = document.querySelector("#evidence-select");
+const fixtures = document.querySelector("#fixtures");
+const overlayToggle = document.querySelector("#overlay-toggle");
+const stage = document.querySelector("#stage");
+const metrics = document.querySelector("#metrics");
+const errors = document.querySelector("#errors");
+const status = document.querySelector("#status");
+const stateName = document.querySelector("#state-name");
+const states = evidenceStates();
+let currentParameters = presetParameters("neutral");
+let currentFixture = null;
+let currentStateName = "preset:neutral";
+
+const n = value => Number(value.toFixed(2));
+const escapeText = value => String(value).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]);
+
+// The geometry owns every landmark. This map only chooses a readable evidence
+// label subset and its screen-space direction; it never changes anatomy.
+const LABEL_LAYOUT = Object.freeze({
+  hairTop: [12, -8, "start"],
+  skullTop: [12, 10, "start"],
+  hairlineCenter: [12, -10, "start"],
+  hairlineTempleLeft: [-12, -10, "end"],
+  hairlineTempleRight: [12, -10, "start"],
+  templeLeft: [-12, 18, "end"],
+  templeRight: [12, 18, "start"],
+  eyeLeft: [-42, 6, "end"],
+  eyeRight: [42, 6, "start"],
+  nose: [14, 0, "start"],
+  mouth: [14, 4, "start"],
+  jawLeft: [-12, -8, "end"],
+  jawRight: [12, -8, "start"],
+  chin: [14, 16, "start"],
+  upperNeckLeft: [-14, -12, "end"],
+  upperNeckRight: [14, -12, "start"],
+  collarLeft: [-14, 18, "end"],
+  collarRight: [14, 18, "start"],
+  acromionLeft: [-14, -12, "end"],
+  acromionRight: [14, -12, "start"],
+  sternum: [14, 18, "start"],
+  bustLeft: [-14, -12, "end"],
+  bustRight: [14, -12, "start"],
+  torso850Left: [12, -10, "start"],
+  torso850Right: [-12, -10, "end"]
+});
+
+function landmarkMarkup(name, item) {
+  const layout = LABEL_LAYOUT[name];
+  const label = layout
+    ? `<text x="${n(item.x + layout[0])}" y="${n(item.y + layout[1])}" text-anchor="${layout[2]}">${name}</text>`
+    : "";
+  return `<g class="landmark" data-landmark="${name}"><title>${name} · ${item.parent} · (${item.x}, ${item.y})</title><circle cx="${item.x}" cy="${item.y}" r="5"/>${label}</g>`;
+}
+
+function buildControls() {
+  controls.innerHTML = Object.entries(PARAMETER_DEFINITIONS).map(([key, definition]) => `
+    <label class="control">
+      <span class="control-label"><span>${escapeText(definition.label)}</span><output data-output="${key}">${definition.value}</output></span>
+      <input data-parameter="${key}" type="range" min="${definition.min}" max="${definition.max}" step="${definition.step}" value="${definition.value}">
+      <span class="control-range"><span>${definition.min}</span><span>${definition.max}</span></span>
+    </label>`).join("");
+}
+
+function buildEvidenceOptions() {
+  const presets = states.filter(item => item.id.startsWith("preset:"));
+  const bounds = states.filter(item => item.id.startsWith("bound:"));
+  const pairs = states.filter(item => item.id.startsWith("pair:"));
+  const combined = states.filter(item => item.id.startsWith("combined:"));
+  const group = (label, items) => `<optgroup label="${label}">${items.map(item => `<option value="${item.id}">${item.id}</option>`).join("")}</optgroup>`;
+  evidenceSelect.innerHTML = group("Presets", presets) + group("Individual bounds", bounds) + group("Pairwise combined extremes", pairs) + group("Combined bundles", combined);
+}
+
+function buildFixtureButtons() {
+  fixtures.innerHTML = Object.keys(NEGATIVE_FIXTURES).map(name => `<button class="fixture-button" type="button" data-fixture="${name}">${name.replace(/([A-Z])/g, " $1")}</button>`).join("");
+}
+
+function updateControlValues() {
+  for (const [key, value] of Object.entries(currentParameters)) {
+    const input = controls.querySelector(`[data-parameter="${key}"]`);
+    const output = controls.querySelector(`[data-output="${key}"]`);
+    if (input) input.value = value;
+    if (output) output.value = value;
+  }
+}
+
+function ellipseMarkup(cx, cy, rx, ry, className, parent, attributes = "") {
+  return `<ellipse class="${className}" data-parent="${parent}" cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" ${attributes}/>`;
+}
+
+function renderSvg(geometry) {
+  const { landmarks: l, measurements: m } = geometry;
+  const anatomy = buildAnatomyPaths(geometry);
+  stage.dataset.acromionLeftX = l.acromionLeft.x;
+  stage.dataset.acromionRightX = l.acromionRight.x;
+  stage.dataset.acromionY = l.acromionLeft.y;
+  const headPath = `M 500 ${l.skullTop.y} C ${n(l.templeLeft.x + 36)} ${l.skullTop.y}, ${l.templeLeft.x} ${n(l.templeLeft.y - 22)}, ${l.templeLeft.x} ${l.templeLeft.y} C ${l.cheekLeft.x} ${n(l.cheekLeft.y - 42)}, ${l.cheekLeft.x} ${l.cheekLeft.y}, ${l.jawLeft.x} ${l.jawLeft.y} Q ${l.chinShelfLeft.x} ${l.chinShelfLeft.y} 500 ${l.chin.y} Q ${l.chinShelfRight.x} ${l.chinShelfRight.y} ${l.jawRight.x} ${l.jawRight.y} C ${l.cheekRight.x} ${l.cheekRight.y}, ${l.cheekRight.x} ${n(l.cheekRight.y - 42)}, ${l.templeRight.x} ${l.templeRight.y} C ${l.templeRight.x} ${n(l.templeRight.y - 22)}, ${n(l.templeRight.x - 36)} ${l.skullTop.y}, 500 ${l.skullTop.y} Z`;
+  const hairLeft = 500 - m.hairWidth / 2;
+  const hairRight = 500 + m.hairWidth / 2;
+  const hairPath = `M ${l.napeLeft.x} ${l.napeLeft.y} C ${hairLeft} ${n(l.eyeLeft.y + 45)}, ${hairLeft} ${n(l.hairTop.y + 42)}, 500 ${l.hairTop.y} C ${hairRight} ${n(l.hairTop.y + 42)}, ${hairRight} ${n(l.eyeRight.y + 45)}, ${l.napeRight.x} ${l.napeRight.y} C ${l.hairlineTempleRight.x} ${l.hairlineTempleRight.y}, ${l.hairInnerTempleRight.x} ${l.hairInnerTempleRight.y}, ${l.hairInnerCrown.x} ${l.hairInnerCrown.y} C ${l.hairInnerTempleLeft.x} ${l.hairInnerTempleLeft.y}, ${l.hairlineTempleLeft.x} ${l.hairlineTempleLeft.y}, ${l.napeLeft.x} ${l.napeLeft.y} Z`;
+  const provenance = item => item.landmarks.join(" ");
+  const landmarkEntries = Object.entries(l).filter(([name]) => name !== "torsoCrop");
+  const overlay = overlayToggle.checked ? `
+    <g class="measurements">
+      <line x1="500" y1="35" x2="500" y2="970"/>
+      <line x1="${l.acromionLeft.x}" y1="${l.acromionLeft.y}" x2="${l.acromionRight.x}" y2="${l.acromionRight.y}"/>
+      ${landmarkEntries.map(([name, item]) => landmarkMarkup(name, item)).join("")}
+      <text class="canvas-label" x="24" y="34">${geometry.specVersion}</text>
+    </g>` : "";
+  stage.innerHTML = `
+    <style>
+      .body { fill:#ddd6e2; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
+      .head { fill:#eee8ef; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
+      .construction { fill:none; stroke:#8c6fb4; stroke-width:3; stroke-dasharray:10 8; vector-effect:non-scaling-stroke }
+      .chest-field { fill:#cfc1dc; fill-opacity:.46; stroke:#806b91; stroke-width:2.5; vector-effect:non-scaling-stroke }
+      .anatomy-line { fill:none; stroke:#75687d; stroke-width:2; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .face-mark { fill:#f8f5f8; stroke:#665b70; stroke-width:3; vector-effect:non-scaling-stroke }
+      .feature-line { fill:none; stroke:#665b70; stroke-width:4; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .measurements line { stroke:#b48d9c; stroke-width:1.5; stroke-dasharray:5 6; vector-effect:non-scaling-stroke }
+      .measurements circle { fill:#9c526e; stroke:#fff; stroke-width:2; vector-effect:non-scaling-stroke }
+      .measurements text { fill:#7b4057; font-family:system-ui,sans-serif; font-weight:700; paint-order:stroke; stroke:#f7f3f7; stroke-width:4px; stroke-linejoin:round }
+      .measurements .canvas-label { font-size:16px; fill:#665b70 }
+    </style>
+    <defs>
+      <clipPath id="eye-clip-left"><ellipse cx="${l.eyeLeft.x}" cy="${l.eyeLeft.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
+      <clipPath id="eye-clip-right"><ellipse cx="${l.eyeRight.x}" cy="${l.eyeRight.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
+    </defs>
+    <path class="body" data-parent="${anatomy.body.parent}" data-landmark-chain="${provenance(anatomy.body)}" d="${anatomy.body.d}"/>
+    ${anatomy.chest ? `<path class="chest-field" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" d="${anatomy.chest.d}"/>` : ""}
+    <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
+    <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
+    <path class="head" data-parent="head.root" d="${headPath}"/>
+    <path class="construction" data-parent="hair.front" d="${hairPath}"/>
+    ${ellipseMarkup(l.eyeLeft.x, l.eyeLeft.y, m.eyeWidth / 2, m.eyeHeight / 2, "face-mark", "eye.left")}
+    ${ellipseMarkup(l.eyeRight.x, l.eyeRight.y, m.eyeWidth / 2, m.eyeHeight / 2, "face-mark", "eye.right")}
+    ${ellipseMarkup(l.irisLeft.x, l.irisLeft.y, m.irisDiameter / 2, m.irisDiameter / 2, "construction", "eye.left", 'clip-path="url(#eye-clip-left)"')}
+    ${ellipseMarkup(l.irisRight.x, l.irisRight.y, m.irisDiameter / 2, m.irisDiameter / 2, "construction", "eye.right", 'clip-path="url(#eye-clip-right)"')}
+    <path class="feature-line" data-parent="brow.left" d="M ${n(l.browLeft.x - m.eyeWidth * .38)} ${l.browLeft.y} Q ${l.browLeft.x} ${n(l.browLeft.y - 8)} ${n(l.browLeft.x + m.eyeWidth * .38)} ${l.browLeft.y}"/>
+    <path class="feature-line" data-parent="brow.right" d="M ${n(l.browRight.x - m.eyeWidth * .38)} ${l.browRight.y} Q ${l.browRight.x} ${n(l.browRight.y - 8)} ${n(l.browRight.x + m.eyeWidth * .38)} ${l.browRight.y}"/>
+    <path class="feature-line" data-parent="nose.center" d="M ${l.nose.x} ${n(l.nose.y - m.noseHeight / 2)} L ${n(l.nose.x - m.noseWidth / 2)} ${n(l.nose.y + m.noseHeight / 2)} L ${n(l.nose.x + m.noseWidth / 2)} ${n(l.nose.y + m.noseHeight / 2)}"/>
+    <path class="feature-line" data-parent="mouth.center" d="M ${n(l.mouth.x - m.mouthWidth / 2)} ${l.mouth.y} Q ${l.mouth.x} ${n(l.mouth.y + m.mouthHeight)} ${n(l.mouth.x + m.mouthWidth / 2)} ${l.mouth.y}"/>
+    <path class="construction" data-parent="ear.left" d="M ${l.earTopLeft.x} ${l.earTopLeft.y} Q ${n(l.earTopLeft.x - 16)} ${n((l.earTopLeft.y + l.earBottomLeft.y) / 2)} ${l.earBottomLeft.x} ${l.earBottomLeft.y}"/>
+    <path class="construction" data-parent="ear.right" d="M ${l.earTopRight.x} ${l.earTopRight.y} Q ${n(l.earTopRight.x + 16)} ${n((l.earTopRight.y + l.earBottomRight.y) / 2)} ${l.earBottomRight.x} ${l.earBottomRight.y}"/>
+    ${overlay}`;
+}
+
+function render() {
+  const geometry = currentFixture ? fixtureGeometry(currentFixture) : buildGeometry(currentParameters);
+  const validation = validateGeometry(geometry);
+  status.textContent = validation.status;
+  status.className = `status ${validation.status === "Blocked" ? "blocked" : "needs-review"}`;
+  stateName.textContent = currentFixture ? `fixture:${currentFixture}` : currentStateName;
+  metrics.innerHTML = Object.entries(geometry.ratios).map(([name, value]) => `<span class="metric-name">${name}</span><span class="metric-value">${value}</span>`).join("");
+  errors.innerHTML = validation.errors.length
+    ? validation.errors.map(error => `<div class="error-card"><strong>${escapeText(error.code)}</strong><br>${escapeText(error.message)} · actual ${escapeText(JSON.stringify(error.actual))}</div>`).join("")
+    : `<div class="review-card"><strong>Automated checks found no hard failure.</strong><br>This remains a candidate until an independent evaluator reviews its silhouette and evidence.</div>`;
+  renderSvg(geometry);
+}
+
+controls.addEventListener("input", event => {
+  const key = event.target.dataset.parameter;
+  if (!key) return;
+  currentParameters = { ...currentParameters, [key]: Number(event.target.value) };
+  currentFixture = null;
+  currentStateName = "custom:bounded";
+  controls.querySelector(`[data-output="${key}"]`).value = event.target.value;
+  render();
+});
+presetSelect.addEventListener("change", () => {
+  currentParameters = presetParameters(presetSelect.value);
+  currentFixture = null;
+  currentStateName = `preset:${presetSelect.value}`;
+  evidenceSelect.value = currentStateName;
+  updateControlValues();
+  render();
+});
+evidenceSelect.addEventListener("change", () => {
+  const selected = states.find(item => item.id === evidenceSelect.value);
+  if (!selected) return;
+  currentParameters = selected.parameters;
+  currentFixture = null;
+  currentStateName = selected.id;
+  updateControlValues();
+  render();
+});
+fixtures.addEventListener("click", event => {
+  const name = event.target.dataset.fixture;
+  if (!name) return;
+  currentFixture = name;
+  render();
+});
+overlayToggle.addEventListener("change", render);
+
+buildControls();
+buildEvidenceOptions();
+buildFixtureButtons();
+updateControlValues();
+if (window.matchMedia("(max-width: 720px)").matches) overlayToggle.checked = false;
+render();

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Bust v1 — Geometry Candidate</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">P0-A · geometry-only evidence</p>
+        <h1>Standard Bust v1</h1>
+      </div>
+      <div class="gate-note">Candidate only · independent Gate A review required</div>
+    </header>
+    <main class="workspace">
+      <aside class="panel controls-panel" aria-label="Anatomy controls">
+        <div class="panel-heading">
+          <p class="step">01 · Proportions</p>
+          <h2>Character anatomy</h2>
+          <p>Every mark is recalculated from bounded anatomy values. There are no part-position controls.</p>
+        </div>
+        <label class="field">Presentation preset
+          <select id="preset-select">
+            <option value="neutral">Neutral</option>
+            <option value="feminine">Feminine</option>
+            <option value="androgynous">Androgynous</option>
+            <option value="masculine">Masculine</option>
+          </select>
+        </label>
+        <div id="controls" class="controls"></div>
+      </aside>
+
+      <section class="stage-column" aria-label="Computed bust result">
+        <div class="stage-toolbar">
+          <div>
+            <span id="status" class="status needs-review">Needs review</span>
+            <span id="state-name" class="state-name">preset:neutral</span>
+          </div>
+          <label class="overlay-toggle"><input id="overlay-toggle" type="checkbox" checked> Measurements</label>
+        </div>
+        <div class="stage-wrap">
+          <svg id="stage" viewBox="0 0 1000 1000" role="img" aria-label="Computed front bust construction geometry"></svg>
+        </div>
+        <div class="stage-footer">
+          <span>1000 × 1000 canonical canvas</span>
+          <span>Actual computed geometry, not finished artwork · key labels shown; hover any point</span>
+        </div>
+      </section>
+
+      <aside class="panel evidence-panel" aria-label="Evidence and validation">
+        <div class="panel-heading">
+          <p class="step">02 · Evidence</p>
+          <h2>Validation inspector</h2>
+          <p>Valid geometry remains “Needs review.” Only an independent evaluator can pass Gate A.</p>
+        </div>
+        <label class="field">Reproducible evidence state
+          <select id="evidence-select"></select>
+        </label>
+        <div class="fixture-block">
+          <h3>Required rejection fixtures</h3>
+          <div id="fixtures" class="fixture-grid"></div>
+        </div>
+        <div id="errors" class="errors"></div>
+        <div class="metric-block">
+          <h3>Measured ratios</h3>
+          <div id="metrics" class="metrics"></div>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

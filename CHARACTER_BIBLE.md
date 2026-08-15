@@ -1,6 +1,6 @@
 # Standard bust v1 character bible
 
-Version: `standard-bust-v1/spec-0.2.0`
+Version: `standard-bust-v1/spec-0.3.0`
 
 Status: planning candidate. P0-A is blocked until an independent Gate A report passes this exact file version and candidate commit.
 
@@ -26,14 +26,14 @@ Canonical neutral landmarks, before allowed preset variation:
 | skull top | `(500, 92)` |
 | center/temple hairline Y | `155 / 178` |
 | brow / eye line | `222 / 260` |
-| eye centers | `(435,260)`, `(565,260)` |
+| eye centers | approximately `(435,260)`, `(565,260)` |
 | nose / mouth | `(500,322)`, `(500,365)` |
 | upper neck at jaw exit | `y = 416` |
 | chin point | `(500,425)` |
-| shoulder roots | approximately `(440,525)`, `(560,525)` |
-| collar center | `(500,550)` |
-| anatomical acromia | approximately `(196,585)`, `(804,585)` |
-| covered bust apex line | approximately `y = 690` |
+| shoulder roots | approximately `(440,501)`, `(560,501)` |
+| collar center | approximately `(500,525)` |
+| anatomical acromia | approximately `(196,545)`, `(804,545)` |
+| covered bust apex line | approximately `y = 650` |
 
 Because Y increases downward, the required junction ordering is:
 
@@ -57,7 +57,7 @@ All ratios are measured from computed silhouette intersections and landmarks, ne
 | upper-neck width / cranium width | `0.34` | `0.29..0.40` |
 | collar span / cranium width | `0.44` | `0.38..0.49` |
 | upper-neck width / jaw width | `0.47` | `0.42..0.62` |
-| visible neck length / head height | `0.34` | `0.25..0.42` |
+| visible neck length / head height | `0.27` | `0.22..0.34` |
 | hair envelope width / cranium width | `1.20` | `1.12..1.32` |
 | hair rise / head height | `0.10` | `0.06..0.15` |
 | covered bust envelope / acromion span | `0.54` | `0.00..0.64` |
@@ -87,23 +87,25 @@ The outline narrows monotonically below the cheek. Adjacent sampled half-width c
 
 ## Face construction
 
-- Eye-center distance / face width at the eye line: `0.43..0.53` (neutral `0.48`).
+- Eye-center distance / face width at the eye line: `0.43..0.53` (neutral `0.516`, approximately 130 units).
 - Eye width: `54..70` (neutral `62`); eye height: `25..37` (neutral `31`).
 - Eye width/height: `1.70..2.35`; left/right dimension delta: at most `2%`.
 - Inner eye gap / eye width: `0.88..1.22`.
-- Visible iris diameter / eye width: `0.52..0.72`; pupils remain inside an inset lid-safe gaze region.
+- Visible iris diameter / eye width: `0.52..0.72`; iris and pupil geometry is clipped by an inset copy of the actual eye opening.
 - Eye-to-nose / eye-to-chin: `0.32..0.45`; nose-to-mouth: `0.20..0.32`; mouth-to-chin: `0.29..0.43`.
 - Nose mark envelope: width `10..26`, height `8..26`.
 - Closed mouth: width `30..56`, height `2..10`; mouth width / eye-center distance `0.23..0.43`.
 - An open mouth width is at most `0.62 * eyeCenterDistance`; its height must preserve explicit nose and chin clearances.
 - Mouth corners keep at least `0.12 * localJawWidth` clearance on both sides.
 
-Correlated maturity rejection is mandatory when all three are true:
+Correlated maturity rejection scores five coupled signals. A candidate is rejected when high eye occupancy and at least two other signals cross their authored boundary:
 
 ```text
 eyeHeight / visibleFaceHeight > 0.115
-jawWidth / craniumWidth < 0.68
 mouthToChin / eyeToChin < 0.32
+jawWidth / craniumWidth < 0.68
+upperNeckWidth / craniumWidth < 0.31
+acromionSpan / craniumWidth < 2.12
 ```
 
 This rejects a chibi/childlike combination even when each isolated slider is inside its individual range.
@@ -111,18 +113,18 @@ This rejects a chibi/childlike combination even when each isolated slider is ins
 ## Neck, shoulders, torso, and bust
 
 - Upper neck is narrower than the jaw and widens symmetrically and monotonically to a collar span that is not narrower than the upper neck.
-- Trapezius curves join the collar/shoulder roots to the acromia. Acromion drop is `24..60` units.
-- The torso curves outward/down to the acromia and then down/slightly inward. Outer width at `y=850` is less than garment shoulder width; rectangular shoulder walls are invalid.
+- Trapezius curves join the collar/shoulder roots to the acromia. Acromion drop is `24..60` units; the neutral target is `44`, not the maximum.
+- The torso curves outward/down to the acromia and then down/inward. Outer width at `y=850` is `0.78..0.90` of garment shoulder width (neutral `0.85`); rectangular shoulder walls are invalid.
 - Covered bust apex offset is `0.13..0.18 * acromionSpan` from the center on each side.
 - Inner sternum clearance is at least `0.08 * acromionSpan`; the outer covered envelope remains at least `12` units inside the torso/arm boundary.
-- Zero/low bust is valid. Bust changes deform one continuous covered body/garment topology; they never translate two breast images.
+- Zero/low bust is valid. Bust upper, outer, apex, inner, and center anchors form one closed chest-owned envelope with continuous joins; at zero it collapses to the chest center without detached lobes.
 
 ## Hair fit construction
 
 Hair is still geometry-only at Gate A. The executable fit arc contains center hairline, temple hairlines, crown samples, side-lock roots, front-bang root curve, and nape width/Y.
 
 - Center hairline: `y=145..165`; temple hairline: `y=165..190`.
-- The inner cap intersects or overlaps the sampled skull crown/temple arc; maximum halo gap is `0`.
+- The inner cap is part of one closed hair envelope and intersects or overlaps measured skull crown/temple samples; maximum signed halo gap is `0`.
 - Hidden overlap is at least `maxProjectedDisplacement + 8` safety units.
 - Side-lock and nape roots follow head sockets; they cannot stay at fixed neutral coordinates as the head changes.
 - Hair back/side/front sublayers are one authored set. Cross-mixing remains disabled without an approved edge contract.
