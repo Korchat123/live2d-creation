@@ -1,0 +1,484 @@
+{
+  "candidate": "0492c7ab110e7fb6d21ea46374a148b4183277cb",
+  "contract": "standard-bust-v1/spec-0.3.0",
+  "executableSpec": "standard-bust-v1/spec-0.4.0",
+  "sweep": {
+    "total": 1159,
+    "needsReview": 731,
+    "blocked": 428,
+    "identityMismatch": 0,
+    "nonFinite": 0,
+    "hairHeadMin": 1.12,
+    "hairHeadMax": 1.32,
+    "bodyHeadMin": 2.05,
+    "bodyHeadMax": 2.48,
+    "blockedSample": [
+      "bound:upperNeckHeadRatio:min",
+      "bound:chinCraniumRatio:min",
+      "bound:eyeCenterFaceRatio:min",
+      "bound:eyeWidth:min",
+      "bound:eyeWidth:max",
+      "bound:eyeHeight:min",
+      "bound:eyeHeight:max",
+      "bound:mouthWidth:max",
+      "bound:mouthChinShare:min",
+      "bound:mouthChinShare:max",
+      "pair:headWidth:min+upperNeckHeadRatio:min",
+      "pair:headWidth:max+upperNeckHeadRatio:min"
+    ]
+  },
+  "fixtures": [
+    {
+      "name": "miniatureHead",
+      "status": "Blocked",
+      "codes": [
+        "ratio.shoulderHead",
+        "ratio.innerGapEye",
+        "ratio.mouthEyeCenters",
+        "rendered.bodyHead",
+        "rendered.shoulderStraightRun",
+        "rendered.shoulderShelf",
+        "rendered.shoulderWindowInset",
+        "rendered.chestContainment.bustInnerRight",
+        "rendered.chestContainment.bustInnerLeft"
+      ]
+    },
+    {
+      "name": "wigGap",
+      "status": "Blocked",
+      "codes": [
+        "fit.wigGap",
+        "fit.hairOverlap"
+      ]
+    },
+    {
+      "name": "floatingNeck",
+      "status": "Blocked",
+      "codes": [
+        "order.bodyVertical",
+        "fit.floatingNeck"
+      ]
+    },
+    {
+      "name": "misplacedFace",
+      "status": "Blocked",
+      "codes": [
+        "symmetry.eyes",
+        "alignment.face"
+      ]
+    },
+    {
+      "name": "rectangularShoulders",
+      "status": "Blocked",
+      "codes": [
+        "ratio.torso850Garment",
+        "fit.rectangularShoulders",
+        "fit.torsoTaper",
+        "rendered.bodyHead",
+        "rendered.wedgeBody",
+        "rendered.shoulderSlab",
+        "rendered.shoulderStraightRun",
+        "rendered.shoulderSideInset",
+        "rendered.shoulderWindowInset",
+        "rendered.shoulderCurvature"
+      ]
+    },
+    {
+      "name": "detachedBust",
+      "status": "Blocked",
+      "codes": [
+        "rendered.shoulderStraightRun",
+        "rendered.shoulderWindowInset",
+        "fit.detachedBust"
+      ]
+    },
+    {
+      "name": "correlatedMaturity",
+      "status": "Blocked",
+      "codes": [
+        "correlation.maturity"
+      ]
+    },
+    {
+      "name": "unsafeCombined",
+      "status": "Blocked",
+      "codes": [
+        "ratio.innerGapEye",
+        "ratio.hairHead",
+        "containment.shoulders",
+        "rendered.hairHead",
+        "rendered.shoulderShelf"
+      ]
+    },
+    {
+      "name": "wedgeBody",
+      "status": "Blocked",
+      "codes": [
+        "rendered.wedgeBody",
+        "rendered.shoulderWindowInset"
+      ]
+    },
+    {
+      "name": "scallopedBib",
+      "status": "Blocked",
+      "codes": [
+        "rendered.chestSurface",
+        "rendered.chestC1",
+        "rendered.chest.sternum",
+        "rendered.chest.upperRibRight",
+        "rendered.chest.chestSideRight",
+        "rendered.chest.lowerRibRight",
+        "rendered.chest.lowerRibCenter",
+        "rendered.chest.lowerRibLeft",
+        "rendered.chest.chestSideLeft",
+        "rendered.chest.upperRibLeft",
+        "rendered.chestContainment.bustRight",
+        "rendered.chestContainment.bustOuterRight",
+        "rendered.chestContainment.bustOuterLeft",
+        "rendered.chestContainment.bustLeft",
+        "rendered.chestCollapse",
+        "rendered.scallopedBib"
+      ]
+    }
+  ],
+  "advertisedPair": {
+    "id": "pair:shoulderHeadRatio:min+shoulderDrop:min",
+    "status": "Needs review",
+    "codes": [
+      "Automated checks found no hard failure."
+    ]
+  },
+  "bust": [
+    {
+      "value": 0,
+      "state": "custom:bounded",
+      "status": "Needs review",
+      "bodyHash": "737df3adb4641a41b9e4f2a31b586792bd3e7cde5d0bc449010c1b71d0b20ccb",
+      "chestHash": "31b56b7e29b871a1c136e43b39a627efd7372537465bd8a8497117904a6973f2",
+      "body": {
+        "x": 196.25,
+        "y": 414.9230041503906,
+        "width": 607.5,
+        "height": 555.0770263671875
+      },
+      "chest": {
+        "x": 261.9584045410156,
+        "y": 524.8079833984375,
+        "width": 476.0832214355469,
+        "height": 239
+      },
+      "chestOpacity": "0.18"
+    },
+    {
+      "value": 0.08,
+      "state": "custom:bounded",
+      "status": "Needs review",
+      "bodyHash": "48c47b0b8281b9e94f489cf9b4f6c53f64fc757c3823983a2b6ef7514746ef28",
+      "chestHash": "e990b5974c12b0abff83ff83c24314fb5ca5ee383631cea011dfa28b9836e5aa",
+      "body": {
+        "x": 196.25,
+        "y": 414.9230041503906,
+        "width": 607.5,
+        "height": 555.0770263671875
+      },
+      "chest": {
+        "x": 259.693603515625,
+        "y": 524.8079833984375,
+        "width": 480.61260986328125,
+        "height": 240.5
+      },
+      "chestOpacity": "0.21"
+    },
+    {
+      "value": 0.5,
+      "state": "custom:bounded",
+      "status": "Needs review",
+      "bodyHash": "6a2946f792777560d8466618e96cb0fd4b424dd82e95eec6b4eca8af7b9c82a6",
+      "chestHash": "d984e9e262212ea6ce8553af7e054000c6f35fe2797378205c4579aca726c7b4",
+      "body": {
+        "x": 196.25,
+        "y": 414.9230041503906,
+        "width": 607.5,
+        "height": 555.0770263671875
+      },
+      "chest": {
+        "x": 247.80389404296875,
+        "y": 524.8079833984375,
+        "width": 504.3922119140625,
+        "height": 248.375
+      },
+      "chestOpacity": "0.35"
+    },
+    {
+      "value": 0.64,
+      "state": "custom:bounded",
+      "status": "Needs review",
+      "bodyHash": "37df42407370c0b42159271ce6cc0fede532b223605500c70941ce18788a5e0d",
+      "chestHash": "73e48674aec545a0cc0ef3f1057b6822e9af657dbdabc44ce278477f3283dee5",
+      "body": {
+        "x": 196.25,
+        "y": 414.9230041503906,
+        "width": 607.5,
+        "height": 555.0770263671875
+      },
+      "chest": {
+        "x": 243.83982849121094,
+        "y": 524.8079833984375,
+        "width": 512.3203125,
+        "height": 251
+      },
+      "chestOpacity": "0.4"
+    }
+  ],
+  "shoulder": {
+    "acromionTarget": {
+      "x": 196.25,
+      "y": 580.808
+    },
+    "nearest": {
+      "x": 196.25091552734375,
+      "y": 580.575439453125
+    },
+    "distance": 0.23256234895853808,
+    "incomingOutgoingChord": [
+      196.29580688476562,
+      579.2049560546875,
+      196.2506866455078,
+      581.94677734375
+    ],
+    "widths": [
+      {
+        "y": 545,
+        "left": 316,
+        "right": 684,
+        "width": 368
+      },
+      {
+        "y": 575,
+        "left": 198,
+        "right": 802,
+        "width": 604
+      },
+      {
+        "y": 605,
+        "left": 201,
+        "right": 799,
+        "width": 598
+      },
+      {
+        "y": 665,
+        "left": 236,
+        "right": 764,
+        "width": 528
+      },
+      {
+        "y": 725,
+        "left": 244,
+        "right": 756,
+        "width": 512
+      },
+      {
+        "y": 785,
+        "left": 257,
+        "right": 743,
+        "width": 486
+      },
+      {
+        "y": 850,
+        "left": 269,
+        "right": 731,
+        "width": 462
+      },
+      {
+        "y": 910,
+        "left": 281,
+        "right": 719,
+        "width": 438
+      }
+    ]
+  },
+  "domAudit": {
+    "images": 0,
+    "canvases": 0,
+    "svgs": 1,
+    "approved": 0,
+    "specLabel": null,
+    "stageMarkupHash": null,
+    "ears": [
+      [
+        "ear",
+        595.3665771484375,
+        343.17999267578125,
+        24.1219482421875,
+        72.52001953125
+      ],
+      [
+        "ear",
+        780.511474609375,
+        343.17999267578125,
+        24.1219482421875,
+        72.52001953125
+      ],
+      [
+        "ear-detail",
+        600.30615234375,
+        360.94000244140625,
+        15.4892578125,
+        38.47998046875
+      ],
+      [
+        "ear-detail",
+        784.20458984375,
+        360.94000244140625,
+        15.4892578125,
+        38.47998046875
+      ]
+    ]
+  },
+  "captures": [
+    {
+      "state": "preset:neutral",
+      "label": "desktop",
+      "file": "preset-neutral-desktop.png",
+      "sha256": "cbac06489a2bfe2337732c02acd9c43cd9f0628555ec38eff1832d07ab7b2c12"
+    },
+    {
+      "state": "preset:neutral",
+      "label": "mobile",
+      "file": "preset-neutral-mobile.png",
+      "sha256": "cd004a2261c439c2e09521af12dd6dfc25602e7789633f3399fe12526fbe3795"
+    },
+    {
+      "state": "preset:feminine",
+      "label": "desktop",
+      "file": "preset-feminine-desktop.png",
+      "sha256": "0ee9a327bbf1f324d843d6188fa7652813d4cd0e301c32c141bf5d02321073c7"
+    },
+    {
+      "state": "preset:feminine",
+      "label": "mobile",
+      "file": "preset-feminine-mobile.png",
+      "sha256": "6135fb9fd8807be400af60fea0925d54196ac27feba8ce45831f27c4cf6db16f"
+    },
+    {
+      "state": "preset:androgynous",
+      "label": "desktop",
+      "file": "preset-androgynous-desktop.png",
+      "sha256": "62cf303c351c92905cdb73ce587a2ddf1ccdc64a549781e67809c887e857db03"
+    },
+    {
+      "state": "preset:androgynous",
+      "label": "mobile",
+      "file": "preset-androgynous-mobile.png",
+      "sha256": "f3af93a2e8045e35fc6df583fb8fa4d087a962de3ca0ceacaa7af6ea28a52f4b"
+    },
+    {
+      "state": "preset:masculine",
+      "label": "desktop",
+      "file": "preset-masculine-desktop.png",
+      "sha256": "5f47e08645ae4e1d11a05425d07c126a4b4f11797dec35a95758fdb4ded4d482"
+    },
+    {
+      "state": "preset:masculine",
+      "label": "mobile",
+      "file": "preset-masculine-mobile.png",
+      "sha256": "86abcc705d2df401a9f31c6aeef4d9ae3f13e27d4fb851fb32ce0316e0b40b45"
+    },
+    {
+      "state": "boundary:adult-safe",
+      "label": "desktop",
+      "file": "boundary-adult-safe-desktop.png",
+      "sha256": "f90040f2ace79ccbdc832e97fdb413f26351677ea087dc671944134dfc49396f"
+    },
+    {
+      "state": "boundary:adult-safe",
+      "label": "mobile",
+      "file": "boundary-adult-safe-mobile.png",
+      "sha256": "91397b4905eaea5cbca6d8cfda38a95b59d6b77e3ad19bc882076cfcc30e336f"
+    },
+    {
+      "state": "combined:worst-valid",
+      "label": "desktop",
+      "file": "combined-worst-valid-desktop.png",
+      "sha256": "373c6d4d0b7801e554ac7957bebab8cc6a7ef4a561c98331a554d5115e4984c2"
+    },
+    {
+      "state": "combined:worst-valid",
+      "label": "mobile",
+      "file": "combined-worst-valid-mobile.png",
+      "sha256": "2368ca24851fab34df1b82296f853eee3cd4df8e17d9cb8d2dcf859d2015332f"
+    },
+    {
+      "state": "bound:shoulderHeadRatio:min",
+      "label": "desktop",
+      "file": "bound-shoulderHeadRatio-min-desktop.png",
+      "sha256": "db86336ea4084cf8e0bd1ce22ea3aaa0c677c3b47f4ddfd78bf02f1ddedac8dc"
+    },
+    {
+      "state": "bound:shoulderHeadRatio:min",
+      "label": "mobile",
+      "file": "bound-shoulderHeadRatio-min-mobile.png",
+      "sha256": "4bb30e85cc5bbe27806160db9f44726d50aa5f5921ab75b07176211defccd2a1"
+    },
+    {
+      "state": "bound:shoulderHeadRatio:max",
+      "label": "desktop",
+      "file": "bound-shoulderHeadRatio-max-desktop.png",
+      "sha256": "b822cb17c1a44d68b13197572d63158ab2f1541a5a3a2d4524cb898ef96ff28a"
+    },
+    {
+      "state": "bound:shoulderHeadRatio:max",
+      "label": "mobile",
+      "file": "bound-shoulderHeadRatio-max-mobile.png",
+      "sha256": "ba0cad46f71bd2d3d9e75a3a39dac94f3e8bb4b50380666fc2389aedb9dfc671"
+    },
+    {
+      "state": "bound:headWidth:min",
+      "label": "desktop",
+      "file": "bound-headWidth-min-desktop.png",
+      "sha256": "59802c2f454f8566e498c994a78f30eee2541c091640e28fe98b2f1627354f9f"
+    },
+    {
+      "state": "bound:headWidth:min",
+      "label": "mobile",
+      "file": "bound-headWidth-min-mobile.png",
+      "sha256": "ab0135267c17ae94fbb768aa197688e4b07826351cc92c2854f2d4d1f0789d03"
+    },
+    {
+      "state": "bound:headWidth:max",
+      "label": "desktop",
+      "file": "bound-headWidth-max-desktop.png",
+      "sha256": "08ed2a05c19ef66ebc05ce49b19d1edda5f897905864450f992c87f4602002d6"
+    },
+    {
+      "state": "bound:headWidth:max",
+      "label": "mobile",
+      "file": "bound-headWidth-max-mobile.png",
+      "sha256": "3b258701b493a7fc0d266eb34c1102267881a29639691233abe91923ca1225f0"
+    },
+    {
+      "state": "bound:bustShoulderRatio:min",
+      "label": "desktop",
+      "file": "bound-bustShoulderRatio-min-desktop.png",
+      "sha256": "183d8e0760eb68ddd2bed2511271700d252959afb61bc0c6e2a9774c3e626feb"
+    },
+    {
+      "state": "bound:bustShoulderRatio:min",
+      "label": "mobile",
+      "file": "bound-bustShoulderRatio-min-mobile.png",
+      "sha256": "9a314577ef1520464d570f0b041d9375b2409f9e22efe9ac6fb9e10eb70b5d4e"
+    },
+    {
+      "state": "bound:bustShoulderRatio:max",
+      "label": "desktop",
+      "file": "bound-bustShoulderRatio-max-desktop.png",
+      "sha256": "2d154521f36a1eb13278cbd427b0b9e856e1a690c0faf619193dbf5cf045109b"
+    },
+    {
+      "state": "bound:bustShoulderRatio:max",
+      "label": "mobile",
+      "file": "bound-bustShoulderRatio-max-mobile.png",
+      "sha256": "3a82c33686b535922caf206ee7829e4ebc5119e9d9d339fd69eefe5e800d3f2b"
+    }
+  ]
+}
