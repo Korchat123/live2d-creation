@@ -1,5 +1,6 @@
 import { NODE_CONTRACTS } from "./geometry.js";
 import { STANDARD_BUST_SPEC as SPEC } from "./spec.js";
+import { measureRenderedGeometry } from "./anatomy-paths.js";
 
 const add = (errors, code, message, actual) => errors.push({ code, message, actual });
 const symmetric = (left, right, tolerance = 0.01) => Math.abs(((left + right) / 2) - SPEC.canvas.centerX) <= tolerance;
@@ -8,6 +9,7 @@ const between = (value, range) => value >= range[0] && value <= range[1];
 export function validateGeometry(geometry) {
   const errors = [];
   const { landmarks: l, measurements: m, ratios: r, parameters: p } = geometry;
+  const rendered = measureRenderedGeometry(geometry);
   for (const [name, range] of Object.entries(SPEC.ratioRanges)) if (!between(r[name], range)) add(errors, `ratio.${name}`, `${name} must be ${range[0]}..${range[1]}`, r[name]);
   for (const [name, definition] of Object.entries(SPEC.parameters)) if (!between(p[name], [definition.min, definition.max])) add(errors, `parameter.${name}`, `${name} is outside its authored bounds`, p[name]);
 
@@ -43,6 +45,19 @@ export function validateGeometry(geometry) {
   if (l.acromionLeft.x < SPEC.canvas.safeLeft || l.acromionRight.x > SPEC.canvas.safeRight) add(errors, "containment.shoulders", "Anatomical shoulders exceed the safe silhouette", [l.acromionLeft.x, l.acromionRight.x]);
   if (m.hairCrownOverlap < 0 || m.hairTempleOverlap < 0) add(errors, "fit.wigGap", "Measured inner-cap samples cannot leave a crown or temple gap", [m.hairCrownOverlap, m.hairTempleOverlap]);
   if (m.hairCrownOverlap < m.hairRequiredOverlap || m.hairTempleOverlap < m.hairRequiredOverlap) add(errors, "fit.hairOverlap", "Measured hair/skull overlap is below projected displacement plus safety", [m.hairCrownOverlap, m.hairTempleOverlap, m.hairRequiredOverlap]);
+  if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
+  if (!between(rendered.bodyHead, [2.08, 2.60])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
+  if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
+  const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));
+  for (const name of ["craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"]) {
+    if (distanceToPath(rendered.paths.head, l[name]) > 1.1) add(errors, `rendered.head.${name}`, `${name} must be an actual sampled point on the visible head contour`, distanceToPath(rendered.paths.head, l[name]));
+  }
+  for (const name of ["napeLeft", "hairTop", "napeRight", "sideLockRootRight", "hairlineTempleRight", "hairlineCenter", "hairlineTempleLeft", "sideLockRootLeft"]) {
+    if (distanceToPath(rendered.paths.hair, l[name]) > 1.1) add(errors, `rendered.hair.${name}`, `${name} must be an actual sampled point on the visible hair contour`, distanceToPath(rendered.paths.hair, l[name]));
+  }
+  for (const name of ["hairInnerTempleLeft", "hairInnerCrown", "hairInnerTempleRight"]) {
+    if (distanceToPath(rendered.paths.hairFit, l[name]) > 1.1) add(errors, `rendered.hairFit.${name}`, `${name} must be sampled on the visible inner-cap fit seam`, distanceToPath(rendered.paths.hairFit, l[name]));
+  }
   const hairLeft = SPEC.canvas.centerX - m.hairWidth / 2; const hairRight = SPEC.canvas.centerX + m.hairWidth / 2;
   if (!(l.acromionLeft.x + 12 < hairLeft && hairRight < l.acromionRight.x - 12)) add(errors, "containment.hairShoulderSpace", "Hair envelope needs negative space inside the acromia", [hairLeft, hairRight]);
 
@@ -56,6 +71,8 @@ export function validateGeometry(geometry) {
   if (adultRisks.filter(Boolean).length >= 3 && adultRisks[0]) add(errors, "correlation.maturity", "Combined eye occupancy, lower face, jaw, neck, and head/shoulder proportions read below the adult target", [r.eyeHeightFace, r.mouthChin, r.jawCranium, r.upperNeckHead, r.shoulderHead]);
 
   if (m.bustEnvelopeWidth > 0 && Math.abs(l.bustLeft.y - m.expectedBustApexY) > 4) add(errors, "fit.detachedBust", "Covered bust must remain in the shared torso deformation field", l.bustLeft.y - m.expectedBustApexY);
+  const chestCenterDrop = rendered.chestCenterY - Math.min(l.shoulderRootLeft.y, l.shoulderRootRight.y);
+  if (m.bustEnvelopeWidth > 0 && chestCenterDrop > 45) add(errors, "rendered.scallopedBib", "The sampled upper-chest bridge cannot hang into a scalloped bib", chestCenterDrop);
   if (l.bustUpper.x !== l.sternum.x || l.bustUpper.y !== l.sternum.y) add(errors, "fit.bustChestJoin", "The closed bust envelope must share its upper C0/C1 join with the sternum", [l.bustUpper, l.sternum]);
   if (m.bustEnvelopeWidth === 0) {
     for (const name of ["bustLeft", "bustRight", "bustInnerLeft", "bustInnerRight", "bustOuterLeft", "bustOuterRight"]) if (l[name].x !== l.bustUpper.x || l[name].y !== l.bustUpper.y) add(errors, "fit.bustCollapse", "Zero bust must collapse to the chest center without detached lobes", [name, l[name]]);

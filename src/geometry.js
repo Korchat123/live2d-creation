@@ -29,6 +29,8 @@ export const NEGATIVE_FIXTURES = Object.freeze({
   detachedBust: { mutations: { bustApexOffsetY: 135 } },
   correlatedMaturity: { parameters: { eyeHeight: 36, jawCraniumRatio: 0.67, mouthChinShare: 0.31, upperNeckHeadRatio: 0.29, shoulderHeadRatio: 2.05 } },
   unsafeCombined: { mutations: { headWidthOverride: 330, acromionSpanOverride: 818, hairWidthOverride: 455 } }
+  ,wedgeBody: { mutations: { bodyStyle: "wedge" } }
+  ,scallopedBib: { mutations: { chestStyle: "scalloped" } }
 });
 
 const defaults = () => Object.fromEntries(Object.entries(SPEC.parameters).map(([key, definition]) => [key, definition.value]));
@@ -120,6 +122,8 @@ export function buildGeometry(candidate = {}, mutations = {}) {
 
   const landmarks = Object.freeze({
     hairTop: point(centerX, skullTopY - hairLift, "hair.front"), skullTop: point(centerX, skullTopY, "head.crown"),
+    craniumLeft: point(centerX - headWidth / 2, skullTopY + headHeight * .19, "head.root"),
+    craniumRight: point(centerX + headWidth / 2, skullTopY + headHeight * .19, "head.root"),
     hairInnerCrown: point(centerX, skullTopY + hairCrownOverlap, "hair.front"),
     hairlineCenter: point(centerX, centerHairlineY, "hair.front"),
     hairlineTempleLeft: point(centerX - templeWidth * .38, templeHairlineY, "hair.front"), hairlineTempleRight: point(centerX + templeWidth * .38, templeHairlineY, "hair.front"),
@@ -146,8 +150,8 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     shoulderMidRight: point(centerX + shoulderMidInset, shoulderRootY + p.shoulderDrop * .72, "shoulder.right"),
     acromionLeft: point(centerX - acromionSpan / 2, acromionY, "shoulder.left"), acromionRight: point(centerX + acromionSpan / 2, acromionY, "shoulder.right"),
     garmentShoulderLeft: point(centerX - garmentShoulderSpan / 2, acromionY + 14, "shoulder.left"), garmentShoulderRight: point(centerX + garmentShoulderSpan / 2, acromionY + 14, "shoulder.right"),
-    deltoidOuterLeft: point(centerX - garmentShoulderSpan / 2 - garmentPadding * .35, deltoidOuterY, "arm.left"),
-    deltoidOuterRight: point(centerX + garmentShoulderSpan / 2 + garmentPadding * .35, deltoidOuterY, "arm.right"),
+    deltoidOuterLeft: point(centerX - acromionSpan / 2 - 8, deltoidOuterY, "arm.left"),
+    deltoidOuterRight: point(centerX + acromionSpan / 2 + 8, deltoidOuterY, "arm.right"),
     upperArmLeft: point(centerX - torsoWidth850 / 2 - 24, upperArmY, "arm.left"),
     upperArmRight: point(centerX + torsoWidth850 / 2 + 24, upperArmY, "arm.right"),
     torso850Left: point(centerX - torsoWidth850 / 2, 850, "torso.root"), torso850Right: point(centerX + torsoWidth850 / 2, 850, "torso.root"),

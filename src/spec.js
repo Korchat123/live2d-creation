@@ -40,7 +40,7 @@ export const STANDARD_BUST_SPEC = Object.freeze({
     chinShelfHeadY: 0.97, eyeNoseShare: 0.376, upperNeckLead: 9, shoulderRootAboveCollar: 4,
     sternumBelowCollar: 20, bustBelowAcromion: 105, earTopRange: [225, 240], earBottomRange: [320, 340],
     hairlineCenterRange: [145, 165], hairlineTempleRange: [165, 190], hairProjectedDisplacement: 12, hairOverlapSafety: 8,
-    garmentPaddingHeadMax: 0.06, torso850GarmentRatio: 0.85, bustOuterClearance: 12, sternumClearanceShoulder: 0.08,
+    garmentPaddingHeadMax: 0.06, torso850GarmentRatio: 0.82, bustOuterClearance: 12, sternumClearanceShoulder: 0.08,
     outlineJoinTolerance: 3
   }),
   presets: Object.freeze({

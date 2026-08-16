@@ -24,9 +24,11 @@ test("candidate contains no flattened image, decorative asset, canvas, or approv
 
 test("renderer marks construction primitives with canonical parent provenance", async () => {
   const app = await read("src/app.js");
-  for (const parent of ["head.root", "hair.front", "nose.center", "mouth.center"]) {
+  for (const parent of ["nose.center", "mouth.center"]) {
     assert.match(app, new RegExp(`data-parent=\\"${parent.replace(".", "\\.")}\\"`), parent);
   }
+  assert.match(app, /data-parent="\$\{anatomy\.head\.parent\}" data-landmark-chain=/);
+  assert.match(app, /data-parent="\$\{anatomy\.hair\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.body\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.chest\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.neckGuide\.parent\}" data-landmark-chain=/);
@@ -34,7 +36,7 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /ellipseMarkup\([^\n]+"eye\.right"\)/);
   assert.match(app, /clipPath id="eye-clip-left"/);
   assert.match(app, /clip-path="url\(#eye-clip-left\)"/);
-  assert.match(app, /hairPath = `M[\s\S]+ Z`/);
+  assert.match(app, /buildAnatomyPaths\(geometry\)/);
   assert.doesNotMatch(app, /const bustPath/);
   assert.match(app, /class="chest-field"/);
 });

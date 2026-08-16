@@ -5,7 +5,7 @@ import {
   evidenceStates, fixtureGeometry, presetParameters
 } from "../src/geometry.js";
 import { STANDARD_BUST_SPEC as SPEC } from "../src/spec.js";
-import { buildAnatomyPaths } from "../src/anatomy-paths.js";
+import { buildAnatomyPaths, measureRenderedGeometry } from "../src/anatomy-paths.js";
 import { validateGeometry, validateNodeContracts } from "../src/validation.js";
 
 const near = (actual, expected, tolerance, message) => assert.ok(Math.abs(actual - expected) <= tolerance, `${message}: ${actual} vs ${expected}`);
@@ -140,11 +140,12 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
     assert.equal(paths.neckGuide.parent, "neck.root");
     assert.equal(paths.shoulderGuide.parent, "collar.center");
     assert.equal(paths.chest.parent, "chest.center");
-    for (const landmark of ["upperNeckLeft", "collarLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left"]) {
+    for (const landmark of ["upperNeckLeft", "collarLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left"]) {
       assert.ok(paths.body.landmarks.includes(landmark), `${name}:${landmark}`);
-      assert.match(paths.body.d, new RegExp(`${geometry.landmarks[landmark].x} ${geometry.landmarks[landmark].y}`), `${name}:${landmark}`);
+      const distance = Math.min(...paths.body.samples.map(point => Math.hypot(point.x - geometry.landmarks[landmark].x, point.y - geometry.landmarks[landmark].y)));
+      assert.ok(distance <= 1.1, `${name}:${landmark} must be on visible contour, distance=${distance}`);
     }
-    assert.deepEqual(paths.chest.landmarks.slice(0, 3), ["shoulderRootLeft", "sternum", "shoulderRootRight"]);
+    assert.deepEqual(paths.chest.landmarks.slice(0, 3), ["shoulderRootLeft", "bustLeft", "sternum"]);
     assert.ok(paths.chest.d.startsWith(`M ${geometry.landmarks.shoulderRootLeft.x} ${geometry.landmarks.shoulderRootLeft.y}`));
     assert.match(paths.chest.d, new RegExp(`${geometry.landmarks.shoulderRootRight.x} ${geometry.landmarks.shoulderRootRight.y}`));
   }
@@ -167,6 +168,18 @@ test("covered bust uses symmetric apexes and a continuous chest-owned envelope",
   }
 });
 
+test("rendered contours, not intended controls, satisfy the visible silhouette contract", () => {
+  for (const state of evidenceStates()) {
+    const geometry = buildGeometry(state.parameters);
+    const validation = validateGeometry(geometry);
+    if (validation.status === "Blocked") continue;
+    const rendered = measureRenderedGeometry(geometry);
+    assert.ok(rendered.hairHead >= SPEC.ratioRanges.hairHead[0] && rendered.hairHead <= SPEC.ratioRanges.hairHead[1], `${state.id}: hair/head=${rendered.hairHead}`);
+    assert.ok(rendered.bodyHead >= 2.08 && rendered.bodyHead <= 2.60, `${state.id}: body/head=${rendered.bodyHead}`);
+    assert.ok(rendered.waistShoulder >= .68 && rendered.waistShoulder <= .86, `${state.id}: waist/shoulder=${rendered.waistShoulder}`);
+  }
+});
+
 test("evidence includes presets, every bound, all pairwise corners, and worst-valid bundle", () => {
   const states = evidenceStates();
   const count = Object.keys(SPEC.parameters).length;
@@ -183,7 +196,8 @@ test("evidence includes presets, every bound, all pairwise corners, and worst-va
 test("all malformed fixtures are blocked for their intended measured defect", () => {
   const expectedCodes = {
     miniatureHead: "ratio.shoulderHead", wigGap: "fit.wigGap", floatingNeck: "fit.floatingNeck", misplacedFace: "alignment.face",
-    rectangularShoulders: "fit.rectangularShoulders", detachedBust: "fit.detachedBust", correlatedMaturity: "correlation.maturity", unsafeCombined: "containment.shoulders"
+    rectangularShoulders: "fit.rectangularShoulders", detachedBust: "fit.detachedBust", correlatedMaturity: "correlation.maturity", unsafeCombined: "containment.shoulders",
+    wedgeBody: "rendered.wedgeBody", scallopedBib: "rendered.scallopedBib"
   };
   assert.deepEqual(Object.keys(NEGATIVE_FIXTURES), Object.keys(expectedCodes));
   for (const [name, code] of Object.entries(expectedCodes)) {
