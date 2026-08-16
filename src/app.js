@@ -104,6 +104,7 @@ function renderSvg(geometry) {
   const landmarkEntries = Object.entries(l).filter(([name]) => name !== "torsoCrop");
   const overlay = overlayToggle.checked ? `
     <g class="measurements">
+      <path class="chest-field" data-layer="torso-deformation-field" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" d="${anatomy.chest.d}"/>
       <line x1="500" y1="35" x2="500" y2="970"/>
       <line x1="${l.acromionLeft.x}" y1="${l.acromionLeft.y}" x2="${l.acromionRight.x}" y2="${l.acromionRight.y}"/>
       ${landmarkEntries.map(([name, item]) => landmarkMarkup(name, item)).join("")}
@@ -118,7 +119,7 @@ function renderSvg(geometry) {
       .hair-front { fill:none; stroke:#6e587e; stroke-width:6; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .ear { fill:#ead7df; stroke:#965f79; stroke-width:4; vector-effect:non-scaling-stroke }
       .ear-detail { fill:none; stroke:#a56b83; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke }
-      .chest-field { fill:#b9a8c4; fill-opacity:.12; stroke:none }
+      .chest-field { fill:none; stroke:#9b8ba7; stroke-opacity:.7; stroke-width:2; stroke-dasharray:8 8; vector-effect:non-scaling-stroke }
       .anatomy-line { fill:none; stroke:#75687d; stroke-width:2; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .face-mark { fill:#f8f5f8; stroke:#665b70; stroke-width:3; vector-effect:non-scaling-stroke }
       .feature-line { fill:none; stroke:#665b70; stroke-width:4; stroke-linecap:round; vector-effect:non-scaling-stroke }
@@ -133,7 +134,6 @@ function renderSvg(geometry) {
     </defs>
     <path class="hair-back" data-layer="hair-back" data-parent="${anatomy.hairBack.parent}" data-landmark-chain="${provenance(anatomy.hairBack)}" d="${anatomy.hairBack.d}"/>
     <path class="body" data-parent="${anatomy.body.parent}" data-landmark-chain="${provenance(anatomy.body)}" d="${anatomy.body.d}"/>
-    ${anatomy.chest ? `<path class="chest-field" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" d="${anatomy.chest.d}"/>` : ""}
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>

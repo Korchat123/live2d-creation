@@ -48,7 +48,11 @@ export function validateGeometry(geometry) {
   if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
   if (!between(rendered.bodyHead, [2.05, 2.48])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
   if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
-  if (rendered.shoulderTangentRatio < .22) add(errors, "rendered.shoulderTangent", "The visible acromion must turn inward into the deltoid instead of dropping as a vertical wall", rendered.shoulderTangentRatio);
+  if (!Number.isFinite(rendered.shoulderJoinMismatch) || rendered.shoulderJoinMismatch > .02 || rendered.shoulderJoinAngle > .1) {
+    add(errors, "rendered.shoulderJoin", "Incoming and outgoing acromion cubics must share one C1/G1 tangent", [rendered.shoulderJoinMismatch, rendered.shoulderJoinAngle]);
+  }
+  if (rendered.shoulderChordDeviation < 3.5) add(errors, "rendered.shoulderSlab", "The sampled acromion-to-arm contour must have visible deltoid curvature, not a long straight slab side", rendered.shoulderChordDeviation);
+  if (!Number.isFinite(rendered.shoulderMaxStraightRun) || rendered.shoulderMaxStraightRun > 176) add(errors, "rendered.shoulderStraightRun", "No sampled shoulder/torso chord may remain effectively straight for more than 176 canvas units", rendered.shoulderMaxStraightRun);
   if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 2 || (index > 0 && inset <= values[index - 1] + .5))) {
     add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must move progressively inward below the acromion", rendered.shoulderInward);
   }
@@ -77,9 +81,23 @@ export function validateGeometry(geometry) {
   if (m.bustEnvelopeWidth > 0 && Math.abs(l.bustLeft.y - m.expectedBustApexY) > 4) add(errors, "fit.detachedBust", "Covered bust must remain in the shared torso deformation field", l.bustLeft.y - m.expectedBustApexY);
   if (rendered.chestMoveCount !== 1 || !rendered.chestClosed) add(errors, "rendered.chestSurface", "Chest ownership requires one connected closed SVG surface (one M and terminal Z)", [rendered.chestMoveCount, rendered.chestClosed]);
   if (!Number.isFinite(rendered.chestTangentMismatch) || rendered.chestTangentMismatch > .02) add(errors, "rendered.chestC1", "Rendered chest cubic joins must share measured incoming/outgoing tangents", rendered.chestTangentMismatch);
-  for (const name of ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]) {
-    if (!rendered.paths.chest.landmarks.includes(name) || distanceToPath(rendered.paths.chest, l[name]) > 1.1) add(errors, `rendered.chest.${name}`, `${name} must be a sampled endpoint on the connected chest-owned surface`, distanceToPath(rendered.paths.chest, l[name]));
+  for (const name of ["sternum", "upperRibRight", "chestSideRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "chestSideLeft", "upperRibLeft"]) {
+    if (!rendered.paths.chest.landmarks.includes(name) || distanceToPath(rendered.paths.chest, l[name]) > 1.1) add(errors, `rendered.chest.${name}`, `${name} must be sampled on the torso-owned ribcage boundary`, distanceToPath(rendered.paths.chest, l[name]));
   }
+  const insideChest = point => {
+    if (distanceToPath(rendered.paths.chest, point) <= 1.1) return true;
+    const polygon = rendered.paths.chest.samples; let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const a = polygon[i]; const b = polygon[j];
+      if ((a.y > point.y) !== (b.y > point.y) && point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  };
+  for (const name of ["bustInnerRight", "bustRight", "bustOuterRight", "bustOuterLeft", "bustLeft", "bustInnerLeft"]) {
+    if (!rendered.paths.chest.landmarks.includes(name) || !insideChest(l[name])) add(errors, `rendered.chestContainment.${name}`, `${name} must remain inside the torso-owned ribcage field`, l[name]);
+  }
+  if (rendered.paths.chest.parent !== "torso.root") add(errors, "ownership.chestField", "The visible ribcage field must be owned by torso.root", rendered.paths.chest.parent);
+  if (rendered.paths.chest.bounds.width < m.torsoWidth850 * .65 || rendered.paths.chest.bounds.height < 150) add(errors, "rendered.chestCollapse", "The ribcage field cannot collapse into a small floating patch", rendered.paths.chest.bounds);
   const chestCenterDrop = rendered.chestCenterY - Math.min(l.shoulderRootLeft.y, l.shoulderRootRight.y);
   if (m.bustEnvelopeWidth > 0 && (chestCenterDrop > 45 || !rendered.chestClosed)) add(errors, "rendered.scallopedBib", "The sampled upper-chest boundary cannot hang into an open scalloped bib", chestCenterDrop);
   if (l.bustUpper.x !== l.sternum.x || l.bustUpper.y !== l.sternum.y) add(errors, "fit.bustChestJoin", "The closed bust envelope must share its upper C0/C1 join with the sternum", [l.bustUpper, l.sternum]);

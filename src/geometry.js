@@ -166,9 +166,13 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     bustInnerRight: point(centerX + bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : sternumY + 24, "chest.center"),
     bustRight: point(centerX + bustApexOffset, bustEnvelopeWidth === 0 ? sternumY : bustApexY, "bust.right"),
     bustOuterRight: point(centerX + bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY - 10, "chest.center"),
-    lowerRibRight: point(centerX + Math.max(collarWidth * .72, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
+    upperRibLeft: point(centerX - collarWidth * .92, sternumY + 34, "torso.root"),
+    upperRibRight: point(centerX + collarWidth * .92, sternumY + 34, "torso.root"),
+    chestSideLeft: point(centerX - (torsoWidth850 / 2 + 8), bustApexY + 18, "torso.root"),
+    chestSideRight: point(centerX + (torsoWidth850 / 2 + 8), bustApexY + 18, "torso.root"),
+    lowerRibRight: point(centerX + Math.max(torsoWidth850 * .38, collarWidth * .85, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
     lowerRibCenter: point(centerX, bustApexY + 82, "chest.center"),
-    lowerRibLeft: point(centerX - Math.max(collarWidth * .72, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
+    lowerRibLeft: point(centerX - Math.max(torsoWidth850 * .38, collarWidth * .85, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
     torsoCrop: point(centerX, SPEC.canvas.cropY, "torso.root")
   });
 

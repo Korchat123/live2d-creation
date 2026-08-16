@@ -139,13 +139,13 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
     assert.equal(paths.body.parent, "torso.root");
     assert.equal(paths.neckGuide.parent, "neck.root");
     assert.equal(paths.shoulderGuide.parent, "collar.center");
-    assert.equal(paths.chest.parent, "chest.center");
-    for (const landmark of ["upperNeckLeft", "collarLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left"]) {
+    assert.equal(paths.chest.parent, "torso.root");
+    for (const landmark of ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left"]) {
       assert.ok(paths.body.landmarks.includes(landmark), `${name}:${landmark}`);
       const distance = Math.min(...paths.body.samples.map(point => Math.hypot(point.x - geometry.landmarks[landmark].x, point.y - geometry.landmarks[landmark].y)));
       assert.ok(distance <= 1.1, `${name}:${landmark} must be on visible contour, distance=${distance}`);
     }
-    assert.deepEqual(paths.chest.landmarks, ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]);
+    assert.deepEqual(paths.chest.landmarks, ["sternum", "upperRibRight", "chestSideRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "chestSideLeft", "upperRibLeft", "bustInnerRight", "bustRight", "bustOuterRight", "bustOuterLeft", "bustLeft", "bustInnerLeft"]);
     assert.ok(paths.chest.d.startsWith(`M ${geometry.landmarks.sternum.x} ${geometry.landmarks.sternum.y}`));
     assert.equal(paths.chest.commands.filter(command => command.type === "M").length, 1);
     assert.equal(paths.chest.commands.at(-1).type, "Z");
@@ -153,17 +153,21 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
   assert.ok(buildAnatomyPaths(buildGeometry({ bustShoulderRatio: 0 })).chest);
 });
 
-test("actual shoulder intersections and tangent reject the former vertical-wall contour", () => {
+test("actual shoulder cubics share acromion tangents and retain sampled deltoid curvature", () => {
   for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.48, headWidth: 280 }]) {
     const rendered = measureRenderedGeometry(buildGeometry(parameters));
     assert.ok(rendered.bodyHead <= 2.48);
-    assert.ok(rendered.shoulderTangentRatio >= .22, JSON.stringify(rendered.shoulderTangentRatio));
+    near(rendered.shoulderJoinMismatch, 0, .02, "acromion C1 mismatch");
+    near(rendered.shoulderJoinAngle, 0, .1, "acromion G1 angle");
+    assert.ok(rendered.shoulderChordDeviation >= 3.5, JSON.stringify(rendered.shoulderChordDeviation));
+    assert.ok(rendered.shoulderMaxStraightRun <= 176, JSON.stringify(rendered.shoulderMaxStraightRun));
     assert.ok(rendered.shoulderInward.every((value, index, values) => value >= 2 && (index === 0 || value > values[index - 1] + .5)), JSON.stringify(rendered.shoulderInward));
   }
   const wall = measureRenderedGeometry(buildGeometry({}, { shoulderStyle: "wall" }));
-  assert.equal(wall.shoulderTangentRatio, 0);
-  assert.deepEqual(wall.shoulderInward, [0, 0, 0]);
-  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderTangent"));
+  assert.ok(wall.shoulderChordDeviation < 3.5);
+  assert.ok(wall.shoulderMaxStraightRun > 176);
+  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderSlab"));
+  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderStraightRun"));
 });
 
 test("covered bust uses symmetric apexes and a continuous chest-owned envelope", () => {
@@ -182,20 +186,35 @@ test("covered bust uses symmetric apexes and a continuous chest-owned envelope",
   }
 });
 
-test("one closed chest surface owns every anchor and preserves measured C1 joins", () => {
+test("one torso-owned ribcage field preserves boundary C1 joins and contains bust controls", () => {
   for (const parameters of [{ bustShoulderRatio: 0 }, { bustShoulderRatio: .08 }, presetParameters("neutral"), { bustShoulderRatio: .64 }, ...Object.keys(PRESETS).map(presetParameters)]) {
     const geometry = buildGeometry(parameters);
     const rendered = measureRenderedGeometry(geometry);
     assert.equal(rendered.chestMoveCount, 1);
     assert.equal(rendered.chestClosed, true);
     near(rendered.chestTangentMismatch, 0, .02, "C1 mismatch");
-    for (const name of ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]) {
+    assert.equal(rendered.paths.chest.parent, "torso.root");
+    for (const name of ["sternum", "upperRibRight", "chestSideRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "chestSideLeft", "upperRibLeft"]) {
       const point = geometry.landmarks[name];
       assert.ok(rendered.paths.chest.landmarks.includes(name), `${name} lacks chest provenance`);
       assert.ok(rendered.paths.chest.commands.some(command => command.type !== "Z" && command.x === point.x && command.y === point.y), `${name} is not an endpoint`);
     }
     assert.equal(validateGeometry(geometry).status, "Needs review");
   }
+});
+
+test("zero bust keeps the same broad ribcage topology instead of a detached patch", () => {
+  const zero = measureRenderedGeometry(buildGeometry({ bustShoulderRatio: 0 }));
+  const low = measureRenderedGeometry(buildGeometry({ bustShoulderRatio: .08 }));
+  const neutral = measureRenderedGeometry(buildGeometry());
+  for (const rendered of [zero, low, neutral]) {
+    assert.equal(rendered.paths.chest.parent, "torso.root");
+    assert.ok(rendered.paths.chest.bounds.width >= rendered.waistWidth * .65, JSON.stringify(rendered.paths.chest.bounds));
+    assert.ok(rendered.paths.chest.bounds.height >= 150, JSON.stringify(rendered.paths.chest.bounds));
+  }
+  assert.ok(zero.paths.chest.bounds.width / neutral.paths.chest.bounds.width >= .82);
+  assert.ok(zero.paths.chest.bounds.height / neutral.paths.chest.bounds.height >= .9);
+  assert.equal(validateGeometry(buildGeometry({ bustShoulderRatio: 0 })).status, "Needs review");
 });
 
 test("rendered contours, not intended controls, satisfy the visible silhouette contract", () => {

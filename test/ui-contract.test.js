@@ -59,6 +59,10 @@ test("measurement overlay keeps every point inspectable but labels a curated rea
   assert.match(app, /<title>\$\{name\} · \$\{item\.parent\}/);
   assert.match(app, /const LABEL_LAYOUT = Object\.freeze/);
   assert.doesNotMatch(app, /item\.x \+ 9/);
+  const overlay = app.indexOf("const overlay = overlayToggle.checked");
+  const chestField = app.indexOf('data-layer="torso-deformation-field"');
+  const renderedStage = app.indexOf("stage.innerHTML");
+  assert.ok(overlay >= 0 && chestField > overlay && chestField < renderedStage, "deformation topology belongs to the optional measurement overlay");
 });
 
 test("responsive layout keeps the center stage first on phone-sized screens", async () => {

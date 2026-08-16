@@ -40,6 +40,26 @@ function closedSpline(points, tension = .58) {
   return commands;
 }
 
+// Convert an ordered anatomical contour to cubic segments with one shared
+// derivative at each interior landmark. This makes acromion continuity a
+// property of the SVG commands rather than a visual approximation.
+function openSpline(points, tension = .62, verticalAt = []) {
+  const tangents = points.map((current, index) => {
+    if (index === 0) return { x: (points[1].x - current.x) * tension, y: (points[1].y - current.y) * tension };
+    if (index === points.length - 1) return { x: (current.x - points[index - 1].x) * tension, y: (current.y - points[index - 1].y) * tension };
+    if (verticalAt.some(point => samePoint(point, current))) return { x: 0, y: (points[index + 1].y - points[index - 1].y) * tension };
+    return { x: (points[index + 1].x - points[index - 1].x) * tension, y: (points[index + 1].y - points[index - 1].y) * tension };
+  });
+  return points.slice(1).map((next, index) => {
+    const current = points[index];
+    return C(
+      current.x + tangents[index].x / 3, current.y + tangents[index].y / 3,
+      next.x - tangents[index + 1].x / 3, next.y - tangents[index + 1].y / 3,
+      next.x, next.y
+    );
+  });
+}
+
 export function buildAnatomyPaths(geometry) {
   const { landmarks: l, measurements: m, mutations } = geometry;
   const head = path("head.root", ["skullTop", "craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"], [
@@ -92,39 +112,36 @@ export function buildAnatomyPaths(geometry) {
   const bodyRight850 = badWedge ? l.acromionRight.x + 26 : l.torso850Right.x;
   const cropLeft = waistLeft + shoulderSpan * .105;
   const cropRight = waistRight - shoulderSpan * .105;
-  const body = path("torso.root", ["upperNeckLeft", "collarLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left", "torso850Right", "upperArmRight", "deltoidOuterRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "collarRight", "upperNeckRight"], [
-    M(l.upperNeckLeft.x, l.upperNeckLeft.y), C(l.upperNeckLeft.x, l.collarLeft.y - 22, l.collarLeft.x, l.collarLeft.y - 10, l.collarLeft.x, l.collarLeft.y),
-    L(l.shoulderRootLeft.x, l.shoulderRootLeft.y),
-    Q((l.shoulderRootLeft.x + l.trapeziusLeft.x) / 2, l.trapeziusLeft.y - 5, l.trapeziusLeft.x, l.trapeziusLeft.y),
-    Q((l.trapeziusLeft.x + l.shoulderMidLeft.x) / 2, l.shoulderMidLeft.y - 4, l.shoulderMidLeft.x, l.shoulderMidLeft.y),
-    Q((l.shoulderMidLeft.x + l.acromionLeft.x) / 2, l.acromionLeft.y - 4, l.acromionLeft.x, l.acromionLeft.y),
-    C(l.acromionLeft.x + (mutations.shoulderStyle === "wall" ? 0 : 7), l.acromionLeft.y + 18, l.deltoidOuterLeft.x - (mutations.shoulderStyle === "wall" ? 0 : 3), l.deltoidOuterLeft.y - 24, l.deltoidOuterLeft.x, l.deltoidOuterLeft.y),
-    Q(l.deltoidOuterLeft.x + (mutations.shoulderStyle === "wall" ? 0 : 6), l.deltoidOuterLeft.y + 38, l.upperArmLeft.x, l.upperArmLeft.y),
-    Q(bodyLeft850 - 8, (l.upperArmLeft.y + 850) / 2, bodyLeft850, 850),
-    C(bodyLeft850 + 8, 900, cropLeft - 8, 942, cropLeft, 970), L(cropRight, 970),
-    C(cropRight + 8, 942, bodyRight850 - 8, 900, bodyRight850, 850),
-    Q(l.upperArmRight.x + 6, l.upperArmRight.y + 40, l.upperArmRight.x, l.upperArmRight.y),
-    Q(l.deltoidOuterRight.x - (mutations.shoulderStyle === "wall" ? 0 : 6), l.deltoidOuterRight.y + 38, l.deltoidOuterRight.x, l.deltoidOuterRight.y),
-    C(l.deltoidOuterRight.x + (mutations.shoulderStyle === "wall" ? 0 : 3), l.deltoidOuterRight.y - 24, l.acromionRight.x - (mutations.shoulderStyle === "wall" ? 0 : 7), l.acromionRight.y + 18, l.acromionRight.x, l.acromionRight.y),
-    Q((l.shoulderMidRight.x + l.acromionRight.x) / 2, l.acromionRight.y - 4, l.shoulderMidRight.x, l.shoulderMidRight.y),
-    Q((l.trapeziusRight.x + l.shoulderMidRight.x) / 2, l.shoulderMidRight.y - 4, l.trapeziusRight.x, l.trapeziusRight.y),
-    Q((l.shoulderRootRight.x + l.trapeziusRight.x) / 2, l.trapeziusRight.y - 5, l.shoulderRootRight.x, l.shoulderRootRight.y),
-    L(l.collarRight.x, l.collarRight.y),
-    C(l.collarRight.x, l.collarRight.y - 10, l.upperNeckRight.x, l.collarRight.y - 22, l.upperNeckRight.x, l.upperNeckRight.y), Z()
+  const wallLeft = mutations.shoulderStyle === "wall"
+    ? { ...l.deltoidOuterLeft, x: l.acromionLeft.x }
+    : l.deltoidOuterLeft;
+  const wallRight = mutations.shoulderStyle === "wall"
+    ? { ...l.deltoidOuterRight, x: l.acromionRight.x }
+    : l.deltoidOuterRight;
+  const upperArmLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmLeft, x: l.acromionLeft.x } : l.upperArmLeft;
+  const upperArmRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmRight, x: l.acromionRight.x } : l.upperArmRight;
+  const left850 = mutations.shoulderStyle === "wall" ? l.acromionLeft.x : bodyLeft850;
+  const right850 = mutations.shoulderStyle === "wall" ? l.acromionRight.x : bodyRight850;
+  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, wallLeft, upperArmLeft, { x: left850, y: 850 }, { x: cropLeft, y: 970 }];
+  const rightContour = [{ x: cropRight, y: 970 }, { x: right850, y: 850 }, upperArmRight, wallRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
+  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left", "torso850Right", "upperArmRight", "deltoidOuterRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
+    M(leftContour[0].x, leftContour[0].y), ...openSpline(leftContour, .62, [l.acromionLeft]),
+    L(rightContour[0].x, rightContour[0].y), ...openSpline(rightContour, .62, [l.acromionRight]), Z()
   ]);
 
   const neckGuide = path("neck.root", ["upperNeckLeft", "collarLeft", "collarRight", "upperNeckRight"], [M(l.upperNeckLeft.x,l.upperNeckLeft.y), C(l.upperNeckLeft.x,l.collarLeft.y-22,l.collarLeft.x,l.collarLeft.y-10,l.collarLeft.x,l.collarLeft.y), M(l.upperNeckRight.x,l.upperNeckRight.y), C(l.upperNeckRight.x,l.collarRight.y-22,l.collarRight.x,l.collarRight.y-10,l.collarRight.x,l.collarRight.y)]);
   const shoulderGuide = path("collar.center", ["shoulderRootLeft", "sternum", "shoulderRootRight"], [M(l.shoulderRootLeft.x,l.shoulderRootLeft.y), C(420,l.sternum.y-22,465,l.sternum.y,l.sternum.x,l.sternum.y), C(535,l.sternum.y,580,l.sternum.y-22,l.shoulderRootRight.x,l.shoulderRootRight.y)]);
 
-  // The visible path is the continuous covered ribcage/deformation surface.
-  // Its semantic anchors progress from sternum through inner/apex/outer chest
-  // to the lower ribs, so the path is auditable without drawing detached lobes.
-  const chestLandmarks = ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"];
-  const chestPoints = chestLandmarks.map(name => l[name]);
+  // A torso-owned ribcage field. Bust anchors are internal deformation
+  // controls, never the visible perimeter, so zero bust retains this same
+  // broad topology instead of degenerating into a detached triangle.
+  const chestLandmarks = ["sternum", "upperRibRight", "chestSideRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "chestSideLeft", "upperRibLeft", "bustInnerRight", "bustRight", "bustOuterRight", "bustOuterLeft", "bustLeft", "bustInnerLeft"];
+  const chestBoundaryNames = ["sternum", "upperRibRight", "chestSideRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "chestSideLeft", "upperRibLeft"];
+  const chestPoints = chestBoundaryNames.map(name => l[name]);
   const chestCommands = mutations.chestStyle === "scalloped"
     ? [M(l.shoulderRootLeft.x,l.shoulderRootLeft.y), Q(l.bustLeft.x,l.bustLeft.y-30,l.bustLeft.x,l.bustLeft.y+45), Q(l.sternum.x,l.bustLeft.y+95,l.sternum.x,l.bustLeft.y+55), Q(l.bustRight.x,l.bustRight.y+95,l.bustRight.x,l.bustRight.y+45), Q(l.bustRight.x,l.bustRight.y-30,l.shoulderRootRight.x,l.shoulderRootRight.y)]
     : closedSpline(chestPoints, .48);
-  const chest = path("chest.center", chestLandmarks, chestCommands);
+  const chest = path("torso.root", chestLandmarks, chestCommands);
   const ears = {
     left: path("ear.left", ["earTopLeft","earBottomLeft"], [M(l.earTopLeft.x,l.earTopLeft.y), C(l.earTopLeft.x-25,l.earTopLeft.y+9,l.earBottomLeft.x-25,l.earBottomLeft.y-10,l.earBottomLeft.x,l.earBottomLeft.y), C(l.earBottomLeft.x+10,l.earBottomLeft.y-18,l.earTopLeft.x+10,l.earTopLeft.y+20,l.earTopLeft.x,l.earTopLeft.y), Z()]),
     right: path("ear.right", ["earTopRight","earBottomRight"], [M(l.earTopRight.x,l.earTopRight.y), C(l.earTopRight.x+25,l.earTopRight.y+9,l.earBottomRight.x+25,l.earBottomRight.y-10,l.earBottomRight.x,l.earBottomRight.y), C(l.earBottomRight.x-10,l.earBottomRight.y-18,l.earTopRight.x-10,l.earTopRight.y+20,l.earTopRight.x,l.earTopRight.y), Z()]),
@@ -135,6 +152,47 @@ export function buildAnatomyPaths(geometry) {
 }
 
 const nearestYAtX = (samples, x) => samples.reduce((best, point) => Math.abs(point.x - x) < Math.abs(best.x - x) ? point : best).y;
+
+function cubicJoinAt(commands, point) {
+  const index = commands.findIndex(command => command.type === "C" && samePoint(command, point));
+  const incoming = commands[index]; const outgoing = commands[index + 1];
+  if (!incoming || outgoing?.type !== "C") return { mismatch: Infinity, angle: Infinity };
+  const a = { x: point.x - incoming.x2, y: point.y - incoming.y2 };
+  const b = { x: outgoing.x1 - point.x, y: outgoing.y1 - point.y };
+  const mismatch = Math.hypot(a.x - b.x, a.y - b.y);
+  const denominator = Math.max(.0001, Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y));
+  const cosine = Math.max(-1, Math.min(1, (a.x * b.x + a.y * b.y) / denominator));
+  return { mismatch: n(mismatch), angle: n(Math.acos(cosine) * 180 / Math.PI) };
+}
+
+function shoulderChordDeviation(commands, acromion, upperArm) {
+  const middleY = (acromion.y + upperArm.y) / 2;
+  const hit = y => intersectionsAtY(commands, y)[0];
+  const startX = hit(acromion.y + 1); const middleX = hit(middleY); const endX = hit(upperArm.y);
+  if (![startX, middleX, endX].every(Number.isFinite)) return 0;
+  const linearMiddle = startX + (endX - startX) * ((middleY - (acromion.y + 1)) / (upperArm.y - (acromion.y + 1)));
+  return n(Math.abs(middleX - linearMiddle));
+}
+
+function shoulderMaxStraightRun(commands, acromionY) {
+  const points = [];
+  for (let y = Math.ceil(acromionY + 5); y <= 850; y += 8) {
+    const x = intersectionsAtY(commands, y)[0];
+    if (Number.isFinite(x)) points.push({ x, y });
+  }
+  let longest = 0;
+  for (let start = 0; start < points.length - 2; start += 1) {
+    for (let end = start + 2; end < points.length; end += 1) {
+      const a = points[start]; const b = points[end];
+      const deviation = points.slice(start + 1, end).reduce((maximum, point) => {
+        const expected = a.x + (b.x - a.x) * ((point.y - a.y) / (b.y - a.y));
+        return Math.max(maximum, Math.abs(point.x - expected));
+      }, 0);
+      if (deviation <= .8) longest = Math.max(longest, b.y - a.y);
+    }
+  }
+  return n(longest);
+}
 
 export function measureRenderedGeometry(geometry) {
   const paths = buildAnatomyPaths(geometry);
@@ -149,9 +207,7 @@ export function measureRenderedGeometry(geometry) {
     return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
   });
   const shoulderInward = shoulderWidths.map(width => n((geometry.measurements.acromionSpan - width) / 2));
-  const leftAcromionIndex = paths.body.commands.findIndex(command => command.x === geometry.landmarks.acromionLeft.x && command.y === geometry.landmarks.acromionLeft.y);
-  const shoulderSegment = paths.body.commands[leftAcromionIndex + 1];
-  const shoulderTangentRatio = shoulderSegment?.type === "C" ? n(Math.abs(shoulderSegment.x1 - geometry.landmarks.acromionLeft.x) / Math.max(1, Math.abs(shoulderSegment.y1 - geometry.landmarks.acromionLeft.y))) : 0;
+  const shoulderJoin = cubicJoinAt(paths.body.commands, geometry.landmarks.acromionLeft);
   const chestMoveCount = paths.chest.commands.filter(command => command.type === "M").length;
   const chestClosed = paths.chest.commands.at(-1)?.type === "Z";
   const chestTangentMismatch = cubicJoinMismatch(paths.chest.commands);
@@ -170,7 +226,10 @@ export function measureRenderedGeometry(geometry) {
     waistShoulder: n(waistWidth / bodyWidth),
     shoulderWidths: Object.freeze(shoulderWidths),
     shoulderInward: Object.freeze(shoulderInward),
-    shoulderTangentRatio,
+    shoulderJoinMismatch: shoulderJoin.mismatch,
+    shoulderJoinAngle: shoulderJoin.angle,
+    shoulderChordDeviation: shoulderChordDeviation(paths.body.commands, geometry.landmarks.acromionLeft, geometry.landmarks.upperArmLeft),
+    shoulderMaxStraightRun: shoulderMaxStraightRun(paths.body.commands, geometry.landmarks.acromionLeft.y),
     chestMoveCount,
     chestClosed,
     chestTangentMismatch,

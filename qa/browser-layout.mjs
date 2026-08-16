@@ -122,4 +122,10 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
     const capture = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
     await writeFile(process.env.P0_CAPTURE_PATH, Buffer.from(capture.data, "base64"));
   }
+  if (process.env.P0_CAPTURE_DESKTOP_PATH) {
+    await cdp.call("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
+    await delay(150);
+    const capture = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
+    await writeFile(process.env.P0_CAPTURE_DESKTOP_PATH, Buffer.from(capture.data, "base64"));
+  }
 });
