@@ -28,7 +28,8 @@ test("renderer marks construction primitives with canonical parent provenance", 
     assert.match(app, new RegExp(`data-parent=\\"${parent.replace(".", "\\.")}\\"`), parent);
   }
   assert.match(app, /data-parent="\$\{anatomy\.head\.parent\}" data-landmark-chain=/);
-  assert.match(app, /data-parent="\$\{anatomy\.hair\.parent\}" data-landmark-chain=/);
+  assert.match(app, /data-parent="\$\{anatomy\.hairBack\.parent\}" data-landmark-chain=/);
+  assert.match(app, /data-parent="\$\{anatomy\.hairFront\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.body\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.chest\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.neckGuide\.parent\}" data-landmark-chain=/);
@@ -39,6 +40,17 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /buildAnatomyPaths\(geometry\)/);
   assert.doesNotMatch(app, /const bustPath/);
   assert.match(app, /class="chest-field"/);
+});
+
+test("explicit hair back, ears, head, and hair front order preserves readable ears", async () => {
+  const app = await read("src/app.js");
+  const back = app.indexOf('data-layer="hair-back"');
+  const ears = app.indexOf('data-layer="ears"');
+  const head = app.indexOf('class="head" data-parent=');
+  const front = app.indexOf('data-layer="hair-front"');
+  assert.ok(back >= 0 && ears > back && head > ears && front > head, { back, ears, head, front });
+  assert.match(app, /class="hair-front"[^>]+data-landmark-chain=/);
+  assert.match(app, /class="ear"[^>]+data-landmark-chain=/);
 });
 
 test("measurement overlay keeps every point inspectable but labels a curated readable subset", async () => {

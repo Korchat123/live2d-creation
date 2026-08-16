@@ -48,6 +48,10 @@ export function validateGeometry(geometry) {
   if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
   if (!between(rendered.bodyHead, [2.05, 2.48])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
   if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
+  if (rendered.shoulderTangentRatio < .22) add(errors, "rendered.shoulderTangent", "The visible acromion must turn inward into the deltoid instead of dropping as a vertical wall", rendered.shoulderTangentRatio);
+  if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 2 || (index > 0 && inset <= values[index - 1] + .5))) {
+    add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must move progressively inward below the acromion", rendered.shoulderInward);
+  }
   const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));
   for (const name of ["craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"]) {
     if (distanceToPath(rendered.paths.head, l[name]) > 1.1) add(errors, `rendered.head.${name}`, `${name} must be an actual sampled point on the visible head contour`, distanceToPath(rendered.paths.head, l[name]));
@@ -71,8 +75,13 @@ export function validateGeometry(geometry) {
   if (adultRisks.filter(Boolean).length >= 3 && adultRisks[0]) add(errors, "correlation.maturity", "Combined eye occupancy, lower face, jaw, neck, and head/shoulder proportions read below the adult target", [r.eyeHeightFace, r.mouthChin, r.jawCranium, r.upperNeckHead, r.shoulderHead]);
 
   if (m.bustEnvelopeWidth > 0 && Math.abs(l.bustLeft.y - m.expectedBustApexY) > 4) add(errors, "fit.detachedBust", "Covered bust must remain in the shared torso deformation field", l.bustLeft.y - m.expectedBustApexY);
+  if (rendered.chestMoveCount !== 1 || !rendered.chestClosed) add(errors, "rendered.chestSurface", "Chest ownership requires one connected closed SVG surface (one M and terminal Z)", [rendered.chestMoveCount, rendered.chestClosed]);
+  if (!Number.isFinite(rendered.chestTangentMismatch) || rendered.chestTangentMismatch > .02) add(errors, "rendered.chestC1", "Rendered chest cubic joins must share measured incoming/outgoing tangents", rendered.chestTangentMismatch);
+  for (const name of ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]) {
+    if (!rendered.paths.chest.landmarks.includes(name) || distanceToPath(rendered.paths.chest, l[name]) > 1.1) add(errors, `rendered.chest.${name}`, `${name} must be a sampled endpoint on the connected chest-owned surface`, distanceToPath(rendered.paths.chest, l[name]));
+  }
   const chestCenterDrop = rendered.chestCenterY - Math.min(l.shoulderRootLeft.y, l.shoulderRootRight.y);
-  if (m.bustEnvelopeWidth > 0 && chestCenterDrop > 45) add(errors, "rendered.scallopedBib", "The sampled upper-chest bridge cannot hang into a scalloped bib", chestCenterDrop);
+  if (m.bustEnvelopeWidth > 0 && (chestCenterDrop > 45 || !rendered.chestClosed)) add(errors, "rendered.scallopedBib", "The sampled upper-chest boundary cannot hang into an open scalloped bib", chestCenterDrop);
   if (l.bustUpper.x !== l.sternum.x || l.bustUpper.y !== l.sternum.y) add(errors, "fit.bustChestJoin", "The closed bust envelope must share its upper C0/C1 join with the sternum", [l.bustUpper, l.sternum]);
   if (m.bustEnvelopeWidth === 0) {
     for (const name of ["bustLeft", "bustRight", "bustInnerLeft", "bustInnerRight", "bustOuterLeft", "bustOuterRight"]) if (l[name].x !== l.bustUpper.x || l[name].y !== l.bustUpper.y) add(errors, "fit.bustCollapse", "Zero bust must collapse to the chest center without detached lobes", [name, l[name]]);

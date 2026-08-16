@@ -25,7 +25,7 @@ export const NEGATIVE_FIXTURES = Object.freeze({
   wigGap: { mutations: { hairHaloGap: 14, hairHiddenOverlapOverride: 4 } },
   floatingNeck: { mutations: { upperNeckOffsetY: 52 } },
   misplacedFace: { mutations: { faceCenterOffsetX: 44 } },
-  rectangularShoulders: { mutations: { torsoWidth850Override: 690 } },
+  rectangularShoulders: { mutations: { torsoWidth850Override: 690, shoulderStyle: "wall" } },
   detachedBust: { mutations: { bustApexOffsetY: 135 } },
   correlatedMaturity: { parameters: { eyeHeight: 36, jawCraniumRatio: 0.67, mouthChinShare: 0.31, upperNeckHeadRatio: 0.29, shoulderHeadRatio: 2.05 } },
   unsafeCombined: { mutations: { headWidthOverride: 330, acromionSpanOverride: 818, hairWidthOverride: 455 } }
@@ -102,6 +102,10 @@ export function buildGeometry(candidate = {}, mutations = {}) {
   const trapeziusInset = acromionSpan * 0.075;
   const shoulderMidInset = acromionSpan * 0.33;
   const deltoidOuterY = acromionY + 86;
+  // The deltoid sits inward from the bony acromion.  Keeping these as distinct
+  // landmarks prevents the old vertical-wall shortcut while preserving the
+  // authored acromion/body width cap.
+  const deltoidInset = mutations.shoulderStyle === "wall" ? 0 : Math.max(18, headWidth * .085);
   const upperArmY = acromionY + 190;
   const bustApexYExpected = acromionY + c.bustBelowAcromion;
   const bustApexY = bustApexYExpected + (mutations.bustApexOffsetY ?? 0);
@@ -150,18 +154,22 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     shoulderMidRight: point(centerX + shoulderMidInset, shoulderRootY + p.shoulderDrop * .72, "shoulder.right"),
     acromionLeft: point(centerX - acromionSpan / 2, acromionY, "shoulder.left"), acromionRight: point(centerX + acromionSpan / 2, acromionY, "shoulder.right"),
     garmentShoulderLeft: point(centerX - garmentShoulderSpan / 2, acromionY + 14, "shoulder.left"), garmentShoulderRight: point(centerX + garmentShoulderSpan / 2, acromionY + 14, "shoulder.right"),
-    deltoidOuterLeft: point(centerX - acromionSpan / 2, deltoidOuterY, "arm.left"),
-    deltoidOuterRight: point(centerX + acromionSpan / 2, deltoidOuterY, "arm.right"),
-    upperArmLeft: point(centerX - torsoWidth850 / 2 - 24, upperArmY, "arm.left"),
-    upperArmRight: point(centerX + torsoWidth850 / 2 + 24, upperArmY, "arm.right"),
+    deltoidOuterLeft: point(centerX - acromionSpan / 2 + deltoidInset, deltoidOuterY, "arm.left"),
+    deltoidOuterRight: point(centerX + acromionSpan / 2 - deltoidInset, deltoidOuterY, "arm.right"),
+    upperArmLeft: point(centerX - torsoWidth850 / 2 - 10, upperArmY, "arm.left"),
+    upperArmRight: point(centerX + torsoWidth850 / 2 + 10, upperArmY, "arm.right"),
     torso850Left: point(centerX - torsoWidth850 / 2, 850, "torso.root"), torso850Right: point(centerX + torsoWidth850 / 2, 850, "torso.root"),
     sternum: point(centerX, sternumY, "chest.center"), bustUpper: point(centerX, sternumY, "chest.center"),
-    bustOuterLeft: point(centerX - bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY + 24, "chest.center"),
+    bustOuterLeft: point(centerX - bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY - 10, "chest.center"),
     bustLeft: point(centerX - bustApexOffset, bustEnvelopeWidth === 0 ? sternumY : bustApexY, "bust.left"),
-    bustInnerLeft: point(centerX - bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : bustApexY + 32, "chest.center"),
-    bustInnerRight: point(centerX + bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : bustApexY + 32, "chest.center"),
+    bustInnerLeft: point(centerX - bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : sternumY + 24, "chest.center"),
+    bustInnerRight: point(centerX + bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : sternumY + 24, "chest.center"),
     bustRight: point(centerX + bustApexOffset, bustEnvelopeWidth === 0 ? sternumY : bustApexY, "bust.right"),
-    bustOuterRight: point(centerX + bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY + 24, "chest.center"), torsoCrop: point(centerX, SPEC.canvas.cropY, "torso.root")
+    bustOuterRight: point(centerX + bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY - 10, "chest.center"),
+    lowerRibRight: point(centerX + Math.max(collarWidth * .72, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
+    lowerRibCenter: point(centerX, bustApexY + 82, "chest.center"),
+    lowerRibLeft: point(centerX - Math.max(collarWidth * .72, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
+    torsoCrop: point(centerX, SPEC.canvas.cropY, "torso.root")
   });
 
   const measurements = Object.freeze({

@@ -114,9 +114,11 @@ function renderSvg(geometry) {
       .body { fill:#ddd6e2; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
       .head { fill:#eee8ef; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
       .construction { fill:none; stroke:#8c6fb4; stroke-width:3; stroke-dasharray:10 8; vector-effect:non-scaling-stroke }
-      .hair-cap { fill:#d8cbe5; fill-opacity:.66; stroke:#6e587e; stroke-width:4; vector-effect:non-scaling-stroke }
-      .ear { fill:#eee8ef; stroke:#765f73; stroke-width:3; vector-effect:non-scaling-stroke }
-      .chest-field { fill:none; stroke:#806b91; stroke-width:2.5; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .hair-back { fill:#d8cbe5; fill-opacity:.76; stroke:#6e587e; stroke-width:4; vector-effect:non-scaling-stroke }
+      .hair-front { fill:none; stroke:#6e587e; stroke-width:6; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .ear { fill:#ead7df; stroke:#965f79; stroke-width:4; vector-effect:non-scaling-stroke }
+      .ear-detail { fill:none; stroke:#a56b83; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .chest-field { fill:#b9a8c4; fill-opacity:.12; stroke:none }
       .anatomy-line { fill:none; stroke:#75687d; stroke-width:2; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .face-mark { fill:#f8f5f8; stroke:#665b70; stroke-width:3; vector-effect:non-scaling-stroke }
       .feature-line { fill:none; stroke:#665b70; stroke-width:4; stroke-linecap:round; vector-effect:non-scaling-stroke }
@@ -129,14 +131,17 @@ function renderSvg(geometry) {
       <clipPath id="eye-clip-left"><ellipse cx="${l.eyeLeft.x}" cy="${l.eyeLeft.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
       <clipPath id="eye-clip-right"><ellipse cx="${l.eyeRight.x}" cy="${l.eyeRight.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
     </defs>
+    <path class="hair-back" data-layer="hair-back" data-parent="${anatomy.hairBack.parent}" data-landmark-chain="${provenance(anatomy.hairBack)}" d="${anatomy.hairBack.d}"/>
     <path class="body" data-parent="${anatomy.body.parent}" data-landmark-chain="${provenance(anatomy.body)}" d="${anatomy.body.d}"/>
     ${anatomy.chest ? `<path class="chest-field" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" d="${anatomy.chest.d}"/>` : ""}
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
-    <path class="ear" data-parent="${anatomy.ears.left.parent}" d="${anatomy.ears.left.d}"/>
-    <path class="ear" data-parent="${anatomy.ears.right.parent}" d="${anatomy.ears.right.d}"/>
+    <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>
+    <path class="ear" data-layer="ears" data-parent="${anatomy.ears.right.parent}" data-landmark-chain="${provenance(anatomy.ears.right)}" d="${anatomy.ears.right.d}"/>
     <path class="head" data-parent="${anatomy.head.parent}" data-landmark-chain="${provenance(anatomy.head)}" d="${anatomy.head.d}"/>
-    <path class="hair-cap" data-parent="${anatomy.hair.parent}" data-landmark-chain="${provenance(anatomy.hair)}" d="${anatomy.hair.d}"/>
+    <path class="ear-detail" data-layer="ear-details" data-parent="${anatomy.ears.innerLeft.parent}" data-landmark-chain="${provenance(anatomy.ears.innerLeft)}" d="${anatomy.ears.innerLeft.d}"/>
+    <path class="ear-detail" data-layer="ear-details" data-parent="${anatomy.ears.innerRight.parent}" data-landmark-chain="${provenance(anatomy.ears.innerRight)}" d="${anatomy.ears.innerRight.d}"/>
+    <path class="hair-front" data-layer="hair-front" data-parent="${anatomy.hairFront.parent}" data-landmark-chain="${provenance(anatomy.hairFront)}" d="${anatomy.hairFront.d}"/>
     <path class="construction" data-parent="${anatomy.hairFit.parent}" data-landmark-chain="${provenance(anatomy.hairFit)}" d="${anatomy.hairFit.d}"/>
     ${ellipseMarkup(l.eyeLeft.x, l.eyeLeft.y, m.eyeWidth / 2, m.eyeHeight / 2, "face-mark", "eye.left")}
     ${ellipseMarkup(l.eyeRight.x, l.eyeRight.y, m.eyeWidth / 2, m.eyeHeight / 2, "face-mark", "eye.right")}

@@ -145,11 +145,25 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
       const distance = Math.min(...paths.body.samples.map(point => Math.hypot(point.x - geometry.landmarks[landmark].x, point.y - geometry.landmarks[landmark].y)));
       assert.ok(distance <= 1.1, `${name}:${landmark} must be on visible contour, distance=${distance}`);
     }
-    assert.deepEqual(paths.chest.landmarks.slice(0, 3), ["shoulderRootLeft", "bustLeft", "sternum"]);
-    assert.ok(paths.chest.d.startsWith(`M ${geometry.landmarks.shoulderRootLeft.x} ${geometry.landmarks.shoulderRootLeft.y}`));
-    assert.match(paths.chest.d, new RegExp(`${geometry.landmarks.shoulderRootRight.x} ${geometry.landmarks.shoulderRootRight.y}`));
+    assert.deepEqual(paths.chest.landmarks, ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]);
+    assert.ok(paths.chest.d.startsWith(`M ${geometry.landmarks.sternum.x} ${geometry.landmarks.sternum.y}`));
+    assert.equal(paths.chest.commands.filter(command => command.type === "M").length, 1);
+    assert.equal(paths.chest.commands.at(-1).type, "Z");
   }
-  assert.equal(buildAnatomyPaths(buildGeometry({ bustShoulderRatio: 0 })).chest, null);
+  assert.ok(buildAnatomyPaths(buildGeometry({ bustShoulderRatio: 0 })).chest);
+});
+
+test("actual shoulder intersections and tangent reject the former vertical-wall contour", () => {
+  for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.48, headWidth: 280 }]) {
+    const rendered = measureRenderedGeometry(buildGeometry(parameters));
+    assert.ok(rendered.bodyHead <= 2.48);
+    assert.ok(rendered.shoulderTangentRatio >= .22, JSON.stringify(rendered.shoulderTangentRatio));
+    assert.ok(rendered.shoulderInward.every((value, index, values) => value >= 2 && (index === 0 || value > values[index - 1] + .5)), JSON.stringify(rendered.shoulderInward));
+  }
+  const wall = measureRenderedGeometry(buildGeometry({}, { shoulderStyle: "wall" }));
+  assert.equal(wall.shoulderTangentRatio, 0);
+  assert.deepEqual(wall.shoulderInward, [0, 0, 0]);
+  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderTangent"));
 });
 
 test("covered bust uses symmetric apexes and a continuous chest-owned envelope", () => {
@@ -165,6 +179,22 @@ test("covered bust uses symmetric apexes and a continuous chest-owned envelope",
     assert.equal(l.bustOuterRight.parent, "chest.center");
     assert.deepEqual(l.bustUpper, { ...l.sternum, parent: "chest.center" });
     assert.equal(validateGeometry(buildGeometry({ bustShoulderRatio })).status, "Needs review");
+  }
+});
+
+test("one closed chest surface owns every anchor and preserves measured C1 joins", () => {
+  for (const parameters of [{ bustShoulderRatio: 0 }, { bustShoulderRatio: .08 }, presetParameters("neutral"), { bustShoulderRatio: .64 }, ...Object.keys(PRESETS).map(presetParameters)]) {
+    const geometry = buildGeometry(parameters);
+    const rendered = measureRenderedGeometry(geometry);
+    assert.equal(rendered.chestMoveCount, 1);
+    assert.equal(rendered.chestClosed, true);
+    near(rendered.chestTangentMismatch, 0, .02, "C1 mismatch");
+    for (const name of ["sternum", "bustInnerRight", "bustRight", "bustOuterRight", "lowerRibRight", "lowerRibCenter", "lowerRibLeft", "bustOuterLeft", "bustLeft", "bustInnerLeft"]) {
+      const point = geometry.landmarks[name];
+      assert.ok(rendered.paths.chest.landmarks.includes(name), `${name} lacks chest provenance`);
+      assert.ok(rendered.paths.chest.commands.some(command => command.type !== "Z" && command.x === point.x && command.y === point.y), `${name} is not an endpoint`);
+    }
+    assert.equal(validateGeometry(geometry).status, "Needs review");
   }
 });
 
