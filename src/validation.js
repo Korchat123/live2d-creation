@@ -46,7 +46,7 @@ export function validateGeometry(geometry) {
   if (m.hairCrownOverlap < 0 || m.hairTempleOverlap < 0) add(errors, "fit.wigGap", "Measured inner-cap samples cannot leave a crown or temple gap", [m.hairCrownOverlap, m.hairTempleOverlap]);
   if (m.hairCrownOverlap < m.hairRequiredOverlap || m.hairTempleOverlap < m.hairRequiredOverlap) add(errors, "fit.hairOverlap", "Measured hair/skull overlap is below projected displacement plus safety", [m.hairCrownOverlap, m.hairTempleOverlap, m.hairRequiredOverlap]);
   if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
-  if (!between(rendered.bodyHead, [2.08, 2.60])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
+  if (!between(rendered.bodyHead, [2.05, 2.48])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
   if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
   const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));
   for (const name of ["craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"]) {

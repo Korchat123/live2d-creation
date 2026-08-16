@@ -175,7 +175,7 @@ test("rendered contours, not intended controls, satisfy the visible silhouette c
     if (validation.status === "Blocked") continue;
     const rendered = measureRenderedGeometry(geometry);
     assert.ok(rendered.hairHead >= SPEC.ratioRanges.hairHead[0] && rendered.hairHead <= SPEC.ratioRanges.hairHead[1], `${state.id}: hair/head=${rendered.hairHead}`);
-    assert.ok(rendered.bodyHead >= 2.08 && rendered.bodyHead <= 2.60, `${state.id}: body/head=${rendered.bodyHead}`);
+    assert.ok(rendered.bodyHead >= 2.05 && rendered.bodyHead <= 2.48, `${state.id}: body/head=${rendered.bodyHead}`);
     assert.ok(rendered.waistShoulder >= .68 && rendered.waistShoulder <= .86, `${state.id}: waist/shoulder=${rendered.waistShoulder}`);
   }
 });
