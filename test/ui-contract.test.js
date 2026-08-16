@@ -40,6 +40,8 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /buildAnatomyPaths\(geometry\)/);
   assert.doesNotMatch(app, /const bustPath/);
   assert.match(app, /class="chest-field"/);
+  assert.match(app, /class="chest-volume" data-layer="covered-torso-volume"/);
+  assert.ok(app.indexOf('class="chest-volume"') < app.indexOf('${overlay}'), "covered torso volume must render by default, outside the optional Measurements overlay");
 });
 
 test("explicit hair back, ears, head, and hair front order preserves readable ears", async () => {

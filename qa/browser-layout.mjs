@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -127,5 +127,18 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
     await delay(150);
     const capture = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
     await writeFile(process.env.P0_CAPTURE_DESKTOP_PATH, Buffer.from(capture.data, "base64"));
+  }
+  if (process.env.P0_CAPTURE_VARIANTS_DIR) {
+    await mkdir(process.env.P0_CAPTURE_VARIANTS_DIR, { recursive: true });
+    for (const value of [0, .08, .5, .64]) {
+      await cdp.call("Runtime.evaluate", { expression: `(() => { const input = document.querySelector('[data-parameter="bustShoulderRatio"]'); input.value = '${value}'; input.dispatchEvent(new Event('input', { bubbles:true })); })()` });
+      await delay(80);
+      for (const [suffix, width, height, mobile] of [["desktop", 1440, 1000, false], ["mobile", 390, 844, true]]) {
+        await cdp.call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile });
+        await delay(80);
+        const variant = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
+        await writeFile(join(process.env.P0_CAPTURE_VARIANTS_DIR, `bust-${String(value).replace('.', '_')}-${suffix}.png`), Buffer.from(variant.data, "base64"));
+      }
+    }
   }
 });

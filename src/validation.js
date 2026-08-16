@@ -38,9 +38,9 @@ export function validateGeometry(geometry) {
     add(errors, "fit.floatingNeck", "Upper-neck endpoints must intersect the measured head outline", [neckJoinError, l.upperNeckLeft.y - m.upperNeckJoinY]);
   }
   if (r.chinCranium <= .32 && r.upperNeckHead >= .40) add(errors, "correlation.chinNeck", "A wide neck cannot attach through the minimum chin shelf", [r.chinCranium, r.upperNeckHead]);
-  if (!between(m.shoulderDrop, [24, 60])) add(errors, "fit.shoulderDrop", "Acromia must descend 24..60 units from shoulder roots", m.shoulderDrop);
+  if (!between(m.shoulderDrop, [SPEC.parameters.shoulderDrop.min, SPEC.parameters.shoulderDrop.max])) add(errors, "fit.shoulderDrop", "Acromia must stay inside the authored anatomical drop range", m.shoulderDrop);
   if (!(m.torsoWidth850 < m.garmentShoulderSpan)) add(errors, "fit.rectangularShoulders", "Torso must curve inward below garment shoulders", [m.torsoWidth850, m.garmentShoulderSpan]);
-  if (!between(r.torso850Garment, SPEC.ratioRanges.torso850Garment)) add(errors, "fit.torsoTaper", "Torso width at y=850 must retain a smooth 0.78..0.90 shoulder taper", r.torso850Garment);
+  if (!between(r.torso850Garment, SPEC.ratioRanges.torso850Garment)) add(errors, "fit.torsoTaper", "Torso width at y=850 must retain the authored shoulder taper", r.torso850Garment);
   if (m.garmentShoulderSpan - m.acromionSpan > SPEC.constants.garmentPaddingHeadMax * m.headWidth * 2 + .01) add(errors, "fit.garmentPadding", "Garment padding exceeds the base family contract", m.garmentShoulderSpan - m.acromionSpan);
   if (l.acromionLeft.x < SPEC.canvas.safeLeft || l.acromionRight.x > SPEC.canvas.safeRight) add(errors, "containment.shoulders", "Anatomical shoulders exceed the safe silhouette", [l.acromionLeft.x, l.acromionRight.x]);
   if (m.hairCrownOverlap < 0 || m.hairTempleOverlap < 0) add(errors, "fit.wigGap", "Measured inner-cap samples cannot leave a crown or temple gap", [m.hairCrownOverlap, m.hairTempleOverlap]);
@@ -53,6 +53,9 @@ export function validateGeometry(geometry) {
   }
   if (rendered.shoulderChordDeviation < 3.5) add(errors, "rendered.shoulderSlab", "The sampled acromion-to-arm contour must have visible deltoid curvature, not a long straight slab side", rendered.shoulderChordDeviation);
   if (!Number.isFinite(rendered.shoulderMaxStraightRun) || rendered.shoulderMaxStraightRun > 176) add(errors, "rendered.shoulderStraightRun", "No sampled shoulder/torso chord may remain effectively straight for more than 176 canvas units", rendered.shoulderMaxStraightRun);
+  if (!Number.isFinite(rendered.shoulderShelfLength) || rendered.shoulderShelfLength > 78) add(errors, "rendered.shoulderShelf", "The trapezius-to-acromion contour cannot contain a long nearly horizontal shelf", rendered.shoulderShelfLength);
+  if (!Number.isFinite(rendered.shoulderSideDisplacement) || rendered.shoulderSideDisplacement < 28) add(errors, "rendered.shoulderSideInset", "The shoulder cap and side torso must move meaningfully inward below the acromion", [rendered.shoulderSideXs, rendered.shoulderSideDisplacement]);
+  if (rendered.shoulderWindowXs.some(value => !Number.isFinite(value)) || rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] < 16) add(errors, "rendered.shoulderWindowInset", "The accepted outline must move inward by at least sixteen canvas units across the evaluator's y=665..785 shoulder/side window", rendered.shoulderWindowXs);
   if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 2 || (index > 0 && inset <= values[index - 1] + .5))) {
     add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must move progressively inward below the acromion", rendered.shoulderInward);
   }

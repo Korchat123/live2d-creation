@@ -1,5 +1,5 @@
 export const STANDARD_BUST_SPEC = Object.freeze({
-  version: "standard-bust-v1/spec-0.3.0",
+  version: "standard-bust-v1/spec-0.4.0",
   canvas: Object.freeze({ width: 1000, height: 1000, centerX: 500, cropY: 970, safeLeft: 120, safeRight: 880 }),
   parameters: Object.freeze({
     headWidth: { label: "Cranium width", min: 260, max: 280, step: 1, value: 270 },
@@ -9,7 +9,7 @@ export const STANDARD_BUST_SPEC = Object.freeze({
     upperNeckHeadRatio: { label: "Upper neck / head", min: 0.29, max: 0.40, step: 0.01, value: 0.34 },
     collarHeadRatio: { label: "Collar span / head", min: 0.38, max: 0.49, step: 0.01, value: 0.44 },
     neckLengthHeadRatio: { label: "Visible neck / head height", min: 0.22, max: 0.34, step: 0.01, value: 0.27 },
-    shoulderDrop: { label: "Shoulder-root to acromion drop", min: 24, max: 60, step: 1, value: 44 },
+    shoulderDrop: { label: "Shoulder-root to acromion drop", min: 72, max: 88, step: 1, value: 80 },
     templeCraniumRatio: { label: "Temple width / cranium", min: 0.94, max: 1.00, step: 0.01, value: 0.98 },
     cheekCraniumRatio: { label: "Cheek width / cranium", min: 0.86, max: 0.94, step: 0.01, value: 0.90 },
     chinCraniumRatio: { label: "Chin shelf / cranium", min: 0.28, max: 0.40, step: 0.01, value: 0.34 },
@@ -33,14 +33,14 @@ export const STANDARD_BUST_SPEC = Object.freeze({
     cheekCranium: [0.86, 0.94], chinCranium: [0.28, 0.40], eyeCenterFace: [0.43, 0.53], eyeAspect: [1.70, 2.35],
     innerGapEye: [0.88, 1.22], irisEye: [0.52, 0.72], eyeNose: [0.32, 0.45], noseMouth: [0.20, 0.32],
     mouthChin: [0.29, 0.43], mouthEyeCenters: [0.23, 0.43], hairHead: [1.12, 1.32], hairLiftHead: [0.06, 0.15],
-    bustShoulder: [0, 0.64], bustApexShoulder: [0, 0.18], torso850Garment: [0.78, 0.90]
+    bustShoulder: [0, 0.64], bustApexShoulder: [0, 0.18], torso850Garment: [0.70, 0.80]
   }),
   constants: Object.freeze({
     skullTopY: 92, browHeadY: 0.390, eyeHeadY: 0.505, templeHeadY: 0.34, cheekHeadY: 0.625, jawHeadY: 0.85,
     chinShelfHeadY: 0.97, eyeNoseShare: 0.376, upperNeckLead: 9, shoulderRootAboveCollar: 4,
     sternumBelowCollar: 20, bustBelowAcromion: 105, earTopRange: [225, 240], earBottomRange: [320, 340],
     hairlineCenterRange: [145, 165], hairlineTempleRange: [165, 190], hairProjectedDisplacement: 12, hairOverlapSafety: 8,
-    garmentPaddingHeadMax: 0.06, torso850GarmentRatio: 0.82, bustOuterClearance: 12, sternumClearanceShoulder: 0.08,
+    garmentPaddingHeadMax: 0.06, torso850GarmentRatio: 0.72, bustOuterClearance: 12, sternumClearanceShoulder: 0.08,
     outlineJoinTolerance: 3
   }),
   presets: Object.freeze({

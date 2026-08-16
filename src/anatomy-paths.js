@@ -47,7 +47,10 @@ function openSpline(points, tension = .62, verticalAt = []) {
   const tangents = points.map((current, index) => {
     if (index === 0) return { x: (points[1].x - current.x) * tension, y: (points[1].y - current.y) * tension };
     if (index === points.length - 1) return { x: (current.x - points[index - 1].x) * tension, y: (current.y - points[index - 1].y) * tension };
-    if (verticalAt.some(point => samePoint(point, current))) return { x: 0, y: (points[index + 1].y - points[index - 1].y) * tension };
+    if (verticalAt.some(point => samePoint(point, current))) {
+      const deltaY = points[index + 1].y - points[index - 1].y;
+      return { x: 0, y: Math.sign(deltaY) * Math.max(60, Math.abs(deltaY) * tension * 1.55) };
+    }
     return { x: (points[index + 1].x - points[index - 1].x) * tension, y: (points[index + 1].y - points[index - 1].y) * tension };
   });
   return points.slice(1).map((next, index) => {
@@ -110,8 +113,8 @@ export function buildAnatomyPaths(geometry) {
   const badWedge = mutations.bodyStyle === "wedge";
   const bodyLeft850 = badWedge ? l.acromionLeft.x - 26 : l.torso850Left.x;
   const bodyRight850 = badWedge ? l.acromionRight.x + 26 : l.torso850Right.x;
-  const cropLeft = waistLeft + shoulderSpan * .105;
-  const cropRight = waistRight - shoulderSpan * .105;
+  const cropLeft = l.waistLeft.x;
+  const cropRight = l.waistRight.x;
   const wallLeft = mutations.shoulderStyle === "wall"
     ? { ...l.deltoidOuterLeft, x: l.acromionLeft.x }
     : l.deltoidOuterLeft;
@@ -120,11 +123,15 @@ export function buildAnatomyPaths(geometry) {
     : l.deltoidOuterRight;
   const upperArmLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmLeft, x: l.acromionLeft.x } : l.upperArmLeft;
   const upperArmRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmRight, x: l.acromionRight.x } : l.upperArmRight;
+  const shoulderCapLeft = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapLeft, x: l.acromionLeft.x } : l.shoulderCapLeft;
+  const shoulderCapRight = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapRight, x: l.acromionRight.x } : l.shoulderCapRight;
   const left850 = mutations.shoulderStyle === "wall" ? l.acromionLeft.x : bodyLeft850;
   const right850 = mutations.shoulderStyle === "wall" ? l.acromionRight.x : bodyRight850;
-  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, wallLeft, upperArmLeft, { x: left850, y: 850 }, { x: cropLeft, y: 970 }];
-  const rightContour = [{ x: cropRight, y: 970 }, { x: right850, y: 850 }, upperArmRight, wallRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
-  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left", "torso850Right", "upperArmRight", "deltoidOuterRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
+  const bustSideLeft = mutations.shoulderStyle === "wall" ? { ...l.bustSideLeft, x: l.acromionLeft.x } : l.bustSideLeft;
+  const bustSideRight = mutations.shoulderStyle === "wall" ? { ...l.bustSideRight, x: l.acromionRight.x } : l.bustSideRight;
+  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, shoulderCapLeft, wallLeft, upperArmLeft, bustSideLeft, { x: left850, y: 850 }, l.waistLeft, { x: cropLeft, y: 970 }];
+  const rightContour = [{ x: cropRight, y: 970 }, l.waistRight, { x: right850, y: 850 }, bustSideRight, upperArmRight, wallRight, shoulderCapRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
+  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "bustSideLeft", "torso850Left", "waistLeft", "waistRight", "torso850Right", "bustSideRight", "upperArmRight", "deltoidOuterRight", "shoulderCapRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
     M(leftContour[0].x, leftContour[0].y), ...openSpline(leftContour, .62, [l.acromionLeft]),
     L(rightContour[0].x, rightContour[0].y), ...openSpline(rightContour, .62, [l.acromionRight]), Z()
   ]);
@@ -194,6 +201,22 @@ function shoulderMaxStraightRun(commands, acromionY) {
   return n(longest);
 }
 
+function shoulderShelfLength(commands, shoulderRoot, acromion) {
+  const acromionIndex = commands.findIndex(command => command.type === "C" && samePoint(command, acromion));
+  if (acromionIndex < 0) return Infinity;
+  const points = samplePath(commands.slice(0, acromionIndex + 1), 24)
+    .filter(point => point.x <= shoulderRoot.x + .01 && point.x >= acromion.x - .01 && point.y >= shoulderRoot.y - 2 && point.y <= acromion.y + 2);
+  let longest = 0; let run = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const dx = points[index].x - points[index - 1].x;
+    const dy = points[index].y - points[index - 1].y;
+    if (Math.abs(dx) > .01 && Math.abs(dy / dx) < .16) {
+      run += Math.hypot(dx, dy); longest = Math.max(longest, run);
+    } else run = 0;
+  }
+  return n(longest);
+}
+
 export function measureRenderedGeometry(geometry) {
   const paths = buildAnatomyPaths(geometry);
   const chestSurface = paths.chest ? samplePath(paths.chest.commands, 64) : [];
@@ -208,6 +231,8 @@ export function measureRenderedGeometry(geometry) {
   });
   const shoulderInward = shoulderWidths.map(width => n((geometry.measurements.acromionSpan - width) / 2));
   const shoulderJoin = cubicJoinAt(paths.body.commands, geometry.landmarks.acromionLeft);
+  const sideSampleYs = [20, 100, 180].map(offset => geometry.landmarks.acromionLeft.y + offset);
+  const sideSampleXs = sideSampleYs.map(y => intersectionsAtY(paths.body.commands, y)[0]);
   const chestMoveCount = paths.chest.commands.filter(command => command.type === "M").length;
   const chestClosed = paths.chest.commands.at(-1)?.type === "Z";
   const chestTangentMismatch = cubicJoinMismatch(paths.chest.commands);
@@ -230,6 +255,10 @@ export function measureRenderedGeometry(geometry) {
     shoulderJoinAngle: shoulderJoin.angle,
     shoulderChordDeviation: shoulderChordDeviation(paths.body.commands, geometry.landmarks.acromionLeft, geometry.landmarks.upperArmLeft),
     shoulderMaxStraightRun: shoulderMaxStraightRun(paths.body.commands, geometry.landmarks.acromionLeft.y),
+    shoulderShelfLength: shoulderShelfLength(paths.body.commands, geometry.landmarks.shoulderRootLeft, geometry.landmarks.acromionLeft),
+    shoulderSideXs: Object.freeze(sideSampleXs.map(n)),
+    shoulderSideDisplacement: n(sideSampleXs.at(-1) - sideSampleXs[0]),
+    shoulderWindowXs: Object.freeze([665, 725, 785].map(y => n(intersectionsAtY(paths.body.commands, y)[0]))),
     chestMoveCount,
     chestClosed,
     chestTangentMismatch,

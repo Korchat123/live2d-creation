@@ -19,7 +19,7 @@ Build a polished bust-up anime character creator that behaves like a game charac
 
 ## Current status
 
-`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.3.0`. It renders calculated construction geometry, landmarks, ratios, parameter bounds, exhaustive evidence states, and deliberately invalid rejection fixtures. `src/spec.js` is the single executable source for parameters, ranges, constants, and presets used by controls, geometry, validation, and tests. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
+`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.4.0`. It renders calculated construction geometry, landmarks, ratios, parameter bounds, exhaustive evidence states, and deliberately invalid rejection fixtures. `src/spec.js` is the single executable source for parameters, ranges, constants, and presets used by controls, geometry, validation, and tests. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
 
 Valid automated results deliberately say `Needs review`, never `Approved`. An independent evaluator must review the pushed candidate before Gate A can pass.
 

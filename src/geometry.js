@@ -98,20 +98,25 @@ export function buildGeometry(candidate = {}, mutations = {}) {
   const acromionY = shoulderRootY + p.shoulderDrop;
   const garmentPadding = Math.min(14, headWidth * c.garmentPaddingHeadMax);
   const garmentShoulderSpan = acromionSpan + garmentPadding * 2;
-  const torsoWidth850 = mutations.torsoWidth850Override ?? garmentShoulderSpan * c.torso850GarmentRatio;
+  const shoulderRangeShare = (p.shoulderHeadRatio - SPEC.parameters.shoulderHeadRatio.min) / (SPEC.parameters.shoulderHeadRatio.max - SPEC.parameters.shoulderHeadRatio.min);
+  const torsoTaperRatio = c.torso850GarmentRatio + shoulderRangeShare * .02;
+  const torsoWidth850 = mutations.torsoWidth850Override ?? garmentShoulderSpan * torsoTaperRatio;
   const trapeziusInset = acromionSpan * 0.075;
-  const shoulderMidInset = acromionSpan * 0.33;
-  const deltoidOuterY = acromionY + 86;
-  // The deltoid sits inward from the bony acromion.  Keeping these as distinct
-  // landmarks prevents the old vertical-wall shortcut while preserving the
-  // authored acromion/body width cap.
-  const deltoidInset = mutations.shoulderStyle === "wall" ? 0 : Math.max(18, headWidth * .085);
-  const upperArmY = acromionY + 190;
+  const shoulderMidInset = acromionSpan * 0.40;
+  const deltoidOuterY = acromionY + 58;
+  // A shoulder cap turns decisively into the upper arm; it is not the side of
+  // a rectangular garment. These insets scale from the actual head/torso
+  // family and remain effective at both shoulder-span bounds.
+  const deltoidInset = mutations.shoulderStyle === "wall" ? 0 : Math.max(34, headWidth * .13);
+  const shoulderCapInset = mutations.shoulderStyle === "wall" ? 0 : Math.max(7, headWidth * .028);
+  const upperArmY = acromionY + 126;
   const bustApexYExpected = acromionY + c.bustBelowAcromion;
   const bustApexY = bustApexYExpected + (mutations.bustApexOffsetY ?? 0);
   const bustEnvelopeWidth = acromionSpan * p.bustShoulderRatio;
   const bustApexOffset = bustEnvelopeWidth === 0 ? 0 : Math.min(acromionSpan * p.bustApexOffsetRatio, bustEnvelopeWidth * .35);
   const bustInnerClearance = bustEnvelopeWidth === 0 ? 0 : Math.min(acromionSpan * c.sternumClearanceShoulder, bustApexOffset * .55);
+  const bustVolume = p.bustShoulderRatio / SPEC.parameters.bustShoulderRatio.max;
+  const bustSideBulge = bustVolume * Math.min(18, headWidth * .067);
   const hairLift = headHeight * p.hairLiftHeadRatio;
   const hairWidth = mutations.hairWidthOverride ?? headWidth * p.hairWidthHeadRatio;
   const projected = c.hairProjectedDisplacement;
@@ -153,12 +158,17 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     shoulderMidLeft: point(centerX - shoulderMidInset, shoulderRootY + p.shoulderDrop * .72, "shoulder.left"),
     shoulderMidRight: point(centerX + shoulderMidInset, shoulderRootY + p.shoulderDrop * .72, "shoulder.right"),
     acromionLeft: point(centerX - acromionSpan / 2, acromionY, "shoulder.left"), acromionRight: point(centerX + acromionSpan / 2, acromionY, "shoulder.right"),
+    shoulderCapLeft: point(centerX - acromionSpan / 2 + shoulderCapInset, acromionY + 29, "shoulder.left"),
+    shoulderCapRight: point(centerX + acromionSpan / 2 - shoulderCapInset, acromionY + 29, "shoulder.right"),
     garmentShoulderLeft: point(centerX - garmentShoulderSpan / 2, acromionY + 14, "shoulder.left"), garmentShoulderRight: point(centerX + garmentShoulderSpan / 2, acromionY + 14, "shoulder.right"),
     deltoidOuterLeft: point(centerX - acromionSpan / 2 + deltoidInset, deltoidOuterY, "arm.left"),
     deltoidOuterRight: point(centerX + acromionSpan / 2 - deltoidInset, deltoidOuterY, "arm.right"),
-    upperArmLeft: point(centerX - torsoWidth850 / 2 - 10, upperArmY, "arm.left"),
-    upperArmRight: point(centerX + torsoWidth850 / 2 + 10, upperArmY, "arm.right"),
+    upperArmLeft: point(centerX - torsoWidth850 / 2 - 30, upperArmY, "arm.left"),
+    upperArmRight: point(centerX + torsoWidth850 / 2 + 30, upperArmY, "arm.right"),
+    bustSideLeft: point(centerX - torsoWidth850 / 2 - bustSideBulge, bustApexY + 64, "torso.root"),
+    bustSideRight: point(centerX + torsoWidth850 / 2 + bustSideBulge, bustApexY + 64, "torso.root"),
     torso850Left: point(centerX - torsoWidth850 / 2, 850, "torso.root"), torso850Right: point(centerX + torsoWidth850 / 2, 850, "torso.root"),
+    waistLeft: point(centerX - torsoWidth850 / 2 + 12, 910, "torso.root"), waistRight: point(centerX + torsoWidth850 / 2 - 12, 910, "torso.root"),
     sternum: point(centerX, sternumY, "chest.center"), bustUpper: point(centerX, sternumY, "chest.center"),
     bustOuterLeft: point(centerX - bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY - 10, "chest.center"),
     bustLeft: point(centerX - bustApexOffset, bustEnvelopeWidth === 0 ? sternumY : bustApexY, "bust.left"),
@@ -166,13 +176,13 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     bustInnerRight: point(centerX + bustInnerClearance, bustEnvelopeWidth === 0 ? sternumY : sternumY + 24, "chest.center"),
     bustRight: point(centerX + bustApexOffset, bustEnvelopeWidth === 0 ? sternumY : bustApexY, "bust.right"),
     bustOuterRight: point(centerX + bustEnvelopeWidth / 2, bustEnvelopeWidth === 0 ? sternumY : bustApexY - 10, "chest.center"),
-    upperRibLeft: point(centerX - collarWidth * .92, sternumY + 34, "torso.root"),
-    upperRibRight: point(centerX + collarWidth * .92, sternumY + 34, "torso.root"),
-    chestSideLeft: point(centerX - (torsoWidth850 / 2 + 8), bustApexY + 18, "torso.root"),
-    chestSideRight: point(centerX + (torsoWidth850 / 2 + 8), bustApexY + 18, "torso.root"),
-    lowerRibRight: point(centerX + Math.max(torsoWidth850 * .38, collarWidth * .85, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
-    lowerRibCenter: point(centerX, bustApexY + 82, "chest.center"),
-    lowerRibLeft: point(centerX - Math.max(torsoWidth850 * .38, collarWidth * .85, bustEnvelopeWidth * .42), bustApexY + 72, "chest.center"),
+    upperRibLeft: point(centerX - collarWidth * (.92 + bustVolume * .05), sternumY + 34 + bustVolume * 3, "torso.root"),
+    upperRibRight: point(centerX + collarWidth * (.92 + bustVolume * .05), sternumY + 34 + bustVolume * 3, "torso.root"),
+    chestSideLeft: point(centerX - (torsoWidth850 / 2 + 5 + bustSideBulge), bustApexY + 18 + bustVolume * 6, "torso.root"),
+    chestSideRight: point(centerX + (torsoWidth850 / 2 + 5 + bustSideBulge), bustApexY + 18 + bustVolume * 6, "torso.root"),
+    lowerRibRight: point(centerX + Math.max(torsoWidth850 * (.36 + bustVolume * .025), collarWidth * .85), bustApexY + 68 + bustVolume * 10, "chest.center"),
+    lowerRibCenter: point(centerX, bustApexY + 78 + bustVolume * 12, "chest.center"),
+    lowerRibLeft: point(centerX - Math.max(torsoWidth850 * (.36 + bustVolume * .025), collarWidth * .85), bustApexY + 68 + bustVolume * 10, "chest.center"),
     torsoCrop: point(centerX, SPEC.canvas.cropY, "torso.root")
   });
 
@@ -182,7 +192,7 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     irisClipRx: round(eyeWidth / 2 - 2), irisClipRy: round(eyeHeight / 2 - 2), irisVisibleHeight: round(Math.min(irisDiameter, eyeHeight - 4)),
     noseWidth: p.noseWidth, noseHeight: p.noseHeight, mouthWidth: p.mouthWidth, mouthHeight: p.mouthHeight,
     upperNeckWidth: round(upperNeckWidth), collarWidth: round(collarWidth), acromionSpan: round(acromionSpan), garmentShoulderSpan: round(garmentShoulderSpan),
-    torsoWidth850: round(torsoWidth850), shoulderDrop: p.shoulderDrop, bustEnvelopeWidth: round(bustEnvelopeWidth), bustApexOffset: round(bustApexOffset), bustInnerClearance: round(bustInnerClearance),
+    torsoWidth850: round(torsoWidth850), shoulderDrop: p.shoulderDrop, bustEnvelopeWidth: round(bustEnvelopeWidth), bustApexOffset: round(bustApexOffset), bustInnerClearance: round(bustInnerClearance), bustSideBulge: round(bustSideBulge),
     expectedBustApexY: round(bustApexYExpected), hairWidth: round(hairWidth), hairLift: round(hairLift), hairHiddenOverlap: round(hairHiddenOverlap),
     hairRequiredOverlap: projected + c.hairOverlapSafety, hairHaloGap: round(Math.max(0, -hairCrownOverlap)),
     hairCrownOverlap: round(landmarks.hairInnerCrown.y - landmarks.skullTop.y),

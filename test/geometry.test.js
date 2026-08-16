@@ -12,7 +12,7 @@ const near = (actual, expected, tolerance, message) => assert.ok(Math.abs(actual
 
 test("neutral geometry matches the corrected character-bible landmarks", () => {
   const geometry = buildGeometry(presetParameters("neutral"));
-  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.3.0");
+  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.4.0");
   assert.deepEqual(validateGeometry(geometry), { status: "Needs review", errors: [] });
   near(geometry.measurements.headWidth, 270, 0.01, "head width");
   near(geometry.measurements.headHeight, 333, 1, "head height");
@@ -26,7 +26,7 @@ test("neutral geometry matches the corrected character-bible landmarks", () => {
   near(geometry.landmarks.sternum.y, 525, 2, "collar/sternum center");
   near(geometry.landmarks.acromionLeft.x, 196, 1, "left anatomical acromion");
   near(geometry.landmarks.acromionRight.x, 804, 1, "right anatomical acromion");
-  near(geometry.landmarks.bustLeft.y, 650, 2, "covered bust apex");
+  near(geometry.landmarks.bustLeft.y, geometry.measurements.expectedBustApexY, .01, "covered bust apex");
 });
 
 test("geometry, validation, controls, and tests share one executable specification", () => {
@@ -45,7 +45,7 @@ test("all presentation presets are valid bounded bundles on one anatomy", () => 
   }
 });
 
-test("presentation targets and shoulder envelopes match spec 0.3", () => {
+test("presentation targets and shoulder envelopes match spec 0.4", () => {
   const expected = {
     feminine: [2.14, 0.69, 0.31, 0.57], androgynous: [2.25, 0.72, 0.34, 0.50], masculine: [2.40, 0.75, 0.38, 0.44]
   };
@@ -127,9 +127,9 @@ test("shoulders distinguish roots, anatomical acromia, garment extent, and narro
   assert.equal(l.deltoidOuterRight.parent, "arm.right");
   assert.ok(l.garmentShoulderLeft.x < l.acromionLeft.x);
   assert.ok(m.torsoWidth850 < m.garmentShoulderSpan);
-  assert.ok(m.torsoWidth850 / m.garmentShoulderSpan >= .78 && m.torsoWidth850 / m.garmentShoulderSpan <= .90);
+  assert.ok(m.torsoWidth850 / m.garmentShoulderSpan >= SPEC.ratioRanges.torso850Garment[0] && m.torsoWidth850 / m.garmentShoulderSpan <= SPEC.ratioRanges.torso850Garment[1]);
   assert.ok(m.garmentShoulderSpan - m.acromionSpan <= SPEC.constants.garmentPaddingHeadMax * m.headWidth * 2 + .01);
-  assert.ok(m.shoulderDrop >= 24 && m.shoulderDrop <= 60);
+  assert.ok(m.shoulderDrop >= SPEC.parameters.shoulderDrop.min && m.shoulderDrop <= SPEC.parameters.shoulderDrop.max);
 });
 
 test("visible anatomy paths preserve neck-to-arm continuity and canonical provenance", () => {
@@ -140,7 +140,7 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
     assert.equal(paths.neckGuide.parent, "neck.root");
     assert.equal(paths.shoulderGuide.parent, "collar.center");
     assert.equal(paths.chest.parent, "torso.root");
-    for (const landmark of ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "deltoidOuterLeft", "upperArmLeft", "torso850Left"]) {
+    for (const landmark of ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "bustSideLeft", "torso850Left", "waistLeft"]) {
       assert.ok(paths.body.landmarks.includes(landmark), `${name}:${landmark}`);
       const distance = Math.min(...paths.body.samples.map(point => Math.hypot(point.x - geometry.landmarks[landmark].x, point.y - geometry.landmarks[landmark].y)));
       assert.ok(distance <= 1.1, `${name}:${landmark} must be on visible contour, distance=${distance}`);
@@ -153,21 +153,36 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
   assert.ok(buildAnatomyPaths(buildGeometry({ bustShoulderRatio: 0 })).chest);
 });
 
-test("actual shoulder cubics share acromion tangents and retain sampled deltoid curvature", () => {
-  for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.48, headWidth: 280 }]) {
+test("actual shoulder cubics share acromion tangents and form a sloped cap with an inward side", () => {
+  for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.05, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 260 }, { shoulderHeadRatio: 2.48, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 280 }]) {
     const rendered = measureRenderedGeometry(buildGeometry(parameters));
     assert.ok(rendered.bodyHead <= 2.48);
     near(rendered.shoulderJoinMismatch, 0, .02, "acromion C1 mismatch");
     near(rendered.shoulderJoinAngle, 0, .1, "acromion G1 angle");
     assert.ok(rendered.shoulderChordDeviation >= 3.5, JSON.stringify(rendered.shoulderChordDeviation));
     assert.ok(rendered.shoulderMaxStraightRun <= 176, JSON.stringify(rendered.shoulderMaxStraightRun));
+    assert.ok(rendered.shoulderShelfLength <= 78, JSON.stringify(rendered.shoulderShelfLength));
+    assert.ok(rendered.shoulderSideDisplacement >= 28, JSON.stringify(rendered.shoulderSideXs));
+    assert.ok(rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] >= 16, JSON.stringify(rendered.shoulderWindowXs));
     assert.ok(rendered.shoulderInward.every((value, index, values) => value >= 2 && (index === 0 || value > values[index - 1] + .5)), JSON.stringify(rendered.shoulderInward));
   }
   const wall = measureRenderedGeometry(buildGeometry({}, { shoulderStyle: "wall" }));
   assert.ok(wall.shoulderChordDeviation < 3.5);
-  assert.ok(wall.shoulderMaxStraightRun > 176);
+  assert.ok(wall.shoulderSideDisplacement < 28);
   assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderSlab"));
-  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderStraightRun"));
+  assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderSideInset"));
+  assert.equal(validateGeometry(buildGeometry({ shoulderHeadRatio: SPEC.parameters.shoulderHeadRatio.min, shoulderDrop: SPEC.parameters.shoulderDrop.min })).status, "Needs review", "the authored min shoulder + min drop pair must remain supported");
+});
+
+test("bust control deforms the actual covered torso silhouette and default chest surface", () => {
+  const variants = [0, .08, .50, .64].map(bustShoulderRatio => measureRenderedGeometry(buildGeometry({ bustShoulderRatio })));
+  assert.equal(new Set(variants.map(rendered => rendered.paths.body.d)).size, variants.length, "body path must change at every sampled bust value");
+  assert.equal(new Set(variants.map(rendered => rendered.paths.chest.d)).size, variants.length, "chest path must change at every sampled bust value");
+  assert.equal(new Set(variants.map(rendered => `${rendered.paths.chest.bounds.width}:${rendered.paths.chest.bounds.height}`)).size, variants.length, "chest bounds must realize each bust value");
+  for (let index = 1; index < variants.length; index += 1) {
+    assert.notDeepEqual(variants[index].paths.body.samples, variants[index - 1].paths.body.samples);
+    assert.notDeepEqual(variants[index].paths.chest.samples, variants[index - 1].paths.chest.samples);
+  }
 });
 
 test("covered bust uses symmetric apexes and a continuous chest-owned envelope", () => {

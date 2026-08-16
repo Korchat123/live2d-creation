@@ -119,6 +119,7 @@ function renderSvg(geometry) {
       .hair-front { fill:none; stroke:#6e587e; stroke-width:6; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .ear { fill:#ead7df; stroke:#965f79; stroke-width:4; vector-effect:non-scaling-stroke }
       .ear-detail { fill:none; stroke:#a56b83; stroke-width:3; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .chest-volume { fill:url(#torso-volume); stroke:none; pointer-events:none }
       .chest-field { fill:none; stroke:#9b8ba7; stroke-opacity:.7; stroke-width:2; stroke-dasharray:8 8; vector-effect:non-scaling-stroke }
       .anatomy-line { fill:none; stroke:#75687d; stroke-width:2; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .face-mark { fill:#f8f5f8; stroke:#665b70; stroke-width:3; vector-effect:non-scaling-stroke }
@@ -129,11 +130,13 @@ function renderSvg(geometry) {
       .measurements .canvas-label { font-size:16px; fill:#665b70 }
     </style>
     <defs>
+      <radialGradient id="torso-volume" cx="50%" cy="42%" rx="58%" ry="72%"><stop offset="0" stop-color="#fff" stop-opacity=".24"/><stop offset=".62" stop-color="#bcaec8" stop-opacity=".12"/><stop offset="1" stop-color="#8c789c" stop-opacity="0"/></radialGradient>
       <clipPath id="eye-clip-left"><ellipse cx="${l.eyeLeft.x}" cy="${l.eyeLeft.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
       <clipPath id="eye-clip-right"><ellipse cx="${l.eyeRight.x}" cy="${l.eyeRight.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
     </defs>
     <path class="hair-back" data-layer="hair-back" data-parent="${anatomy.hairBack.parent}" data-landmark-chain="${provenance(anatomy.hairBack)}" d="${anatomy.hairBack.d}"/>
     <path class="body" data-parent="${anatomy.body.parent}" data-landmark-chain="${provenance(anatomy.body)}" d="${anatomy.body.d}"/>
+    <path class="chest-volume" data-layer="covered-torso-volume" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" opacity="${n(.18 + geometry.parameters.bustShoulderRatio / .64 * .22)}" d="${anatomy.chest.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>
