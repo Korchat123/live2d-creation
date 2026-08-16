@@ -1,0 +1,31 @@
+{
+  "candidate": "8a09c705bdc757533d4d8b161b292b957581fa53",
+  "specification": "standard-bust-v1/spec-0.3.0",
+  "result": "FAIL",
+  "tests": { "node": "32/32", "candidateChromium": "1/1" },
+  "sweep": { "states": 1159, "needsReview": 730, "blocked": 429, "finite": 1159, "identityMismatches": 0 },
+  "fixtures": { "total": 10, "blockedWithIntendedFamily": 10 },
+  "renderedRanges": { "hairHead": [1.118331, 1.320000], "bodyHead": [2.046945, 2.480000] },
+  "mobile": { "viewportWidth": 390, "documentWidth": 390, "stageLeft": 12, "stageRight": 378 },
+  "neutralChest": { "bbox": { "x": 228.623, "y": 524.808, "width": 542.754, "height": 207 }, "parent": "torso.root", "closed": true, "fillInOverlay": "none" },
+  "bustPathComparison": {
+    "values": [0, 0.08, 0.5, 0.64],
+    "envelopeWidths": [0, 48.6, 303.75, 388.8],
+    "uniqueChestPaths": 1,
+    "uniqueBodyPaths": 1
+  },
+  "neutralLeftOutlineSamples": { "y665": 223.975, "y705": 227.044, "y745": 230.229, "y785": 230.304 },
+  "captureSha256": {
+    "neutralDesktop": "8ef07faba1e451bc1cb24c5b14b8d94e6b38edd65101122698a172e656a34de1",
+    "neutralDesktopOverlay": "9a3fe0dc2a0609128e59678fbe3c0669d4a300c5232395f0c91942c5c1765b57",
+    "feminineDesktop": "0e2a3d1397dd0c65ada91734bc225001687d7232ff5e294e241dc1c4faf5109a",
+    "masculineDesktop": "f909b4b7ca61e635b5e52366f5d49e745eb74dab72f8f0f4706e78549d95f5e4",
+    "worstValidDesktop": "028f4d4d51bdf1ff9b12825d5a2b977db071322479d64b14a0f0b2fe870fe5d2",
+    "bustMinDesktop": "5927066d4a719b7116cfb83e12eb679788543468fc7af4ac6d9479e95d81c441",
+    "bustMaxDesktop": "6f32b72dddb83df34e6c7b660c1f4b050cabde2af206a60a7c816f55eceb62da",
+    "neutralMobile": "5331fbecd71988ed6f124bbbf1e1e443e55c96136e7fd3f2cfda96dbdcf39b83",
+    "worstValidMobile": "ac8e8b105d01fc7ed78d67eb34a4c4f379dce867bd01ecbe0029183048d8a75b"
+  },
+  "antiCheating": { "stageImages": 0, "canvas": 0, "rasterCharacterAssets": 0, "approvedShortcut": 0 },
+  "temporaryCaptureDirectory": "C:/Users/korch/AppData/Local/Temp/p0-gate-a-4-captures"
+}
