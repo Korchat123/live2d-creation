@@ -1,0 +1,54 @@
+{
+  "candidate": "e1fa52e894c18d1583fe436834cc91280a2cd2ad",
+  "spec": "standard-bust-v1/spec-0.3.0",
+  "decision": "FAIL",
+  "checks": {
+    "node": { "passed": 31, "failed": 0 },
+    "candidateBrowser": { "passed": 1, "failed": 0 },
+    "chromiumStateSweep": { "total": 1159, "needsReview": 731, "blocked": 428, "nonFinite": 0, "identityMismatches": 0 },
+    "fixtures": { "total": 10, "blocked": 10 }
+  },
+  "actualSvgRanges": {
+    "hairHead": [1.118331067864303, 1.3200000904224538],
+    "bodyHead": [2.046945092885735, 2.480000187800481],
+    "chestMoveCount": [1, 1],
+    "allAcceptedChestsClosed": true,
+    "allAcceptedChestsFilled": true,
+    "minimumEarScreenWidthDesktop": 21.02734375,
+    "minimumEarScreenHeightDesktop": 72.52001953125,
+    "minimumActualShoulderNarrowing": 9.20001220703125
+  },
+  "representativeShoulderWidths": {
+    "preset:neutral": { "bodyBBox": 607.5, "belowAcromion24_48_72": [588, 576, 564] },
+    "preset:feminine": { "bodyBBox": 577.800048828125, "belowAcromion24_48_72": [558, 546, 534] },
+    "preset:masculine": { "bodyBBox": 648, "belowAcromion24_48_72": [628, 616, 604] },
+    "combined:worst-valid": { "bodyBBox": 694.4000244140625, "belowAcromion24_48_72": [676, 660, 648] }
+  },
+  "chestBounds": {
+    "bound:bustShoulderRatio:min": { "width": 171.072021484375, "height": 214.84912109375 },
+    "preset:neutral": { "width": 333.1292419433594, "height": 207.7205810546875 },
+    "bound:bustShoulderRatio:max": { "width": 397.161865234375, "height": 207.7205810546875 },
+    "combined:worst-valid": { "width": 453.9747009277344, "height": 207.7205810546875 }
+  },
+  "mobile": { "viewportWidth": 390, "documentWidth": 390, "stageLeft": 12, "stageRight": 378, "freshLoadOverlayDefault": false },
+  "captureSha256": {
+    "preset-neutral-desktop.png": "776d21d67d0f8cccbbb9c6d6ef44fa62f3baa92d4aa23cbec93f255ac7241cd8",
+    "preset-feminine-desktop.png": "8ba19a4226038a065e346c47284082d52090326c4633eeaded01ddb4d1abfba4",
+    "preset-androgynous-desktop.png": "41dd2e67815bba270715724501a860ba66ec3e66b8ea69d682e5dab165bc3a22",
+    "preset-masculine-desktop.png": "98ef95446c32def3c1d9ae526280558852e1e16083bda07117ca65c22d9ee131",
+    "boundary-adult-safe-desktop.png": "100b88bcc9d42f29bd9ca5b2db0a4b8d5ba9fea8338fbc51b2f6d7eafedc5a8c",
+    "combined-worst-valid-desktop.png": "6da37cc3265603d80d1637431c75597ea6a443c07f4dd1c53b0fbdd532cc9e2a",
+    "bound-shoulderHeadRatio-min-desktop.png": "dce51bc8bb6098bf1c265f8f1459c5051f292e25bb194ccc9146dd1920f577d9",
+    "bound-shoulderHeadRatio-max-desktop.png": "e43e417f42ead41efe47731f8c4dbd6b95f2583321c55f1da8763caca312c87f",
+    "bound-bustShoulderRatio-min-desktop.png": "573ba33000001ee28a19a7b1d905f578f51998850478e0d6579fda9309d740b1",
+    "bound-bustShoulderRatio-max-desktop.png": "9d940334ffd21b91486ca507b21d58221ab5ec3d276fa6e447577a5794a6b08e",
+    "bound-hairWidthHeadRatio-min-desktop.png": "d6c94a6f9d536bb9261d2344e7bcb21f98008a9a0d3aa0bf73b09ecc366cfab8",
+    "bound-hairWidthHeadRatio-max-desktop.png": "d8fbb6c1b2340d626db844a94e9d5d0e39b9b6db19fe37e56fd4612526df0735",
+    "bound-headWidth-min-desktop.png": "35f89ab2ecbb56a11d426752d40f6fe25de7ffe6e37cbbfdc8d94be4317b209b",
+    "bound-headWidth-max-desktop.png": "2651ab7214afe8102a5dfc4a0c6f436fc2e0f4b805c6f8654383d05c4d652b72",
+    "preset-neutral-mobile.png": "c821ab422cc8893e17d1ae24122ddf0fc36593e8288f3679fd4cc5620d6f7e11",
+    "preset-feminine-mobile.png": "a93f562d312b0b19c79465bd77509184bf4473ebdf66e5b8629166c58e7c492b",
+    "preset-masculine-mobile.png": "106f07a4c5b97d5d25eb99fbe81160da19b0f85ea1437c91f4e1810102964329",
+    "combined-worst-valid-mobile.png": "0537e7a4a1a2d32cb96f850d99e5eef86136913a3ebc3453f459a62d95f913fa"
+  }
+}
