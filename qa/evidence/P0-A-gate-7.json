@@ -1,0 +1,31 @@
+{
+  "gate": "P0-A/Gate-A-7",
+  "result": "FAIL",
+  "featureHead": "124da755a6deb61629ccf5011fa57dd4864d0cb8",
+  "codeCandidate": "25f2528bb65fe51ef6c6472c865bd860d69435aa",
+  "spec": "standard-bust-v1/spec-0.6.0",
+  "tests": { "node": "35/35", "chromium": "1/1" },
+  "browserSweep": {
+    "states": 1159,
+    "needsReview": 1122,
+    "blocked": 37,
+    "isolatedEndpointsAccepted": "48/48",
+    "fixturesBlocked": "11/11",
+    "identityMismatches": 0,
+    "nonFinite": 0
+  },
+  "passed": [
+    "contract-parity",
+    "custom-state-identity",
+    "visible-bust-propagation",
+    "zero-bust-topology",
+    "head-hair-ear-fit",
+    "mobile-containment",
+    "anti-cheating"
+  ],
+  "blockers": [
+    "outer body remains a shield/container silhouette",
+    "inner axilla curves are decorative seams rather than separately owned arm and torso anatomy"
+  ],
+  "provenanceNote": "Independent reviewer completed the checks and communicated the FAIL findings, then hit its service limit before committing; the coordinator recorded those unchanged findings."
+}
