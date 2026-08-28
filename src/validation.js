@@ -55,14 +55,27 @@ export function validateGeometry(geometry) {
   if (!Number.isFinite(rendered.shoulderMaxStraightRun) || rendered.shoulderMaxStraightRun > 176) add(errors, "rendered.shoulderStraightRun", "No sampled shoulder/torso chord may remain effectively straight for more than 176 canvas units", rendered.shoulderMaxStraightRun);
   if (!Number.isFinite(rendered.shoulderShelfLength) || rendered.shoulderShelfLength > 48) add(errors, "rendered.shoulderShelf", "The trapezius-to-acromion contour cannot contain a long nearly horizontal shelf", rendered.shoulderShelfLength);
   if (!between(rendered.shoulderRootSlope, [.17, .29])) add(errors, "rendered.shoulderSlope", "The actual shoulder must descend early from the root to the acromion instead of forming a shelf or hanger", rendered.shoulderRootSlope);
-  if (rendered.shoulderTurnWidths.some(value => !Number.isFinite(value)) || rendered.shoulderTurnWidths[1] < rendered.shoulderTurnWidths[0] + 6 || rendered.shoulderDeltoidInset < 11.5 || rendered.shoulderPeakPadding < 4 || rendered.shoulderPeakPadding > m.headWidth * SPEC.constants.garmentPaddingHeadMax) {
+  if (rendered.shoulderTurnWidths.some(value => !Number.isFinite(value)) || rendered.shoulderTurnWidths[1] < rendered.shoulderTurnWidths[0] + 6 || rendered.shoulderDeltoidInset < 3 || rendered.shoulderPeakPadding < 4 || rendered.shoulderPeakPadding > m.headWidth * SPEC.constants.garmentPaddingHeadMax) {
     add(errors, "rendered.deltoidTurn", "The actual silhouette must form one bounded rounded deltoid beyond the bony acromion and turn inward without a square cap", [rendered.shoulderTurnWidths, rendered.shoulderPeakPadding, rendered.shoulderDeltoidInset]);
   }
   if (!Number.isFinite(rendered.shoulderSideDisplacement) || rendered.shoulderSideDisplacement < 28) add(errors, "rendered.shoulderSideInset", "The shoulder cap and side torso must move meaningfully inward below the acromion", [rendered.shoulderSideXs, rendered.shoulderSideDisplacement]);
   if (rendered.shoulderWindowXs.some(value => !Number.isFinite(value)) || rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] < 16) add(errors, "rendered.shoulderWindowInset", "The accepted outline must move inward by at least sixteen canvas units across the evaluator's y=665..785 shoulder/side window", rendered.shoulderWindowXs);
-  if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 4 || (index > 0 && inset <= values[index - 1] + 8))) {
+  if (rendered.shoulderInward.some(inset => !Number.isFinite(inset)) || rendered.shoulderInward[0] < -6 || rendered.shoulderWidths[0] - rendered.shoulderWidths[1] < 20 || rendered.shoulderWidths[1] - rendered.shoulderWidths[2] < 25) {
     add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must keep moving progressively inward after the deltoid turn", rendered.shoulderInward);
   }
+  const maxShoulderDerivative = Math.max(...rendered.shoulderDerivatives.map(Math.abs));
+  const maxShoulderCurvature = Math.max(...rendered.shoulderCurvatures.map(Math.abs));
+  if (rendered.shoulderProfile.some(value => !Number.isFinite(value)) || maxShoulderDerivative > 1.9 || rendered.shoulderWidths[0] - rendered.shoulderWidths[1] > 60) {
+    add(errors, "rendered.shoulderDerivative", "The sampled upper-arm and torso contour cannot collapse abruptly into an inward hook", [maxShoulderDerivative, rendered.shoulderWidths]);
+  }
+  if (!Number.isFinite(maxShoulderCurvature) || maxShoulderCurvature > .1) {
+    add(errors, "rendered.shoulderHook", "The sampled shoulder derivative must change gradually without hook-like curvature", [maxShoulderCurvature, rendered.shoulderCurvatures]);
+  }
+  const zeroBustFrameRisk = m.bustEnvelopeWidth === 0 && (
+    (m.headWidth <= SPEC.parameters.headWidth.min && rendered.waistWidth < 450) ||
+    (r.shoulderHead >= SPEC.parameters.shoulderHeadRatio.max && rendered.shoulderWidths[2] < m.acromionSpan * .78)
+  );
+  if (zeroBustFrameRisk) add(errors, "correlation.shoulderFrame", "The zero-bust arm/torso frame cannot combine with the smallest head/lower-torso field or widest acromion endpoint", [m.headWidth, r.shoulderHead, rendered.waistWidth, rendered.shoulderWidths[2]]);
   const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));
   for (const name of ["craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"]) {
     if (distanceToPath(rendered.paths.head, l[name]) > 1.1) add(errors, `rendered.head.${name}`, `${name} must be an actual sampled point on the visible head contour`, distanceToPath(rendered.paths.head, l[name]));

@@ -74,8 +74,8 @@ function buildEvidenceOptions() {
   const pairs = states.filter(item => item.id.startsWith("pair:"));
   const boundaries = states.filter(item => item.id.startsWith("boundary:"));
   const combined = states.filter(item => item.id.startsWith("combined:"));
-  const group = (label, items) => `<optgroup label="${label}">${items.map(item => `<option value="${item.id}">${item.id}</option>`).join("")}</optgroup>`;
-  evidenceSelect.innerHTML = group("Presets", presets) + group("Individual bounds", bounds) + group("Pairwise combined extremes", pairs) + group("Safety boundaries", boundaries) + group("Combined bundles", combined);
+  const group = (label, items) => `<optgroup label="${label}">${items.map(item => `<option value="${item.id}"${item.disabled ? " disabled" : ""}>${item.id}</option>`).join("")}</optgroup>`;
+  evidenceSelect.innerHTML = group("Manual state", [{ id: "custom:bounded", disabled: true }, { id: "custom:reconciled", disabled: true }]) + group("Presets", presets) + group("Individual bounds", bounds) + group("Pairwise combined extremes", pairs) + group("Safety boundaries", boundaries) + group("Combined bundles", combined);
 }
 
 function buildFixtureButtons() {
@@ -141,6 +141,8 @@ function renderSvg(geometry) {
     <path class="chest-volume" data-layer="covered-torso-volume" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" opacity="${n(.18 + geometry.parameters.bustShoulderRatio / .64 * .22)}" d="${anatomy.chest.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
+    <path class="anatomy-line arm-transition" data-layer="arm-torso-transition" data-parent="${anatomy.armGuides.left.parent}" data-landmark-chain="${provenance(anatomy.armGuides.left)}" d="${anatomy.armGuides.left.d}"/>
+    <path class="anatomy-line arm-transition" data-layer="arm-torso-transition" data-parent="${anatomy.armGuides.right.parent}" data-landmark-chain="${provenance(anatomy.armGuides.right)}" d="${anatomy.armGuides.right.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.right.parent}" data-landmark-chain="${provenance(anatomy.ears.right)}" d="${anatomy.ears.right.d}"/>
     <path class="head" data-parent="${anatomy.head.parent}" data-landmark-chain="${provenance(anatomy.head)}" d="${anatomy.head.d}"/>
@@ -180,7 +182,9 @@ controls.addEventListener("input", event => {
   const candidate = { ...currentParameters, [key]: Number(event.target.value) };
   if (validateGeometry(buildGeometry(candidate)).status === "Blocked") {
     updateControlValues();
-    currentStateName = "custom:reconciled (unsafe change rejected)";
+    currentStateName = "custom:reconciled";
+    presetSelect.selectedIndex = -1;
+    evidenceSelect.value = currentStateName;
     render();
     return;
   }
@@ -188,6 +192,7 @@ controls.addEventListener("input", event => {
   currentFixture = null;
   currentStateName = "custom:bounded";
   presetSelect.selectedIndex = -1;
+  evidenceSelect.value = currentStateName;
   controls.querySelector(`[data-output="${key}"]`).value = event.target.value;
   render();
 });

@@ -13,7 +13,7 @@ const near = (actual, expected, tolerance, message) => assert.ok(Math.abs(actual
 
 test("neutral geometry matches the corrected character-bible landmarks", () => {
   const geometry = buildGeometry(presetParameters("neutral"));
-  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.5.0");
+  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.6.0");
   assert.deepEqual(validateGeometry(geometry), { status: "Needs review", errors: [] });
   near(geometry.measurements.headWidth, 270, 0.01, "head width");
   near(geometry.measurements.headHeight, 333, 1, "head height");
@@ -58,7 +58,7 @@ test("all presentation presets are valid bounded bundles on one anatomy", () => 
   }
 });
 
-test("presentation targets and shoulder envelopes match spec 0.5", () => {
+test("presentation targets and shoulder envelopes match spec 0.6", () => {
   const expected = {
     feminine: [2.14, 0.69, 0.31, 0.57], androgynous: [2.25, 0.72, 0.34, 0.50], masculine: [2.40, 0.75, 0.38, 0.44]
   };
@@ -135,7 +135,7 @@ test("shoulders distinguish roots, anatomical acromia, garment extent, and narro
   const { landmarks: l, measurements: m } = buildGeometry();
   assert.ok(l.shoulderRootLeft.x > l.acromionLeft.x);
   assert.ok(l.shoulderRootLeft.y < l.trapeziusLeft.y && l.trapeziusLeft.y < l.shoulderMidLeft.y && l.shoulderMidLeft.y < l.acromionLeft.y);
-  assert.ok(l.deltoidOuterLeft.y > l.acromionLeft.y && l.upperArmLeft.y > l.deltoidOuterLeft.y);
+  assert.ok(l.deltoidOuterLeft.y > l.acromionLeft.y && l.upperArmLeft.y > l.deltoidOuterLeft.y && l.upperArmTransitionLeft.y > l.upperArmLeft.y);
   assert.equal(l.deltoidOuterLeft.parent, "arm.left");
   assert.equal(l.deltoidOuterRight.parent, "arm.right");
   assert.ok(l.garmentShoulderLeft.x < l.acromionLeft.x);
@@ -152,8 +152,10 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
     assert.equal(paths.body.parent, "torso.root");
     assert.equal(paths.neckGuide.parent, "neck.root");
     assert.equal(paths.shoulderGuide.parent, "collar.center");
+    assert.equal(paths.armGuides.left.parent, "arm.left");
+    assert.equal(paths.armGuides.right.parent, "arm.right");
     assert.equal(paths.chest.parent, "torso.root");
-    for (const landmark of ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "bustSideLeft", "torso850Left", "waistLeft"]) {
+    for (const landmark of ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "upperArmTransitionLeft", "bustSideLeft", "torso850Left", "waistLeft"]) {
       assert.ok(paths.body.landmarks.includes(landmark), `${name}:${landmark}`);
       const distance = Math.min(...paths.body.samples.map(point => Math.hypot(point.x - geometry.landmarks[landmark].x, point.y - geometry.landmarks[landmark].y)));
       assert.ok(distance <= 1.1, `${name}:${landmark} must be on visible contour, distance=${distance}`);
@@ -178,10 +180,13 @@ test("actual shoulder cubics share acromion tangents and form a sloped cap with 
     assert.ok(rendered.shoulderRootSlope >= .17 && rendered.shoulderRootSlope <= .29, JSON.stringify(rendered.shoulderRootSlope));
     assert.ok(rendered.shoulderPeakPadding >= 4 && rendered.shoulderPeakPadding <= parameters.headWidth * SPEC.constants.garmentPaddingHeadMax, JSON.stringify(rendered.shoulderPeakPadding));
     assert.ok(rendered.shoulderTurnWidths[1] >= rendered.shoulderTurnWidths[0] + 6, JSON.stringify(rendered.shoulderTurnWidths));
-    assert.ok(rendered.shoulderDeltoidInset >= 11.5, JSON.stringify(rendered.shoulderDeltoidInset));
+    assert.ok(rendered.shoulderDeltoidInset >= 3, JSON.stringify(rendered.shoulderDeltoidInset));
     assert.ok(rendered.shoulderSideDisplacement >= 28, JSON.stringify(rendered.shoulderSideXs));
     assert.ok(rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] >= 16, JSON.stringify(rendered.shoulderWindowXs));
-    assert.ok(rendered.shoulderInward.every((value, index, values) => value >= 2 && (index === 0 || value > values[index - 1] + .5)), JSON.stringify(rendered.shoulderInward));
+    assert.ok(rendered.shoulderInward[0] >= -6 && rendered.shoulderWidths[0] - rendered.shoulderWidths[1] >= 20 && rendered.shoulderWidths[1] - rendered.shoulderWidths[2] >= 25, JSON.stringify(rendered.shoulderInward));
+    assert.ok(Math.max(...rendered.shoulderDerivatives.map(Math.abs)) <= 1.9, JSON.stringify(rendered.shoulderDerivatives));
+    assert.ok(Math.max(...rendered.shoulderCurvatures.map(Math.abs)) <= .1, JSON.stringify(rendered.shoulderCurvatures));
+    assert.ok(rendered.shoulderWidths[0] - rendered.shoulderWidths[1] <= 60, JSON.stringify(rendered.shoulderWidths));
   }
   const wall = measureRenderedGeometry(buildGeometry({}, { shoulderStyle: "wall" }));
   assert.ok(wall.shoulderChordDeviation < 3.5);
@@ -259,6 +264,11 @@ test("rendered contours, not intended controls, satisfy the visible silhouette c
     assert.ok(rendered.hairHead >= SPEC.ratioRanges.hairHead[0] && rendered.hairHead <= SPEC.ratioRanges.hairHead[1], `${state.id}: hair/head=${rendered.hairHead}`);
     assert.ok(rendered.bodyHead >= 2.05 && rendered.bodyHead <= 2.60, `${state.id}: body/head=${rendered.bodyHead}`);
     assert.ok(rendered.waistShoulder >= .68 && rendered.waistShoulder <= .86, `${state.id}: waist/shoulder=${rendered.waistShoulder}`);
+    assert.equal(rendered.shoulderProfile.length, 21, `${state.id}: dense shoulder samples`);
+    assert.ok(rendered.shoulderProfile.every(Number.isFinite), `${state.id}: ${JSON.stringify(rendered.shoulderProfile)}`);
+    assert.ok(Math.max(...rendered.shoulderDerivatives.map(Math.abs)) <= 1.9, `${state.id}: ${JSON.stringify(rendered.shoulderDerivatives)}`);
+    assert.ok(Math.max(...rendered.shoulderCurvatures.map(Math.abs)) <= .1, `${state.id}: ${JSON.stringify(rendered.shoulderCurvatures)}`);
+    assert.ok(rendered.shoulderWidths[0] - rendered.shoulderWidths[1] <= 60, `${state.id}: ${JSON.stringify(rendered.shoulderWidths)}`);
   }
 });
 
@@ -276,14 +286,18 @@ test("evidence includes presets, every bound, all pairwise corners, and worst-va
     assert.equal(validateGeometry(buildGeometry(state.parameters)).status, "Needs review", `${key}:${bound} is an advertised isolated endpoint`);
   }
   assert.equal(validateGeometry(buildGeometry(states.find(state => state.id === "combined:worst-valid").parameters)).status, "Needs review");
-  assert.ok(states.some(state => validateGeometry(buildGeometry(state.parameters)).status === "Blocked"), "correlated combinations must be rejected, not silently accepted");
+  const blocked = states.filter(state => validateGeometry(buildGeometry(state.parameters)).status === "Blocked");
+  assert.equal(blocked.length, 37, "the documented correlated rejection set must remain stable");
+  for (const id of ["pair:headWidth:min+bustShoulderRatio:min", "pair:shoulderHeadRatio:max+bustShoulderRatio:min"]) {
+    assert.ok(validateGeometry(buildGeometry(states.find(state => state.id === id).parameters)).errors.some(error => error.code === "correlation.shoulderFrame"), id);
+  }
 });
 
 test("all malformed fixtures are blocked for their intended measured defect", () => {
   const expectedCodes = {
     miniatureHead: "ratio.shoulderHead", wigGap: "fit.wigGap", floatingNeck: "fit.floatingNeck", misplacedFace: "alignment.face",
     rectangularShoulders: "fit.rectangularShoulders", detachedBust: "fit.detachedBust", correlatedMaturity: "correlation.maturity", unsafeCombined: "containment.shoulders",
-    wedgeBody: "rendered.wedgeBody", scallopedBib: "rendered.scallopedBib"
+    wedgeBody: "rendered.wedgeBody", scallopedBib: "rendered.scallopedBib", compactShoulderHook: "rendered.shoulderDerivative"
   };
   assert.deepEqual(Object.keys(NEGATIVE_FIXTURES), Object.keys(expectedCodes));
   for (const [name, code] of Object.entries(expectedCodes)) {

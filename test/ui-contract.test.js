@@ -38,6 +38,7 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /data-parent="\$\{anatomy\.hairBack\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.hairFront\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.body\.parent\}" data-landmark-chain=/);
+  assert.match(app, /data-layer="arm-torso-transition" data-parent="\$\{anatomy\.armGuides\.left\.parent\}"/);
   assert.match(app, /data-parent="\$\{anatomy\.chest\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.neckGuide\.parent\}" data-landmark-chain=/);
   assert.match(app, /ellipseMarkup\([^\n]+"eye\.left"\)/);

@@ -123,21 +123,27 @@ export function buildAnatomyPaths(geometry) {
     : l.deltoidOuterRight;
   const upperArmLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmLeft, x: l.acromionLeft.x } : l.upperArmLeft;
   const upperArmRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmRight, x: l.acromionRight.x } : l.upperArmRight;
+  const upperArmTransitionLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmTransitionLeft, x: l.acromionLeft.x } : l.upperArmTransitionLeft;
+  const upperArmTransitionRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmTransitionRight, x: l.acromionRight.x } : l.upperArmTransitionRight;
   const shoulderCapLeft = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapLeft, x: l.acromionLeft.x } : l.shoulderCapLeft;
   const shoulderCapRight = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapRight, x: l.acromionRight.x } : l.shoulderCapRight;
   const left850 = mutations.shoulderStyle === "wall" ? l.acromionLeft.x : bodyLeft850;
   const right850 = mutations.shoulderStyle === "wall" ? l.acromionRight.x : bodyRight850;
   const bustSideLeft = mutations.shoulderStyle === "wall" ? { ...l.bustSideLeft, x: l.acromionLeft.x } : l.bustSideLeft;
   const bustSideRight = mutations.shoulderStyle === "wall" ? { ...l.bustSideRight, x: l.acromionRight.x } : l.bustSideRight;
-  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, shoulderCapLeft, wallLeft, upperArmLeft, bustSideLeft, { x: left850, y: 850 }, l.waistLeft, { x: cropLeft, y: 970 }];
-  const rightContour = [{ x: cropRight, y: 970 }, l.waistRight, { x: right850, y: 850 }, bustSideRight, upperArmRight, wallRight, shoulderCapRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
-  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "bustSideLeft", "torso850Left", "waistLeft", "waistRight", "torso850Right", "bustSideRight", "upperArmRight", "deltoidOuterRight", "shoulderCapRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
+  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, shoulderCapLeft, wallLeft, upperArmLeft, upperArmTransitionLeft, bustSideLeft, { x: left850, y: 850 }, l.waistLeft, { x: cropLeft, y: 970 }];
+  const rightContour = [{ x: cropRight, y: 970 }, l.waistRight, { x: right850, y: 850 }, bustSideRight, upperArmTransitionRight, upperArmRight, wallRight, shoulderCapRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
+  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "upperArmTransitionLeft", "bustSideLeft", "torso850Left", "waistLeft", "waistRight", "torso850Right", "bustSideRight", "upperArmTransitionRight", "upperArmRight", "deltoidOuterRight", "shoulderCapRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
     M(leftContour[0].x, leftContour[0].y), ...openSpline(leftContour, .62, [l.acromionLeft]),
     L(rightContour[0].x, rightContour[0].y), ...openSpline(rightContour, .62, [l.acromionRight]), Z()
   ]);
 
   const neckGuide = path("neck.root", ["upperNeckLeft", "collarLeft", "collarRight", "upperNeckRight"], [M(l.upperNeckLeft.x,l.upperNeckLeft.y), C(l.upperNeckLeft.x,l.collarLeft.y-22,l.collarLeft.x,l.collarLeft.y-10,l.collarLeft.x,l.collarLeft.y), M(l.upperNeckRight.x,l.upperNeckRight.y), C(l.upperNeckRight.x,l.collarRight.y-22,l.collarRight.x,l.collarRight.y-10,l.collarRight.x,l.collarRight.y)]);
   const shoulderGuide = path("collar.center", ["shoulderRootLeft", "sternum", "shoulderRootRight"], [M(l.shoulderRootLeft.x,l.shoulderRootLeft.y), C(420,l.sternum.y-22,465,l.sternum.y,l.sternum.x,l.sternum.y), C(535,l.sternum.y,580,l.sternum.y-22,l.shoulderRootRight.x,l.shoulderRootRight.y)]);
+  const armGuides = Object.freeze({
+    left: path("arm.left", ["shoulderMidLeft", "axillaLeft"], [M(l.shoulderMidLeft.x,l.shoulderMidLeft.y+5), C(l.acromionLeft.x+42,l.acromionLeft.y+46,l.axillaLeft.x-18,l.axillaLeft.y-22,l.axillaLeft.x,l.axillaLeft.y)]),
+    right: path("arm.right", ["shoulderMidRight", "axillaRight"], [M(l.shoulderMidRight.x,l.shoulderMidRight.y+5), C(l.acromionRight.x-42,l.acromionRight.y+46,l.axillaRight.x+18,l.axillaRight.y-22,l.axillaRight.x,l.axillaRight.y)])
+  });
 
   // A torso-owned ribcage field. Bust anchors are internal deformation
   // controls, never the visible perimeter, so zero bust retains this same
@@ -155,7 +161,7 @@ export function buildAnatomyPaths(geometry) {
     innerLeft: path("ear.left", ["earTopLeft","earBottomLeft"], [M(l.earTopLeft.x-2,l.earTopLeft.y+24), Q(l.earTopLeft.x-14,(l.earTopLeft.y+l.earBottomLeft.y)/2,l.earBottomLeft.x-2,l.earBottomLeft.y-22)]),
     innerRight: path("ear.right", ["earTopRight","earBottomRight"], [M(l.earTopRight.x+2,l.earTopRight.y+24), Q(l.earTopRight.x+14,(l.earTopRight.y+l.earBottomRight.y)/2,l.earBottomRight.x+2,l.earBottomRight.y-22)])
   };
-  return Object.freeze({ head, hair: hairBack, hairBack, hairFront, hairFit, body, neckGuide, shoulderGuide, chest, ears });
+  return Object.freeze({ head, hair: hairBack, hairBack, hairFront, hairFit, body, neckGuide, shoulderGuide, armGuides, chest, ears });
 }
 
 const nearestYAtX = (samples, x) => samples.reduce((best, point) => Math.abs(point.x - x) < Math.abs(best.x - x) ? point : best).y;
@@ -237,6 +243,13 @@ export function measureRenderedGeometry(geometry) {
     const hits = intersectionsAtY(paths.body.commands, y);
     return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
   });
+  const shoulderProfile = [];
+  for (let offset = 0; offset <= 240; offset += 12) {
+    const hits = intersectionsAtY(paths.body.commands, geometry.landmarks.acromionLeft.y + offset);
+    shoulderProfile.push(hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN);
+  }
+  const shoulderDerivatives = shoulderProfile.slice(1).map((width, index) => n((width - shoulderProfile[index]) / 12));
+  const shoulderCurvatures = shoulderDerivatives.slice(1).map((slope, index) => n((slope - shoulderDerivatives[index]) / 12));
   const shoulderJoin = cubicJoinAt(paths.body.commands, geometry.landmarks.acromionLeft);
   const sideSampleYs = [20, 100, 180].map(offset => geometry.landmarks.acromionLeft.y + offset);
   const sideSampleXs = sideSampleYs.map(y => intersectionsAtY(paths.body.commands, y)[0]);
@@ -260,6 +273,9 @@ export function measureRenderedGeometry(geometry) {
     shoulderInward: Object.freeze(shoulderInward),
     shoulderRootSlope: n((geometry.landmarks.acromionLeft.y - geometry.landmarks.shoulderRootLeft.y) / (geometry.landmarks.shoulderRootLeft.x - geometry.landmarks.acromionLeft.x)),
     shoulderTurnWidths: Object.freeze(shoulderTurnWidths),
+    shoulderProfile: Object.freeze(shoulderProfile),
+    shoulderDerivatives: Object.freeze(shoulderDerivatives),
+    shoulderCurvatures: Object.freeze(shoulderCurvatures),
     shoulderPeakPadding: n((Math.max(...shoulderTurnWidths) - geometry.measurements.acromionSpan) / 2),
     shoulderDeltoidInset: n((Math.max(...shoulderTurnWidths) - shoulderTurnWidths.at(-1)) / 2),
     shoulderJoinMismatch: shoulderJoin.mismatch,

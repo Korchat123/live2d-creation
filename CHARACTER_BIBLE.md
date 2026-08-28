@@ -1,6 +1,6 @@
 # Standard bust v1 character bible
 
-Version: `standard-bust-v1/spec-0.5.0`
+Version: `standard-bust-v1/spec-0.6.0`
 
 Status: planning candidate. P0-A is blocked until an independent Gate A report passes this exact file version and candidate commit.
 
@@ -10,9 +10,9 @@ The target is a polished, front-facing anime VTuber bust with young-adult appare
 
 The neutral construction is symmetric. Feminine, androgynous, and masculine presentation presets are bounded values on this one anatomy; gender presentation, bust, and maturity are independent dimensions.
 
-## Version 0.5 rationale and executable parity
+## Version 0.6 rationale and executable parity
 
-This version reconciles the written contract with the executable candidate after independent Gate 5 evidence. It restores the acromion from the rejected `y=581` region to approximately `y=553`, replaces the late square cap with a measured root slope, rounded deltoid turn, and progressive torso curvature, and retains the visually necessary `0.70..0.78` torso taper. Face and neck bounds are narrowed only where an isolated endpoint mathematically violated an unchanged derived invariant: upper-neck/jaw, adjacent head curvature, inner eye gap, eye aspect, mouth/eye-center ratio, or nose/mouth ratio. The correlated maturity rule remains a separate multi-control rejection.
+This version retains the reconciled 0.5 parameter ranges and raises the acromion from the rejected `y=581` region to approximately `y=553`. After independent Gate 6 evidence showed that the 0.5 contour still collapsed by about 85 units between the `+90` and `+150` samples, 0.6 versions the visible topology as an anatomical chain: trapezius, acromion, broad rounded deltoid, upper arm, arm/torso transition, and torso. An axilla seam makes arm ownership visible. Dense samples of the actual SVG now bound both first-derivative collapse and hook-like curvature; the former compact-cap geometry is retained only as a blocked fixture. All 24 control triples remain unchanged from 0.5.
 
 The following table is the parity source reviewed by tests. `src/spec.js`, the UI controls, evidence states, and README must expose this exact version and these exact min/max/neutral triples.
 
@@ -147,9 +147,9 @@ This rejects a chibi/childlike combination even when each isolated slider is ins
 
 - Upper neck is narrower than the jaw and widens symmetrically and monotonically to a collar span that is not narrower than the upper neck.
 - Trapezius curves join the collar/shoulder roots to the acromia. The supported acromion drop is `44..60` units; the neutral target is `52`, keeping the bony landmark near `y=553` rather than the rejected low `y=581` cap.
-- The visible contour descends from root to acromion with rendered slope `0.17..0.29`, rounds through bounded deltoid tissue at most `0.06 * headWidth` outside each acromion, and then turns continuously inward. A compact square cap, hanger shelf, or sleeve wall is invalid even if landmark ratios pass.
+- The visible contour descends from root to acromion with rendered slope `0.17..0.29`, rounds through bounded deltoid tissue at most `0.06 * headWidth` outside each acromion, continues through separately owned upper-arm and arm/torso-transition anchors, and then enters the torso without a hook. A compact square cap, hanger shelf, sleeve wall, or container outline is invalid even if landmark ratios pass.
 - Outer torso width at `y=850` is `0.70..0.78` of garment shoulder width (neutral `0.72`). This stricter taper replaces the planning value `0.78..0.90`, whose upper half permits the independently observed slab/container silhouette.
-- These are actual-path requirements. Tests sample the rendered body path at the acromion and `+24`, `+48`, `+90`, `+150`, and `+230` Y offsets. The `+24` width must establish a small bounded deltoid round beyond the bony acromion; the `+90..+230` intersections must then move progressively inward. Acromion incoming/outgoing cubics share a measured C1 tangent. Landmark metadata alone cannot satisfy this requirement.
+- These are actual-path requirements. Tests sample the rendered body path at the acromion and `+24`, `+48`, `+90`, `+150`, and `+230` Y offsets, plus a dense 12-unit profile from `0..240`. The early samples establish one broad bounded deltoid round beyond the bony acromion; later widths move progressively inward. No 12-unit interval may exceed the authored derivative limit, no local derivative change may exceed the curvature limit, and the `+90..+150` width loss is capped so the old 85-unit hook cannot recur. Acromion incoming/outgoing cubics share a measured C1 tangent. Landmark metadata alone cannot satisfy this requirement.
 - Covered bust apex offset is `0.13..0.18 * acromionSpan` from the center on each side.
 - Inner sternum clearance is at least `0.08 * acromionSpan`; the outer covered envelope remains at least `12` units inside the torso/arm boundary.
 - Zero/low bust is valid. Bust upper, outer, apex, inner, and center anchors form one closed chest-owned envelope with continuous joins; at zero it collapses to the chest center without detached lobes.
@@ -181,6 +181,7 @@ The implementation must reject or reconcile correlated extremes before rendering
 - maximum shoulder ratio with a head width that exceeds the safe canvas silhouette;
 - maximum upper-neck width with minimum jaw width when upper-neck/jaw exceeds `0.62`;
 - maximum hair width with shoulder/head negative-space failure;
+- zero bust combined with either the minimum-head/narrow-lower-torso field or maximum-acromion frame; these two inherited correlated boundaries remain blocked even though each isolated endpoint is supported;
 - the maturity triple above;
 - any pairwise or worst-valid bundle that breaks containment, ordering, curvature, continuity, or graph ownership.
 
@@ -192,7 +193,7 @@ Gate A fails for a detached or miniature head; rectangular shoulders; face/stern
 
 An independent evaluator must review the actual geometry app at intended preview scale. Required reproducible evidence includes neutral and all presets, each min/max, pairwise combined extremes, a worst-valid combined bundle, measured silhouette intersections and local containment—not ratios alone—and rejection fixtures for miniature head, wig gap, floating neck, misplaced face, rectangular shoulders, detached bust, correlated maturity, and unsafe combined extremes.
 
-Evidence also covers every advertised isolated endpoint, zero/low/neutral/maximum bust, and the wedge-body and scalloped-bib fixtures. All presets and representative geometry extremes are captured at desktop and `390px` with the measurement overlay off.
+Evidence also covers every advertised isolated endpoint, zero/low/neutral/maximum bust, and the wedge-body, scalloped-bib, and compact-shoulder-hook fixtures. All presets and representative geometry extremes are captured at desktop and `390px` with the measurement overlay off. A manual control edit must replace both selectors' displayed identities with `custom:bounded` or `custom:reconciled`; stale preset evidence is invalid.
 
 A generated finished character, decorative art, manually corrected screenshot, or result from a renderer other than the inspected geometry app is invalid evidence. Automated success remains `Needs review`; this implementation cannot self-approve Gate A.
 
