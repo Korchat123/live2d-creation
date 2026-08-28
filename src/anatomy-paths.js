@@ -108,8 +108,6 @@ export function buildAnatomyPaths(geometry) {
     C(500 + 58, l.hairInnerCrown.y, l.hairInnerTempleRight.x - 8, l.skullTop.y + 32, l.hairInnerTempleRight.x, l.hairInnerTempleRight.y)
   ]);
 
-  const shoulderSpan = m.acromionSpan;
-  const waistLeft = l.torso850Left.x; const waistRight = l.torso850Right.x;
   const badWedge = mutations.bodyStyle === "wedge";
   const bodyLeft850 = badWedge ? l.acromionLeft.x - 26 : l.torso850Left.x;
   const bodyRight850 = badWedge ? l.acromionRight.x + 26 : l.torso850Right.x;
@@ -123,27 +121,60 @@ export function buildAnatomyPaths(geometry) {
     : l.deltoidOuterRight;
   const upperArmLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmLeft, x: l.acromionLeft.x } : l.upperArmLeft;
   const upperArmRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmRight, x: l.acromionRight.x } : l.upperArmRight;
-  const upperArmTransitionLeft = mutations.shoulderStyle === "wall" ? { ...l.upperArmTransitionLeft, x: l.acromionLeft.x } : l.upperArmTransitionLeft;
-  const upperArmTransitionRight = mutations.shoulderStyle === "wall" ? { ...l.upperArmTransitionRight, x: l.acromionRight.x } : l.upperArmTransitionRight;
   const shoulderCapLeft = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapLeft, x: l.acromionLeft.x } : l.shoulderCapLeft;
   const shoulderCapRight = mutations.shoulderStyle === "wall" ? { ...l.shoulderCapRight, x: l.acromionRight.x } : l.shoulderCapRight;
   const left850 = mutations.shoulderStyle === "wall" ? l.acromionLeft.x : bodyLeft850;
   const right850 = mutations.shoulderStyle === "wall" ? l.acromionRight.x : bodyRight850;
   const bustSideLeft = mutations.shoulderStyle === "wall" ? { ...l.bustSideLeft, x: l.acromionLeft.x } : l.bustSideLeft;
   const bustSideRight = mutations.shoulderStyle === "wall" ? { ...l.bustSideRight, x: l.acromionRight.x } : l.bustSideRight;
-  const leftContour = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, shoulderCapLeft, wallLeft, upperArmLeft, upperArmTransitionLeft, bustSideLeft, { x: left850, y: 850 }, l.waistLeft, { x: cropLeft, y: 970 }];
-  const rightContour = [{ x: cropRight, y: 970 }, l.waistRight, { x: right850, y: 850 }, bustSideRight, upperArmTransitionRight, upperArmRight, wallRight, shoulderCapRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
-  const body = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "upperArmTransitionLeft", "bustSideLeft", "torso850Left", "waistLeft", "waistRight", "torso850Right", "bustSideRight", "upperArmTransitionRight", "upperArmRight", "deltoidOuterRight", "shoulderCapRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
-    M(leftContour[0].x, leftContour[0].y), ...openSpline(leftContour, .62, [l.acromionLeft]),
-    L(rightContour[0].x, rightContour[0].y), ...openSpline(rightContour, .62, [l.acromionRight]), Z()
+  // Five closed segment envelopes: central torso, paired deltoids, and paired
+  // upper arms. Their attachment zones overlap by twelve hidden canvas units.
+  const torsoLeft = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.anteriorFoldLeft, l.axillaLeft, bustSideLeft, { x: left850, y: 850 }, l.waistLeft, { x: cropLeft, y: 970 }];
+  const torsoRight = [{ x: cropRight, y: 970 }, l.waistRight, { x: right850, y: 850 }, bustSideRight, l.axillaRight, l.anteriorFoldRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
+  const torso = path("torso.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "anteriorFoldLeft", "axillaLeft", "bustSideLeft", "torso850Left", "waistLeft", "waistRight", "torso850Right", "bustSideRight", "axillaRight", "anteriorFoldRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
+    M(torsoLeft[0].x, torsoLeft[0].y), ...openSpline(torsoLeft, .54),
+    L(torsoRight[0].x, torsoRight[0].y), ...openSpline(torsoRight, .54), Z()
   ]);
+
+  const decorativeOnly = ["decorativeSeam", "fusedContainer"].includes(mutations.surfaceStyle);
+  const leftArmCommands = decorativeOnly
+    ? [M(upperArmLeft.x, upperArmLeft.y), C(upperArmLeft.x, upperArmLeft.y, l.axillaLeft.x, l.axillaLeft.y, l.axillaLeft.x, l.axillaLeft.y)]
+    : [M(upperArmLeft.x,upperArmLeft.y), C(upperArmLeft.x-5,upperArmLeft.y+72,l.elbowDirectionLeft.x-4,l.elbowDirectionLeft.y-55,l.elbowDirectionLeft.x,l.elbowDirectionLeft.y), C(l.elbowDirectionLeft.x,l.elbowDirectionLeft.y+16,l.armCropOuterLeft.x,l.armCropOuterLeft.y-14,l.armCropOuterLeft.x,l.armCropOuterLeft.y), L(l.armCropInnerLeft.x,l.armCropInnerLeft.y), C(l.armCropInnerLeft.x-2,l.armCropInnerLeft.y-90,l.axillaLeft.x+7,l.axillaLeft.y+42,l.axillaLeft.x,l.axillaLeft.y), C(l.axillaLeft.x-9,l.axillaLeft.y-18,l.upperArmInnerLeft.x+12,l.upperArmInnerLeft.y+2,l.upperArmInnerLeft.x,l.upperArmInnerLeft.y), C(l.upperArmInnerLeft.x-18,l.upperArmInnerLeft.y-8,upperArmLeft.x+10,upperArmLeft.y-5,upperArmLeft.x,upperArmLeft.y), Z()];
+  const rightArmCommands = decorativeOnly
+    ? [M(upperArmRight.x, upperArmRight.y), C(upperArmRight.x, upperArmRight.y, l.axillaRight.x, l.axillaRight.y, l.axillaRight.x, l.axillaRight.y)]
+    : [M(l.upperArmInnerRight.x,l.upperArmInnerRight.y), C(l.upperArmInnerRight.x+18,l.upperArmInnerRight.y-8,upperArmRight.x-10,upperArmRight.y-5,upperArmRight.x,upperArmRight.y), C(upperArmRight.x+5,upperArmRight.y+72,l.elbowDirectionRight.x+4,l.elbowDirectionRight.y-55,l.elbowDirectionRight.x,l.elbowDirectionRight.y), C(l.elbowDirectionRight.x,l.elbowDirectionRight.y+16,l.armCropOuterRight.x,l.armCropOuterRight.y-14,l.armCropOuterRight.x,l.armCropOuterRight.y), L(l.armCropInnerRight.x,l.armCropInnerRight.y), C(l.armCropInnerRight.x+2,l.armCropInnerRight.y-90,l.axillaRight.x-7,l.axillaRight.y+42,l.axillaRight.x,l.axillaRight.y), C(l.axillaRight.x+9,l.axillaRight.y-18,l.upperArmInnerRight.x-12,l.upperArmInnerRight.y+2,l.upperArmInnerRight.x,l.upperArmInnerRight.y), Z()];
+  const arms = Object.freeze({
+    left: path("arm.left", ["upperArmLeft", "elbowDirectionLeft", "armCropOuterLeft", "armCropInnerLeft", "axillaLeft", "upperArmInnerLeft"], leftArmCommands),
+    right: path("arm.right", ["upperArmInnerRight", "axillaRight", "armCropInnerRight", "armCropOuterRight", "elbowDirectionRight", "upperArmRight"], rightArmCommands)
+  });
+
+  const leftDeltoidPoints = [l.shoulderMidLeft, l.acromionLeft, l.deltoidApexLeft, shoulderCapLeft, wallLeft, l.deltoidInsertionOuterLeft, l.deltoidInsertionInnerLeft, l.deltoidTorsoOverlapLeft, l.anteriorFoldLeft];
+  const rightDeltoidPoints = [l.shoulderMidRight, l.anteriorFoldRight, l.deltoidTorsoOverlapRight, l.deltoidInsertionInnerRight, l.deltoidInsertionOuterRight, wallRight, shoulderCapRight, l.deltoidApexRight, l.acromionRight];
+  const deltoids = Object.freeze({
+    left: path("shoulder.left", ["shoulderMidLeft", "acromionLeft", "deltoidApexLeft", "shoulderCapLeft", "deltoidOuterLeft", "deltoidInsertionOuterLeft", "deltoidInsertionInnerLeft", "deltoidTorsoOverlapLeft", "anteriorFoldLeft"], decorativeOnly ? leftArmCommands : closedSpline(leftDeltoidPoints, .42)),
+    right: path("shoulder.right", ["shoulderMidRight", "anteriorFoldRight", "deltoidTorsoOverlapRight", "deltoidInsertionInnerRight", "deltoidInsertionOuterRight", "deltoidOuterRight", "shoulderCapRight", "deltoidApexRight", "acromionRight"], decorativeOnly ? rightArmCommands : closedSpline(rightDeltoidPoints, .42))
+  });
+
+  const outlineCropLeft = badWedge ? { x: l.acromionLeft.x - 26, y: l.armCropOuterLeft.y } : l.armCropOuterLeft;
+  const outlineCropRight = badWedge ? { x: l.acromionRight.x + 26, y: l.armCropOuterRight.y } : l.armCropOuterRight;
+  const outerLeft = [l.upperNeckLeft, l.shoulderRootLeft, l.trapeziusLeft, l.shoulderMidLeft, l.acromionLeft, shoulderCapLeft, wallLeft, upperArmLeft, l.elbowDirectionLeft, outlineCropLeft];
+  const outerRight = [outlineCropRight, l.elbowDirectionRight, upperArmRight, wallRight, shoulderCapRight, l.acromionRight, l.shoulderMidRight, l.trapeziusRight, l.shoulderRootRight, l.upperNeckRight];
+  const outline = path("character.root", ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "acromionLeft", "shoulderCapLeft", "deltoidOuterLeft", "upperArmLeft", "elbowDirectionLeft", "armCropOuterLeft", "armCropOuterRight", "elbowDirectionRight", "upperArmRight", "deltoidOuterRight", "shoulderCapRight", "acromionRight", "shoulderMidRight", "trapeziusRight", "shoulderRootRight", "upperNeckRight"], [
+    M(outerLeft[0].x, outerLeft[0].y), ...openSpline(outerLeft, .54),
+    L(outerRight[0].x, outerRight[0].y), ...openSpline(outerRight, .54), Z()
+  ]);
+
+  // Kept as the canonical body entry for consumers, but it now aliases the
+  // central torso surface rather than a shield-shaped whole-body polygon.
+  const body = torso;
 
   const neckGuide = path("neck.root", ["upperNeckLeft", "collarLeft", "collarRight", "upperNeckRight"], [M(l.upperNeckLeft.x,l.upperNeckLeft.y), C(l.upperNeckLeft.x,l.collarLeft.y-22,l.collarLeft.x,l.collarLeft.y-10,l.collarLeft.x,l.collarLeft.y), M(l.upperNeckRight.x,l.upperNeckRight.y), C(l.upperNeckRight.x,l.collarRight.y-22,l.collarRight.x,l.collarRight.y-10,l.collarRight.x,l.collarRight.y)]);
   const shoulderGuide = path("collar.center", ["shoulderRootLeft", "sternum", "shoulderRootRight"], [M(l.shoulderRootLeft.x,l.shoulderRootLeft.y), C(420,l.sternum.y-22,465,l.sternum.y,l.sternum.x,l.sternum.y), C(535,l.sternum.y,580,l.sternum.y-22,l.shoulderRootRight.x,l.shoulderRootRight.y)]);
-  const armGuides = Object.freeze({
-    left: path("arm.left", ["shoulderMidLeft", "axillaLeft"], [M(l.shoulderMidLeft.x,l.shoulderMidLeft.y+5), C(l.acromionLeft.x+42,l.acromionLeft.y+46,l.axillaLeft.x-18,l.axillaLeft.y-22,l.axillaLeft.x,l.axillaLeft.y)]),
-    right: path("arm.right", ["shoulderMidRight", "axillaRight"], [M(l.shoulderMidRight.x,l.shoulderMidRight.y+5), C(l.acromionRight.x-42,l.acromionRight.y+46,l.axillaRight.x+18,l.axillaRight.y-22,l.axillaRight.x,l.axillaRight.y)])
+  const armSeams = Object.freeze({
+    left: path("torso.root", ["axillaLeft", "bustSideLeft"], [M(l.axillaLeft.x,l.axillaLeft.y), Q(l.axillaLeft.x-5,(l.axillaLeft.y+l.bustSideLeft.y)/2,l.bustSideLeft.x,l.bustSideLeft.y)]),
+    right: path("torso.root", ["axillaRight", "bustSideRight"], [M(l.axillaRight.x,l.axillaRight.y), Q(l.axillaRight.x+5,(l.axillaRight.y+l.bustSideRight.y)/2,l.bustSideRight.x,l.bustSideRight.y)])
   });
+  const armGuides = armSeams;
 
   // A torso-owned ribcage field. Bust anchors are internal deformation
   // controls, never the visible perimeter, so zero bust retains this same
@@ -161,7 +192,17 @@ export function buildAnatomyPaths(geometry) {
     innerLeft: path("ear.left", ["earTopLeft","earBottomLeft"], [M(l.earTopLeft.x-2,l.earTopLeft.y+24), Q(l.earTopLeft.x-14,(l.earTopLeft.y+l.earBottomLeft.y)/2,l.earBottomLeft.x-2,l.earBottomLeft.y-22)]),
     innerRight: path("ear.right", ["earTopRight","earBottomRight"], [M(l.earTopRight.x+2,l.earTopRight.y+24), Q(l.earTopRight.x+14,(l.earTopRight.y+l.earBottomRight.y)/2,l.earBottomRight.x+2,l.earBottomRight.y-22)])
   };
-  return Object.freeze({ head, hair: hairBack, hairBack, hairFront, hairFit, body, neckGuide, shoulderGuide, armGuides, chest, ears });
+  const topology = Object.freeze({
+    surfaces: Object.freeze(["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"]),
+    edges: Object.freeze([
+      Object.freeze({ from: "arm.left", to: "shoulder.left", seam: "left-insertion", overlap: 12 }),
+      Object.freeze({ from: "arm.right", to: "shoulder.right", seam: "right-insertion", overlap: 12 }),
+      Object.freeze({ from: "shoulder.left", to: "torso.root", seam: "left-axilla", overlap: 12 }),
+      Object.freeze({ from: "shoulder.right", to: "torso.root", seam: "right-axilla", overlap: 12 })
+    ]),
+    zOrder: Object.freeze(["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"])
+  });
+  return Object.freeze({ head, hair: hairBack, hairBack, hairFront, hairFit, body, torso, arms, deltoids, outline, neckGuide, shoulderGuide, armGuides, armSeams, chest, ears, topology });
 }
 
 const nearestYAtX = (samples, x) => samples.reduce((best, point) => Math.abs(point.x - x) < Math.abs(best.x - x) ? point : best).y;
@@ -223,72 +264,77 @@ function shoulderShelfLength(commands, shoulderRoot, acromion) {
   return n(longest);
 }
 
+const surfaceIntersectionsAtY = (paths, y) => intersectionsAtY(paths.outline.commands, y);
+
 export function measureRenderedGeometry(geometry) {
   const paths = buildAnatomyPaths(geometry);
-  const chestSurface = paths.chest ? samplePath(paths.chest.commands, 64) : [];
-  const bodyWidth = paths.body.bounds.width;
+  const chestSurface = samplePath(paths.chest.commands, 64);
+  const bodyWidth = paths.outline.bounds.width;
   const headWidth = paths.head.bounds.width;
-  const waistHits = intersectionsAtY(paths.body.commands, 850);
+  const waistHits = surfaceIntersectionsAtY(paths, 850);
   const waistWidth = waistHits.length >= 2 ? waistHits.at(-1) - waistHits[0] : bodyWidth;
-  // Sample after the rounded deltoid, where the arm/ribcage contour must keep
-  // curving inward instead of becoming a sleeve wall or rectangular torso.
   const shoulderYs = [90, 150, 230].map(offset => geometry.landmarks.acromionLeft.y + offset);
-  const shoulderWidths = shoulderYs.map(y => {
-    const hits = intersectionsAtY(paths.body.commands, y);
+  const widthsAt = ys => ys.map(y => {
+    const hits = surfaceIntersectionsAtY(paths, y);
     return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
   });
+  const shoulderWidths = widthsAt(shoulderYs);
   const shoulderInward = shoulderWidths.map(width => n((geometry.measurements.acromionSpan - width) / 2));
-  const shoulderTurnYs = [0, 24, 48, 90].map(offset => geometry.landmarks.acromionLeft.y + offset);
-  const shoulderTurnWidths = shoulderTurnYs.map(y => {
-    const hits = intersectionsAtY(paths.body.commands, y);
-    return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
-  });
-  const shoulderProfile = [];
-  for (let offset = 0; offset <= 240; offset += 12) {
-    const hits = intersectionsAtY(paths.body.commands, geometry.landmarks.acromionLeft.y + offset);
-    shoulderProfile.push(hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN);
-  }
+  const shoulderTurnWidths = widthsAt([0, 24, 48, 90].map(offset => geometry.landmarks.acromionLeft.y + offset));
+  const shoulderProfile = widthsAt(Array.from({ length: 21 }, (_, index) => geometry.landmarks.acromionLeft.y + index * 12));
   const shoulderDerivatives = shoulderProfile.slice(1).map((width, index) => n((width - shoulderProfile[index]) / 12));
   const shoulderCurvatures = shoulderDerivatives.slice(1).map((slope, index) => n((slope - shoulderDerivatives[index]) / 12));
-  const shoulderJoin = cubicJoinAt(paths.body.commands, geometry.landmarks.acromionLeft);
-  const sideSampleYs = [20, 100, 180].map(offset => geometry.landmarks.acromionLeft.y + offset);
-  const sideSampleXs = sideSampleYs.map(y => intersectionsAtY(paths.body.commands, y)[0]);
+  const shoulderJoin = cubicJoinAt(paths.outline.commands, geometry.landmarks.acromionLeft);
+  const sideSampleXs = [20, 100, 180].map(offset => surfaceIntersectionsAtY(paths, geometry.landmarks.acromionLeft.y + offset)[0]);
   const chestMoveCount = paths.chest.commands.filter(command => command.type === "M").length;
   const chestClosed = paths.chest.commands.at(-1)?.type === "Z";
-  const chestTangentMismatch = cubicJoinMismatch(paths.chest.commands);
   return Object.freeze({
-    headBounds: paths.head.bounds,
-    hairBounds: paths.hair.bounds,
-    bodyBounds: paths.body.bounds,
-    earLeftBounds: paths.ears.left.bounds,
-    earRightBounds: paths.ears.right.bounds,
-    headWidth,
-    hairWidth: paths.hair.bounds.width,
-    bodyWidth,
-    hairHead: n(paths.hair.bounds.width / headWidth),
-    bodyHead: n(bodyWidth / headWidth),
-    waistWidth: n(waistWidth),
-    waistShoulder: n(waistWidth / bodyWidth),
-    shoulderWidths: Object.freeze(shoulderWidths),
-    shoulderInward: Object.freeze(shoulderInward),
+    headBounds: paths.head.bounds, hairBounds: paths.hair.bounds, bodyBounds: paths.outline.bounds,
+    earLeftBounds: paths.ears.left.bounds, earRightBounds: paths.ears.right.bounds,
+    headWidth, hairWidth: paths.hair.bounds.width, bodyWidth,
+    hairHead: n(paths.hair.bounds.width / headWidth), bodyHead: n(bodyWidth / headWidth),
+    waistWidth: n(waistWidth), waistShoulder: n(waistWidth / bodyWidth),
+    shoulderWidths: Object.freeze(shoulderWidths), shoulderInward: Object.freeze(shoulderInward),
     shoulderRootSlope: n((geometry.landmarks.acromionLeft.y - geometry.landmarks.shoulderRootLeft.y) / (geometry.landmarks.shoulderRootLeft.x - geometry.landmarks.acromionLeft.x)),
-    shoulderTurnWidths: Object.freeze(shoulderTurnWidths),
-    shoulderProfile: Object.freeze(shoulderProfile),
-    shoulderDerivatives: Object.freeze(shoulderDerivatives),
-    shoulderCurvatures: Object.freeze(shoulderCurvatures),
+    shoulderTurnWidths: Object.freeze(shoulderTurnWidths), shoulderProfile: Object.freeze(shoulderProfile),
+    shoulderDerivatives: Object.freeze(shoulderDerivatives), shoulderCurvatures: Object.freeze(shoulderCurvatures),
     shoulderPeakPadding: n((Math.max(...shoulderTurnWidths) - geometry.measurements.acromionSpan) / 2),
     shoulderDeltoidInset: n((Math.max(...shoulderTurnWidths) - shoulderTurnWidths.at(-1)) / 2),
-    shoulderJoinMismatch: shoulderJoin.mismatch,
-    shoulderJoinAngle: shoulderJoin.angle,
-    shoulderChordDeviation: shoulderChordDeviation(paths.body.commands, geometry.landmarks.acromionLeft, geometry.landmarks.upperArmLeft),
-    shoulderMaxStraightRun: shoulderMaxStraightRun(paths.body.commands, geometry.landmarks.acromionLeft.y),
-    shoulderShelfLength: shoulderShelfLength(paths.body.commands, geometry.landmarks.shoulderRootLeft, geometry.landmarks.acromionLeft),
-    shoulderSideXs: Object.freeze(sideSampleXs.map(n)),
-    shoulderSideDisplacement: n(sideSampleXs.at(-1) - sideSampleXs[0]),
-    shoulderWindowXs: Object.freeze([665, 725, 785].map(y => n(intersectionsAtY(paths.body.commands, y)[0]))),
-    chestMoveCount,
-    chestClosed,
-    chestTangentMismatch,
+    shoulderJoinMismatch: shoulderJoin.mismatch, shoulderJoinAngle: shoulderJoin.angle,
+    shoulderChordDeviation: shoulderChordDeviation(paths.outline.commands, geometry.landmarks.acromionLeft, geometry.landmarks.upperArmLeft),
+    shoulderMaxStraightRun: shoulderMaxStraightRun(paths.outline.commands, geometry.landmarks.acromionLeft.y),
+    shoulderShelfLength: shoulderShelfLength(paths.outline.commands, geometry.landmarks.shoulderRootLeft, geometry.landmarks.acromionLeft),
+    shoulderSideXs: Object.freeze(sideSampleXs.map(n)), shoulderSideDisplacement: n(sideSampleXs.at(-1) - sideSampleXs[0]),
+    shoulderWindowXs: Object.freeze([665, 725, 785].map(y => n(surfaceIntersectionsAtY(paths, y)[0]))),
+    armSurfaceClosed: Object.freeze([paths.arms.left, paths.arms.right].map(surface => surface.commands.filter(command => command.type === "M").length === 1 && surface.commands.at(-1)?.type === "Z")),
+    armSurfaceParents: Object.freeze([paths.arms.left.parent, paths.arms.right.parent]),
+    armSurfaceWidths: Object.freeze([paths.arms.left.bounds.width, paths.arms.right.bounds.width].map(n)),
+    armSurfaceHeights: Object.freeze([paths.arms.left.bounds.height, paths.arms.right.bounds.height].map(n)),
+    deltoidSurfaceClosed: Object.freeze([paths.deltoids.left, paths.deltoids.right].map(surface => surface.commands.filter(command => command.type === "M").length === 1 && surface.commands.at(-1)?.type === "Z")),
+    deltoidSurfaceParents: Object.freeze([paths.deltoids.left.parent, paths.deltoids.right.parent]),
+    seamEndpointGaps: Object.freeze([
+      Math.min(...paths.torso.samples.map(sample => Math.hypot(sample.x - geometry.landmarks.axillaLeft.x, sample.y - geometry.landmarks.axillaLeft.y))),
+      Math.min(...paths.torso.samples.map(sample => Math.hypot(sample.x - geometry.landmarks.bustSideLeft.x, sample.y - geometry.landmarks.bustSideLeft.y))),
+      Math.min(...paths.torso.samples.map(sample => Math.hypot(sample.x - geometry.landmarks.axillaRight.x, sample.y - geometry.landmarks.axillaRight.y))),
+      Math.min(...paths.torso.samples.map(sample => Math.hypot(sample.x - geometry.landmarks.bustSideRight.x, sample.y - geometry.landmarks.bustSideRight.y)))
+    ].map(n)),
+    seamHeights: Object.freeze([paths.armSeams.left.bounds.height, paths.armSeams.right.bounds.height].map(n)),
+    attachmentOverlaps: Object.freeze([
+      geometry.landmarks.deltoidInsertionOuterLeft.y - geometry.landmarks.upperArmLeft.y,
+      geometry.landmarks.deltoidInsertionOuterRight.y - geometry.landmarks.upperArmRight.y,
+      geometry.landmarks.deltoidTorsoOverlapLeft.x - geometry.landmarks.anteriorFoldLeft.x,
+      geometry.landmarks.anteriorFoldRight.x - geometry.landmarks.deltoidTorsoOverlapRight.x
+    ].map(n)),
+    compositeShoulderRatios: Object.freeze([0, 40, 90, 150, 230].map(offset => {
+      const hits = surfaceIntersectionsAtY(paths, geometry.landmarks.acromionLeft.y + offset);
+      return n((hits.at(-1) - hits[0]) / geometry.measurements.acromionSpan);
+    })),
+    torsoInset230: n((shoulderWidths[2] - (intersectionsAtY(paths.torso.commands, geometry.landmarks.acromionLeft.y + 230).at(-1) - intersectionsAtY(paths.torso.commands, geometry.landmarks.acromionLeft.y + 230)[0])) / 2),
+    upperArmStrip850: n(intersectionsAtY(paths.torso.commands, 850)[0] - surfaceIntersectionsAtY(paths, 850)[0]),
+    torsoLateralViolation: n(Math.max(0, geometry.landmarks.acromionLeft.x - paths.torso.bounds.minX, paths.torso.bounds.maxX - geometry.landmarks.acromionRight.x)),
+    sideCrossingViolation: n(Math.max(0, paths.arms.left.bounds.maxX - 500, 500 - paths.arms.right.bounds.minX, paths.deltoids.left.bounds.maxX - 500, 500 - paths.deltoids.right.bounds.minX)),
+    topologyEdges: paths.topology.edges.length, topologySurfaces: paths.topology.surfaces, zOrder: paths.topology.zOrder,
+    chestMoveCount, chestClosed, chestTangentMismatch: cubicJoinMismatch(paths.chest.commands),
     chestCenterY: chestSurface.length ? n(nearestYAtX(chestSurface, 500)) : geometry.landmarks.sternum.y,
     chestApexY: chestSurface.length ? n(nearestYAtX(chestSurface, geometry.landmarks.bustLeft.x)) : geometry.landmarks.sternum.y,
     paths

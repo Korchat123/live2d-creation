@@ -32,6 +32,8 @@ export const NEGATIVE_FIXTURES = Object.freeze({
   ,wedgeBody: { mutations: { bodyStyle: "wedge" } }
   ,scallopedBib: { mutations: { chestStyle: "scalloped" } }
   ,compactShoulderHook: { mutations: { shoulderStyle: "compactHook" } }
+  ,fakeDecorativeSeam: { mutations: { surfaceStyle: "decorativeSeam" } }
+  ,fusedArmContainer: { mutations: { surfaceStyle: "fusedContainer" } }
 });
 
 const defaults = () => Object.fromEntries(Object.entries(SPEC.parameters).map(([key, definition]) => [key, definition.value]));
@@ -105,13 +107,13 @@ export function buildGeometry(candidate = {}, mutations = {}) {
   const trapeziusInset = acromionSpan * 0.075;
   const shoulderMidInset = acromionSpan * 0.40;
   const compactShoulder = mutations.shoulderStyle === "compactHook";
-  const deltoidOuterY = acromionY + (compactShoulder ? 58 : 76);
+  const deltoidOuterY = acromionY + (compactShoulder ? 58 : headWidth * .28);
   // The visible edge has enough vertical room to read as shoulder, deltoid,
   // upper arm, and axilla rather than a small cap attached to a torso wall.
-  const deltoidOutset = mutations.shoulderStyle === "wall" ? 0 : Math.min(compactShoulder ? 4 : 7, headWidth * (compactShoulder ? .014 : .026));
-  const shoulderCapOutset = mutations.shoulderStyle === "wall" ? 0 : Math.min(compactShoulder ? 8 : 6, headWidth * (compactShoulder ? .029 : .023));
-  const upperArmY = acromionY + (compactShoulder ? 126 : 132);
-  const axillaY = acromionY + (compactShoulder ? 169 : 184);
+  const deltoidOutset = mutations.shoulderStyle === "wall" ? 0 : compactShoulder ? 4 : headWidth * .055;
+  const shoulderCapOutset = mutations.shoulderStyle === "wall" ? 0 : compactShoulder ? 8 : headWidth * .05;
+  const upperArmY = acromionY + (compactShoulder ? 126 : headWidth * .48);
+  const axillaY = acromionY + (compactShoulder ? 169 : headWidth * .55);
   const bustApexYExpected = acromionY + c.bustBelowAcromion;
   const bustApexY = bustApexYExpected + (mutations.bustApexOffsetY ?? 0);
   const bustEnvelopeWidth = acromionSpan * p.bustShoulderRatio;
@@ -119,10 +121,10 @@ export function buildGeometry(candidate = {}, mutations = {}) {
   const bustInnerClearance = bustEnvelopeWidth === 0 ? 0 : Math.min(acromionSpan * c.sternumClearanceShoulder, bustApexOffset * .55);
   const bustVolume = p.bustShoulderRatio / SPEC.parameters.bustShoulderRatio.max;
   const bustSideBulge = bustVolume * Math.min(18, headWidth * .067);
-  const upperArmLeftX = centerX - acromionSpan / 2 + headWidth * (compactShoulder ? .075 : .045);
-  const upperArmRightX = centerX + acromionSpan / 2 - headWidth * (compactShoulder ? .075 : .045);
-  const bustSideLeftX = centerX - torsoWidth850 / 2 - bustSideBulge;
-  const bustSideRightX = centerX + torsoWidth850 / 2 + bustSideBulge;
+  const upperArmLeftX = centerX - acromionSpan / 2 + headWidth * (compactShoulder ? .075 : .03);
+  const upperArmRightX = centerX + acromionSpan / 2 - headWidth * (compactShoulder ? .075 : .03);
+  const bustSideLeftX = centerX - torsoWidth850 / 2 + headWidth * .075 - bustSideBulge;
+  const bustSideRightX = centerX + torsoWidth850 / 2 - headWidth * .075 + bustSideBulge;
   const upperArmTransitionLeftX = compactShoulder ? bustSideLeftX : centerX - acromionSpan / 2 + headWidth * .17;
   const upperArmTransitionRightX = compactShoulder ? bustSideRightX : centerX + acromionSpan / 2 - headWidth * .17;
   const bustSideY = compactShoulder ? bustApexY + 64 : Math.min(acromionY + 230, 810);
@@ -170,14 +172,34 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     shoulderCapLeft: point(centerX - acromionSpan / 2 - shoulderCapOutset, acromionY + (compactShoulder ? 27 : 38), "shoulder.left"),
     shoulderCapRight: point(centerX + acromionSpan / 2 + shoulderCapOutset, acromionY + (compactShoulder ? 27 : 38), "shoulder.right"),
     garmentShoulderLeft: point(centerX - garmentShoulderSpan / 2, acromionY + 14, "shoulder.left"), garmentShoulderRight: point(centerX + garmentShoulderSpan / 2, acromionY + 14, "shoulder.right"),
-    deltoidOuterLeft: point(centerX - acromionSpan / 2 - deltoidOutset, deltoidOuterY, "arm.left"),
-    deltoidOuterRight: point(centerX + acromionSpan / 2 + deltoidOutset, deltoidOuterY, "arm.right"),
+    deltoidOuterLeft: point(centerX - acromionSpan / 2 - deltoidOutset, deltoidOuterY, "shoulder.left"),
+    deltoidOuterRight: point(centerX + acromionSpan / 2 + deltoidOutset, deltoidOuterY, "shoulder.right"),
+    deltoidApexLeft: point(centerX - acromionSpan / 2 - headWidth * .045, acromionY + headWidth * .14, "shoulder.left"),
+    deltoidApexRight: point(centerX + acromionSpan / 2 + headWidth * .045, acromionY + headWidth * .14, "shoulder.right"),
     upperArmLeft: point(upperArmLeftX, upperArmY, "arm.left"),
     upperArmRight: point(upperArmRightX, upperArmY, "arm.right"),
+    deltoidInsertionOuterLeft: point(upperArmLeftX + 2, upperArmY + 12, "shoulder.left"),
+    deltoidInsertionOuterRight: point(upperArmRightX - 2, upperArmY + 12, "shoulder.right"),
     upperArmTransitionLeft: point(upperArmTransitionLeftX, axillaY, "arm.left"),
     upperArmTransitionRight: point(upperArmTransitionRightX, axillaY, "arm.right"),
-    axillaLeft: point(centerX - torsoWidth850 / 2 + headWidth * .10, acromionY + 164, "arm.left"),
-    axillaRight: point(centerX + torsoWidth850 / 2 - headWidth * .10, acromionY + 164, "arm.right"),
+    deltoidInnerLeft: point(centerX - acromionSpan / 2 + headWidth * .20, acromionY + headWidth * .42, "shoulder.left"),
+    deltoidInnerRight: point(centerX + acromionSpan / 2 - headWidth * .20, acromionY + headWidth * .42, "shoulder.right"),
+    upperArmInnerLeft: point(centerX - acromionSpan / 2 + headWidth * .20, acromionY + headWidth * .42, "arm.left"),
+    upperArmInnerRight: point(centerX + acromionSpan / 2 - headWidth * .20, acromionY + headWidth * .42, "arm.right"),
+    deltoidInsertionInnerLeft: point(centerX - acromionSpan / 2 + headWidth * .20 + 2, acromionY + headWidth * .42 + 12, "shoulder.left"),
+    deltoidInsertionInnerRight: point(centerX + acromionSpan / 2 - headWidth * .20 - 2, acromionY + headWidth * .42 + 12, "shoulder.right"),
+    anteriorFoldLeft: point(centerX - acromionSpan / 2 + headWidth * .30, acromionY + headWidth * .43, "torso.root"),
+    anteriorFoldRight: point(centerX + acromionSpan / 2 - headWidth * .30, acromionY + headWidth * .43, "torso.root"),
+    deltoidTorsoOverlapLeft: point(centerX - acromionSpan / 2 + headWidth * .30 + 12, acromionY + headWidth * .43, "shoulder.left"),
+    deltoidTorsoOverlapRight: point(centerX + acromionSpan / 2 - headWidth * .30 - 12, acromionY + headWidth * .43, "shoulder.right"),
+    axillaLeft: point(centerX - acromionSpan / 2 + headWidth * .34, axillaY, "torso.root"),
+    axillaRight: point(centerX + acromionSpan / 2 - headWidth * .34, axillaY, "torso.root"),
+    elbowDirectionLeft: point(centerX - acromionSpan / 2 + headWidth * .12, 930, "arm.left"),
+    elbowDirectionRight: point(centerX + acromionSpan / 2 - headWidth * .12, 930, "arm.right"),
+    armCropOuterLeft: point(centerX - torsoWidth850 / 2 - headWidth * .18, SPEC.canvas.cropY, "arm.left"),
+    armCropOuterRight: point(centerX + torsoWidth850 / 2 + headWidth * .18, SPEC.canvas.cropY, "arm.right"),
+    armCropInnerLeft: point(centerX - torsoWidth850 / 2 + headWidth * .13, SPEC.canvas.cropY, "arm.left"),
+    armCropInnerRight: point(centerX + torsoWidth850 / 2 - headWidth * .13, SPEC.canvas.cropY, "arm.right"),
     bustSideLeft: point(bustSideLeftX, bustSideY, "torso.root"),
     bustSideRight: point(bustSideRightX, bustSideY, "torso.root"),
     torso850Left: point(centerX - torsoWidth850 / 2, 850, "torso.root"), torso850Right: point(centerX + torsoWidth850 / 2, 850, "torso.root"),
@@ -196,6 +218,9 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     lowerRibRight: point(centerX + Math.max(torsoWidth850 * (.36 + bustVolume * .025), collarWidth * .85), bustApexY + 68 + bustVolume * 10, "chest.center"),
     lowerRibCenter: point(centerX, bustApexY + 78 + bustVolume * 12, "chest.center"),
     lowerRibLeft: point(centerX - Math.max(torsoWidth850 * (.36 + bustVolume * .025), collarWidth * .85), bustApexY + 68 + bustVolume * 10, "chest.center"),
+    torsoCenter: point(centerX, 790, "torso.root"),
+    hipDirectionLeft: point(centerX - torsoWidth850 * .28, 930, "torso.root"),
+    hipDirectionRight: point(centerX + torsoWidth850 * .28, 930, "torso.root"),
     torsoCrop: point(centerX, SPEC.canvas.cropY, "torso.root")
   });
 

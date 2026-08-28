@@ -19,7 +19,7 @@ Build a polished bust-up anime character creator that behaves like a game charac
 
 ## Current status
 
-`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.6.0`. `CHARACTER_BIBLE.md` is the governing reviewed contract; its explicit parameter parity table is checked against `src/spec.js`, which supplies those exact values to controls, geometry, validation, evidence states, and tests. The app visibly exposes the same version. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
+`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.7.0`. `CHARACTER_BIBLE.md` is the governing reviewed contract; its explicit parameter parity table is checked against `src/spec.js`, which supplies those exact values to controls, geometry, validation, evidence states, and tests. The app visibly exposes the same version. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
 
 Valid automated results deliberately say `Needs review`, never `Approved`. An independent evaluator must review the pushed candidate before Gate A can pass.
 
@@ -39,7 +39,7 @@ Open `http://localhost:4173`.
 npm test
 ```
 
-The suite covers exact character-bible/executable/UI contract parity, landmark ordering, symmetry, every advertised individual min/max endpoint, all presets, every pairwise four-corner extreme, rendered shoulder slope/deltoid/torso derivatives and curvature, deterministic output, canonical ownership, propagation, and all eleven mandatory rejection fixtures.
+The suite covers exact character-bible/executable/UI contract parity, landmark ordering, symmetry, every advertised individual min/max endpoint, all presets, every pairwise four-corner extreme, five-surface arm/deltoid/torso topology, scanline union, deterministic output, canonical ownership, propagation, and all thirteen mandatory rejection fixtures.
 
 Run the real Chromium responsive check separately:
 

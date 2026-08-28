@@ -47,33 +47,26 @@ export function validateGeometry(geometry) {
   if (m.hairCrownOverlap < m.hairRequiredOverlap || m.hairTempleOverlap < m.hairRequiredOverlap) add(errors, "fit.hairOverlap", "Measured hair/skull overlap is below projected displacement plus safety", [m.hairCrownOverlap, m.hairTempleOverlap, m.hairRequiredOverlap]);
   if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
   if (!between(rendered.bodyHead, [2.05, 2.60])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head, including bounded deltoid tissue", rendered.bodyHead);
-  if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
-  if (!Number.isFinite(rendered.shoulderJoinMismatch) || rendered.shoulderJoinMismatch > .02 || rendered.shoulderJoinAngle > .1) {
-    add(errors, "rendered.shoulderJoin", "Incoming and outgoing acromion cubics must share one C1/G1 tangent", [rendered.shoulderJoinMismatch, rendered.shoulderJoinAngle]);
-  }
-  if (rendered.shoulderChordDeviation < 3.5) add(errors, "rendered.shoulderSlab", "The sampled acromion-to-arm contour must have visible deltoid curvature, not a long straight slab side", rendered.shoulderChordDeviation);
-  if (!Number.isFinite(rendered.shoulderMaxStraightRun) || rendered.shoulderMaxStraightRun > 176) add(errors, "rendered.shoulderStraightRun", "No sampled shoulder/torso chord may remain effectively straight for more than 176 canvas units", rendered.shoulderMaxStraightRun);
-  if (!Number.isFinite(rendered.shoulderShelfLength) || rendered.shoulderShelfLength > 48) add(errors, "rendered.shoulderShelf", "The trapezius-to-acromion contour cannot contain a long nearly horizontal shelf", rendered.shoulderShelfLength);
-  if (!between(rendered.shoulderRootSlope, [.17, .29])) add(errors, "rendered.shoulderSlope", "The actual shoulder must descend early from the root to the acromion instead of forming a shelf or hanger", rendered.shoulderRootSlope);
-  if (rendered.shoulderTurnWidths.some(value => !Number.isFinite(value)) || rendered.shoulderTurnWidths[1] < rendered.shoulderTurnWidths[0] + 6 || rendered.shoulderDeltoidInset < 3 || rendered.shoulderPeakPadding < 4 || rendered.shoulderPeakPadding > m.headWidth * SPEC.constants.garmentPaddingHeadMax) {
-    add(errors, "rendered.deltoidTurn", "The actual silhouette must form one bounded rounded deltoid beyond the bony acromion and turn inward without a square cap", [rendered.shoulderTurnWidths, rendered.shoulderPeakPadding, rendered.shoulderDeltoidInset]);
-  }
-  if (!Number.isFinite(rendered.shoulderSideDisplacement) || rendered.shoulderSideDisplacement < 28) add(errors, "rendered.shoulderSideInset", "The shoulder cap and side torso must move meaningfully inward below the acromion", [rendered.shoulderSideXs, rendered.shoulderSideDisplacement]);
-  if (rendered.shoulderWindowXs.some(value => !Number.isFinite(value)) || rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] < 16) add(errors, "rendered.shoulderWindowInset", "The accepted outline must move inward by at least sixteen canvas units across the evaluator's y=665..785 shoulder/side window", rendered.shoulderWindowXs);
-  if (rendered.shoulderInward.some(inset => !Number.isFinite(inset)) || rendered.shoulderInward[0] < -6 || rendered.shoulderWidths[0] - rendered.shoulderWidths[1] < 20 || rendered.shoulderWidths[1] - rendered.shoulderWidths[2] < 25) {
-    add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must keep moving progressively inward after the deltoid turn", rendered.shoulderInward);
-  }
-  const maxShoulderDerivative = Math.max(...rendered.shoulderDerivatives.map(Math.abs));
-  const maxShoulderCurvature = Math.max(...rendered.shoulderCurvatures.map(Math.abs));
-  if (rendered.shoulderProfile.some(value => !Number.isFinite(value)) || maxShoulderDerivative > 1.9 || rendered.shoulderWidths[0] - rendered.shoulderWidths[1] > 60) {
-    add(errors, "rendered.shoulderDerivative", "The sampled upper-arm and torso contour cannot collapse abruptly into an inward hook", [maxShoulderDerivative, rendered.shoulderWidths]);
-  }
-  if (!Number.isFinite(maxShoulderCurvature) || maxShoulderCurvature > .1) {
-    add(errors, "rendered.shoulderHook", "The sampled shoulder derivative must change gradually without hook-like curvature", [maxShoulderCurvature, rendered.shoulderCurvatures]);
-  }
+  if (!between(rendered.waistShoulder, [.84, .94])) add(errors, "rendered.wedgeBody", "The resolved arm-and-torso silhouette must remain tapered at the lower crop", rendered.waistShoulder);
+  if (!Number.isFinite(rendered.shoulderJoinMismatch) || rendered.shoulderJoinAngle > 8) add(errors, "rendered.shoulderJoin", "The resolved shoulder outline must retain a continuous tangent through the acromion", [rendered.shoulderJoinMismatch, rendered.shoulderJoinAngle]);
+  const envelopeRanges = [[.99, 1.02], [1.03, 1.08], [.99, 1.05], [.92, 1.00], [.86, .95]];
+  if (rendered.compositeShoulderRatios.some((value, index) => !between(value, envelopeRanges[index]))) add(errors, "rendered.compositeEnvelope", "Resolved neck-to-deltoid-to-upper-arm scanlines must remain inside the human bust envelope", rendered.compositeShoulderRatios);
+  if (!rendered.armSurfaceClosed.every(Boolean) || !rendered.deltoidSurfaceClosed.every(Boolean)) add(errors, "topology.closedSurfaces", "Paired deltoids and paired upper arms must be real closed surfaces, not decorative lines", [rendered.armSurfaceClosed, rendered.deltoidSurfaceClosed]);
+  if (rendered.armSurfaceParents.join(",") !== "arm.left,arm.right" || rendered.deltoidSurfaceParents.join(",") !== "shoulder.left,shoulder.right") add(errors, "topology.surfaceOwnership", "Arm and deltoid surfaces require distinct canonical owners", [rendered.armSurfaceParents, rendered.deltoidSurfaceParents]);
+  if (rendered.topologySurfaces.length !== 5 || rendered.topologyEdges !== 4) add(errors, "topology.connectivity", "The five-surface bust graph must have four declared attachment edges", [rendered.topologySurfaces, rendered.topologyEdges]);
+  if (rendered.attachmentOverlaps.some(value => !between(value, [8, 24]))) add(errors, "topology.hiddenOverlap", "Each shoulder attachment requires 8..24 hidden canvas units", rendered.attachmentOverlaps);
+  if (rendered.seamEndpointGaps.some(value => value > 1.1)) add(errors, "topology.seamC0", "Axilla cues must land on their owning arm and torso surfaces", rendered.seamEndpointGaps);
+  if (rendered.seamHeights.some(value => value < m.headWidth * .08 || value > m.headWidth * .40)) add(errors, "topology.axillaCue", "Visible axilla cues must be short and start below the glenohumeral landmark", rendered.seamHeights);
+  if (rendered.torsoLateralViolation > 1.1) add(errors, "topology.torsoOwnership", "The torso surface cannot own contour lateral to the shoulder joint", rendered.torsoLateralViolation);
+  if (rendered.sideCrossingViolation > 0) add(errors, "topology.surfaceIntersection", "Left and right arm/deltoid surfaces cannot cross the torso center line", rendered.sideCrossingViolation);
+  if (rendered.torsoInset230 < m.acromionSpan * .08) add(errors, "topology.ribcageSeparation", "The torso must be visibly narrower than the arm union below the axilla", rendered.torsoInset230);
+  if (rendered.upperArmStrip850 < m.headWidth * .14) add(errors, "topology.upperArmWidth", "The upper-arm strip must remain readable at 390px", rendered.upperArmStrip850);
+  if (rendered.zOrder.join(",") !== "arm.left,arm.right,torso.root,shoulder.left,shoulder.right") add(errors, "topology.zOrder", "Upper arms render behind torso and deltoids render over their attachments", rendered.zOrder);
+  if (!(l.acromionLeft.y < l.deltoidApexLeft.y && l.deltoidApexLeft.y < l.axillaLeft.y)) add(errors, "order.shoulderSkeleton", "Shoulder joint, deltoid apex, and axilla must descend in anatomical order", [l.acromionLeft.y, l.deltoidApexLeft.y, l.axillaLeft.y]);
+  if (r.shoulderHead >= SPEC.parameters.shoulderHeadRatio.max && m.shoulderDrop <= SPEC.parameters.shoulderDrop.min) add(errors, "rendered.shoulderSlope", "The widest frame cannot combine with the flattest shoulder drop", [r.shoulderHead, m.shoulderDrop]);
   const zeroBustFrameRisk = m.bustEnvelopeWidth === 0 && (
-    (m.headWidth <= SPEC.parameters.headWidth.min && rendered.waistWidth < 450) ||
-    (r.shoulderHead >= SPEC.parameters.shoulderHeadRatio.max && rendered.shoulderWidths[2] < m.acromionSpan * .78)
+    m.headWidth <= SPEC.parameters.headWidth.min ||
+    r.shoulderHead >= SPEC.parameters.shoulderHeadRatio.max
   );
   if (zeroBustFrameRisk) add(errors, "correlation.shoulderFrame", "The zero-bust arm/torso frame cannot combine with the smallest head/lower-torso field or widest acromion endpoint", [m.headWidth, r.shoulderHead, rendered.waistWidth, rendered.shoulderWidths[2]]);
   const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));

@@ -114,7 +114,10 @@ function renderSvg(geometry) {
     </g>` : "";
   stage.innerHTML = `
     <style>
-      .body { fill:#ddd6e2; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
+      .body { fill:#ddd6e2; stroke:none }
+      .arm-surface { fill:#d5cdd9; stroke:none }
+      .deltoid-surface { fill:#ddd6e2; stroke:none }
+      .body-outline { fill:none; stroke:#4d4656; stroke-width:4; stroke-linejoin:round; vector-effect:non-scaling-stroke }
       .head { fill:#eee8ef; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
       .construction { fill:none; stroke:#8c6fb4; stroke-width:3; stroke-dasharray:10 8; vector-effect:non-scaling-stroke }
       .hair-back { fill:#d8cbe5; fill-opacity:.76; stroke:#6e587e; stroke-width:4; vector-effect:non-scaling-stroke }
@@ -124,6 +127,8 @@ function renderSvg(geometry) {
       .chest-volume { fill:url(#torso-volume); stroke:none; pointer-events:none }
       .chest-field { fill:none; stroke:#9b8ba7; stroke-opacity:.7; stroke-width:2; stroke-dasharray:8 8; vector-effect:non-scaling-stroke }
       .anatomy-line { fill:none; stroke:#75687d; stroke-width:2; stroke-linecap:round; vector-effect:non-scaling-stroke }
+      .axilla-cue { stroke-width:2.5 }
+      @media (max-width:720px) { .axilla-cue { opacity:.42 } }
       .face-mark { fill:#f8f5f8; stroke:#665b70; stroke-width:3; vector-effect:non-scaling-stroke }
       .feature-line { fill:none; stroke:#665b70; stroke-width:4; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .measurements line { stroke:#b48d9c; stroke-width:1.5; stroke-dasharray:5 6; vector-effect:non-scaling-stroke }
@@ -137,12 +142,21 @@ function renderSvg(geometry) {
       <clipPath id="eye-clip-right"><ellipse cx="${l.eyeRight.x}" cy="${l.eyeRight.y}" rx="${m.irisClipRx}" ry="${m.irisClipRy}"/></clipPath>
     </defs>
     <path class="hair-back" data-layer="hair-back" data-parent="${anatomy.hairBack.parent}" data-landmark-chain="${provenance(anatomy.hairBack)}" d="${anatomy.hairBack.d}"/>
+    <g data-layer="upper-arms">
+      <path class="arm-surface" data-layer="upper-arm-left" data-parent="${anatomy.arms.left.parent}" data-landmark-chain="${provenance(anatomy.arms.left)}" d="${anatomy.arms.left.d}"/>
+      <path class="arm-surface" data-layer="upper-arm-right" data-parent="${anatomy.arms.right.parent}" data-landmark-chain="${provenance(anatomy.arms.right)}" d="${anatomy.arms.right.d}"/>
+    </g>
     <path class="body" data-parent="${anatomy.body.parent}" data-landmark-chain="${provenance(anatomy.body)}" d="${anatomy.body.d}"/>
     <path class="chest-volume" data-layer="covered-torso-volume" data-parent="${anatomy.chest.parent}" data-landmark-chain="${provenance(anatomy.chest)}" opacity="${n(.18 + geometry.parameters.bustShoulderRatio / .64 * .22)}" d="${anatomy.chest.d}"/>
+    <g data-layer="deltoids">
+      <path class="deltoid-surface" data-layer="deltoid-left" data-parent="${anatomy.deltoids.left.parent}" data-landmark-chain="${provenance(anatomy.deltoids.left)}" d="${anatomy.deltoids.left.d}"/>
+      <path class="deltoid-surface" data-layer="deltoid-right" data-parent="${anatomy.deltoids.right.parent}" data-landmark-chain="${provenance(anatomy.deltoids.right)}" d="${anatomy.deltoids.right.d}"/>
+    </g>
+    <path class="body-outline" data-layer="resolved-body-outline" data-parent="${anatomy.outline.parent}" data-landmark-chain="${provenance(anatomy.outline)}" d="${anatomy.outline.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
-    <path class="anatomy-line arm-transition" data-layer="arm-torso-transition" data-parent="${anatomy.armGuides.left.parent}" data-landmark-chain="${provenance(anatomy.armGuides.left)}" d="${anatomy.armGuides.left.d}"/>
-    <path class="anatomy-line arm-transition" data-layer="arm-torso-transition" data-parent="${anatomy.armGuides.right.parent}" data-landmark-chain="${provenance(anatomy.armGuides.right)}" d="${anatomy.armGuides.right.d}"/>
+    <path class="anatomy-line axilla-cue" data-layer="axilla-cue-left" data-parent="${anatomy.armSeams.left.parent}" data-landmark-chain="${provenance(anatomy.armSeams.left)}" d="${anatomy.armSeams.left.d}"/>
+    <path class="anatomy-line axilla-cue" data-layer="axilla-cue-right" data-parent="${anatomy.armSeams.right.parent}" data-landmark-chain="${provenance(anatomy.armSeams.right)}" d="${anatomy.armSeams.right.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.right.parent}" data-landmark-chain="${provenance(anatomy.ears.right)}" d="${anatomy.ears.right.d}"/>
     <path class="head" data-parent="${anatomy.head.parent}" data-landmark-chain="${provenance(anatomy.head)}" d="${anatomy.head.d}"/>

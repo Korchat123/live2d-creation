@@ -1,6 +1,6 @@
 # Standard bust v1 character bible
 
-Version: `standard-bust-v1/spec-0.6.0`
+Version: `standard-bust-v1/spec-0.7.0`
 
 Status: planning candidate. P0-A is blocked until an independent Gate A report passes this exact file version and candidate commit.
 
@@ -145,11 +145,17 @@ This rejects a chibi/childlike combination even when each isolated slider is ins
 
 ## Neck, shoulders, torso, and bust
 
+The topology follows the official Cubism workflow of separate Parts/ArtMeshes with hidden attachment overlap and shoulder Glue (`docs.live2d.com/en/cubism-editor-manual/glue/`). Pose construction likewise treats shoulder and elbow direction as distinct skeleton landmarks rather than inferring anatomy from a container perimeter.
+
 - Upper neck is narrower than the jaw and widens symmetrically and monotonically to a collar span that is not narrower than the upper neck.
 - Trapezius curves join the collar/shoulder roots to the acromia. The supported acromion drop is `44..60` units; the neutral target is `52`, keeping the bony landmark near `y=553` rather than the rejected low `y=581` cap.
-- The visible contour descends from root to acromion with rendered slope `0.17..0.29`, rounds through bounded deltoid tissue at most `0.06 * headWidth` outside each acromion, continues through separately owned upper-arm and arm/torso-transition anchors, and then enters the torso without a hook. A compact square cap, hanger shelf, sleeve wall, or container outline is invalid even if landmark ratios pass.
+- The bust is five closed semantic surfaces: one `torso.root`, paired `shoulder.left/right` deltoids, and paired `arm.left/right` upper arms. The arm surfaces render behind the torso, the deltoids render over both attachments, and every attachment has `8..24` hidden canvas units of overlap. Open guide curves cannot substitute for a surface.
+- The landmark skeleton orders shoulder joint, deltoid apex, insertion, axilla, elbow direction, torso center, and hip direction. Torso ownership stops medial to the shoulder joint; no torso-owned contour may extend lateral to an acromion.
+- The resolved visible contour descends from neck outer to trapezius, acromion, deltoid outer, upper-arm outer, and crop outer. Its acromion tangent discontinuity is at most `8 degrees`; only this resolved outline receives the external stroke. Full inner surface borders are hidden.
+- Composite width / acromion span at `acromion + [0, 40, 90, 150, 230]` is respectively `[0.99..1.02, 1.03..1.08, 0.99..1.05, 0.92..1.00, 0.86..0.95]`. At `+230`, the torso is at least `0.08 * acromionSpan` narrower per side than the arm union. At `y=850`, each readable arm strip is at least `0.14 * headWidth` and at least `12 CSS px` in the `390px` browser check.
+- A visible axilla cue begins below the shoulder joint and is at most `0.40 * headWidth` long. A diagonal line from shoulder top to torso is a decorative seam and is invalid.
 - Outer torso width at `y=850` is `0.70..0.78` of garment shoulder width (neutral `0.72`). This stricter taper replaces the planning value `0.78..0.90`, whose upper half permits the independently observed slab/container silhouette.
-- These are actual-path requirements. Tests sample the rendered body path at the acromion and `+24`, `+48`, `+90`, `+150`, and `+230` Y offsets, plus a dense 12-unit profile from `0..240`. The early samples establish one broad bounded deltoid round beyond the bony acromion; later widths move progressively inward. No 12-unit interval may exceed the authored derivative limit, no local derivative change may exceed the curvature limit, and the `+90..+150` width loss is capped so the old 85-unit hook cannot recur. Acromion incoming/outgoing cubics share a measured C1 tangent. Landmark metadata alone cannot satisfy this requirement.
+- These are actual-path requirements. Tests inspect each closed surface, the resolved outline, ownership graph, attachment overlap, endpoint continuity, z-order, scanline union, torso separation, and mobile rendered widths. Landmark metadata alone cannot satisfy them.
 - Covered bust apex offset is `0.13..0.18 * acromionSpan` from the center on each side.
 - Inner sternum clearance is at least `0.08 * acromionSpan`; the outer covered envelope remains at least `12` units inside the torso/arm boundary.
 - Zero/low bust is valid. Bust upper, outer, apex, inner, and center anchors form one closed chest-owned envelope with continuous joins; at zero it collapses to the chest center without detached lobes.
@@ -193,7 +199,7 @@ Gate A fails for a detached or miniature head; rectangular shoulders; face/stern
 
 An independent evaluator must review the actual geometry app at intended preview scale. Required reproducible evidence includes neutral and all presets, each min/max, pairwise combined extremes, a worst-valid combined bundle, measured silhouette intersections and local containment—not ratios alone—and rejection fixtures for miniature head, wig gap, floating neck, misplaced face, rectangular shoulders, detached bust, correlated maturity, and unsafe combined extremes.
 
-Evidence also covers every advertised isolated endpoint, zero/low/neutral/maximum bust, and the wedge-body, scalloped-bib, and compact-shoulder-hook fixtures. All presets and representative geometry extremes are captured at desktop and `390px` with the measurement overlay off. A manual control edit must replace both selectors' displayed identities with `custom:bounded` or `custom:reconciled`; stale preset evidence is invalid.
+Evidence also covers every advertised isolated endpoint, zero/low/neutral/maximum bust, and the wedge-body, scalloped-bib, compact-shoulder-hook, fake-decorative-seam, and fused-arm-container fixtures. All presets and representative geometry extremes are captured at desktop and `390px` with the measurement overlay off. A manual control edit must replace both selectors' displayed identities with `custom:bounded` or `custom:reconciled`; stale preset evidence is invalid.
 
 A generated finished character, decorative art, manually corrected screenshot, or result from a renderer other than the inspected geometry app is invalid evidence. Automated success remains `Needs review`; this implementation cannot self-approve Gate A.
 

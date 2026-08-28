@@ -38,7 +38,12 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /data-parent="\$\{anatomy\.hairBack\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.hairFront\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.body\.parent\}" data-landmark-chain=/);
-  assert.match(app, /data-layer="arm-torso-transition" data-parent="\$\{anatomy\.armGuides\.left\.parent\}"/);
+  assert.match(app, /data-layer="upper-arm-left" data-parent="\$\{anatomy\.arms\.left\.parent\}"/);
+  assert.match(app, /data-layer="upper-arm-right" data-parent="\$\{anatomy\.arms\.right\.parent\}"/);
+  assert.match(app, /data-layer="deltoid-left" data-parent="\$\{anatomy\.deltoids\.left\.parent\}"/);
+  assert.match(app, /data-layer="deltoid-right" data-parent="\$\{anatomy\.deltoids\.right\.parent\}"/);
+  assert.match(app, /data-layer="axilla-cue-left" data-parent="\$\{anatomy\.armSeams\.left\.parent\}"/);
+  assert.match(app, /data-layer="resolved-body-outline" data-parent="\$\{anatomy\.outline\.parent\}"/);
   assert.match(app, /data-parent="\$\{anatomy\.chest\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.neckGuide\.parent\}" data-landmark-chain=/);
   assert.match(app, /ellipseMarkup\([^\n]+"eye\.left"\)/);
@@ -61,6 +66,16 @@ test("explicit hair back, ears, head, and hair front order preserves readable ea
   assert.ok(back >= 0 && ears > back && head > ears && front > head, { back, ears, head, front });
   assert.match(app, /class="hair-front"[^>]+data-landmark-chain=/);
   assert.match(app, /class="ear"[^>]+data-landmark-chain=/);
+});
+
+test("semantic bust surfaces render in the declared attachment order", async () => {
+  const app = await read("src/app.js");
+  const arm = app.indexOf('data-layer="upper-arm-left"');
+  const torso = app.indexOf('class="body" data-parent=');
+  const deltoid = app.indexOf('data-layer="deltoid-left"');
+  const outline = app.indexOf('data-layer="resolved-body-outline"');
+  const axilla = app.indexOf('data-layer="axilla-cue-left"');
+  assert.ok(arm >= 0 && torso > arm && deltoid > torso && outline > deltoid && axilla > outline, { arm, torso, deltoid, outline, axilla });
 });
 
 test("measurement overlay keeps every point inspectable but labels a curated readable subset", async () => {
