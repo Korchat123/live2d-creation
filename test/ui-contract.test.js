@@ -10,6 +10,13 @@ test("browser shell exposes controls, the real center SVG, and evidence inspecto
   assert.match(html, /id="stage"/);
   assert.match(html, /class="panel evidence-panel"/);
   assert.equal((html.match(/<svg /g) || []).length, 1);
+  assert.match(html, /id="spec-version"/);
+});
+
+test("UI exposes the governing executable specification identity", async () => {
+  const app = await read("src/app.js");
+  assert.match(app, /specVersion\.textContent = SPEC_VERSION/);
+  assert.match(app, /stage\.dataset\.specVersion = geometry\.specVersion/);
 });
 
 test("candidate contains no flattened image, decorative asset, canvas, or approval shortcut", async () => {

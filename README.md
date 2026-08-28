@@ -19,7 +19,7 @@ Build a polished bust-up anime character creator that behaves like a game charac
 
 ## Current status
 
-`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.4.0`. It renders calculated construction geometry, landmarks, ratios, parameter bounds, exhaustive evidence states, and deliberately invalid rejection fixtures. `src/spec.js` is the single executable source for parameters, ranges, constants, and presets used by controls, geometry, validation, and tests. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
+`P0-A` is an executable **geometry-only Gate A candidate** for `standard-bust-v1/spec-0.5.0`. `CHARACTER_BIBLE.md` is the governing reviewed contract; its explicit parameter parity table is checked against `src/spec.js`, which supplies those exact values to controls, geometry, validation, evidence states, and tests. The app visibly exposes the same version. The candidate contains no decorative character artwork, hair/outfit assets, generated finished image, or rig.
 
 Valid automated results deliberately say `Needs review`, never `Approved`. An independent evaluator must review the pushed candidate before Gate A can pass.
 
@@ -39,7 +39,7 @@ Open `http://localhost:4173`.
 npm test
 ```
 
-The suite covers the character-bible ratios, landmark ordering, symmetry, parameter bounds, all presets, all individual min/max states, every pairwise four-corner extreme, deterministic output, canonical ownership, absence of per-part global positioning, propagation, and all eight mandatory rejection fixtures.
+The suite covers exact character-bible/executable/UI contract parity, landmark ordering, symmetry, every advertised individual min/max endpoint, all presets, every pairwise four-corner extreme, rendered shoulder slope/deltoid/torso curvature, deterministic output, canonical ownership, propagation, and all ten mandatory rejection fixtures.
 
 Run the real Chromium responsive check separately:
 

@@ -1,4 +1,4 @@
-import { NEGATIVE_FIXTURES, PARAMETER_DEFINITIONS, buildGeometry, evidenceStates, fixtureGeometry, presetParameters } from "./geometry.js";
+import { NEGATIVE_FIXTURES, PARAMETER_DEFINITIONS, SPEC_VERSION, buildGeometry, evidenceStates, fixtureGeometry, presetParameters } from "./geometry.js";
 import { validateGeometry } from "./validation.js";
 import { buildAnatomyPaths, measureRenderedGeometry } from "./anatomy-paths.js";
 
@@ -12,6 +12,7 @@ const metrics = document.querySelector("#metrics");
 const errors = document.querySelector("#errors");
 const status = document.querySelector("#status");
 const stateName = document.querySelector("#state-name");
+const specVersion = document.querySelector("#spec-version");
 const states = evidenceStates();
 let currentParameters = presetParameters("neutral");
 let currentFixture = null;
@@ -100,6 +101,7 @@ function renderSvg(geometry) {
   stage.dataset.acromionLeftX = l.acromionLeft.x;
   stage.dataset.acromionRightX = l.acromionRight.x;
   stage.dataset.acromionY = l.acromionLeft.y;
+  stage.dataset.specVersion = geometry.specVersion;
   const provenance = item => item.landmarks.join(" ");
   const landmarkEntries = Object.entries(l).filter(([name]) => name !== "torsoCrop");
   const overlay = overlayToggle.checked ? `
@@ -217,6 +219,7 @@ fixtures.addEventListener("click", event => {
 overlayToggle.addEventListener("change", render);
 
 buildControls();
+specVersion.textContent = SPEC_VERSION;
 buildEvidenceOptions();
 buildFixtureButtons();
 updateControlValues();

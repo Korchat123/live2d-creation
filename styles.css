@@ -28,6 +28,7 @@ button, input, select { font: inherit; }
   border-bottom: 1px solid var(--line);
 }
 .topbar h1 { margin: 1px 0 0; font-size: 1.18rem; letter-spacing: -.02em; }
+.topbar h1 small { font-size: .58em; color: var(--muted); }
 .eyebrow, .step { margin: 0; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .gate-note { padding: 8px 12px; color: #6a4d25; background: #f7edd9; border: 1px solid #e4cfaa; border-radius: 999px; font-size: .8rem; font-weight: 700; }
 

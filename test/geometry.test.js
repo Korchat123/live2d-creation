@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   CANVAS, NEGATIVE_FIXTURES, NODE_CONTRACTS, PARAMETER_DEFINITIONS, PRESETS, buildGeometry, clampParameters,
@@ -12,7 +13,7 @@ const near = (actual, expected, tolerance, message) => assert.ok(Math.abs(actual
 
 test("neutral geometry matches the corrected character-bible landmarks", () => {
   const geometry = buildGeometry(presetParameters("neutral"));
-  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.4.0");
+  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.5.0");
   assert.deepEqual(validateGeometry(geometry), { status: "Needs review", errors: [] });
   near(geometry.measurements.headWidth, 270, 0.01, "head width");
   near(geometry.measurements.headHeight, 333, 1, "head height");
@@ -37,6 +38,18 @@ test("geometry, validation, controls, and tests share one executable specificati
   for (const [name, range] of Object.entries(SPEC.ratioRanges)) assert.ok(geometry.ratios[name] >= range[0] && geometry.ratios[name] <= range[1], name);
 });
 
+test("governing character bible and executable parameter contract have exact parity", () => {
+  const bible = readFileSync(new URL("../CHARACTER_BIBLE.md", import.meta.url), "utf8");
+  const version = bible.match(/^Version: `([^`]+)`/m)?.[1];
+  assert.equal(version, SPEC.version);
+  const rows = [...bible.matchAll(/^\| (\w+) \| ([0-9.]+) \| ([0-9.]+) \| ([0-9.]+) \|$/gm)];
+  const contract = Object.fromEntries(rows.map(([, key, min, max, value]) => [key, { min: Number(min), max: Number(max), value: Number(value) }]));
+  assert.deepEqual(Object.keys(contract), Object.keys(SPEC.parameters));
+  for (const [key, definition] of Object.entries(SPEC.parameters)) {
+    assert.deepEqual(contract[key], { min: definition.min, max: definition.max, value: definition.value }, key);
+  }
+});
+
 test("all presentation presets are valid bounded bundles on one anatomy", () => {
   for (const name of Object.keys(PRESETS)) {
     const parameters = presetParameters(name);
@@ -45,7 +58,7 @@ test("all presentation presets are valid bounded bundles on one anatomy", () => 
   }
 });
 
-test("presentation targets and shoulder envelopes match spec 0.4", () => {
+test("presentation targets and shoulder envelopes match spec 0.5", () => {
   const expected = {
     feminine: [2.14, 0.69, 0.31, 0.57], androgynous: [2.25, 0.72, 0.34, 0.50], masculine: [2.40, 0.75, 0.38, 0.44]
   };
@@ -90,15 +103,15 @@ test("multi-Y silhouette is symmetric, locally contained, and narrows below chee
 
 test("eyes, iris, nose, mouth, and ears meet explicit construction bounds", () => {
   const { measurements: m, ratios: r, landmarks: l } = buildGeometry();
-  assert.ok(m.eyeWidth >= 54 && m.eyeWidth <= 70);
-  assert.ok(m.eyeHeight >= 25 && m.eyeHeight <= 37);
+  assert.ok(m.eyeWidth >= SPEC.parameters.eyeWidth.min && m.eyeWidth <= SPEC.parameters.eyeWidth.max);
+  assert.ok(m.eyeHeight >= SPEC.parameters.eyeHeight.min && m.eyeHeight <= SPEC.parameters.eyeHeight.max);
   assert.ok(r.eyeAspect >= 1.70 && r.eyeAspect <= 2.35);
   assert.ok(r.innerGapEye >= .88 && r.innerGapEye <= 1.22);
   assert.ok(r.irisEye >= .52 && r.irisEye <= .72);
   assert.ok(m.irisDiameter < m.eyeWidth && m.irisDiameter < m.eyeHeight * 1.45);
   assert.ok(m.irisVisibleHeight <= m.eyeHeight - 4);
   assert.ok(m.noseWidth >= 10 && m.noseWidth <= 26 && m.noseHeight >= 8 && m.noseHeight <= 26);
-  assert.ok(m.mouthWidth >= 30 && m.mouthWidth <= 56 && m.mouthHeight >= 2 && m.mouthHeight <= 10);
+  assert.ok(m.mouthWidth >= SPEC.parameters.mouthWidth.min && m.mouthWidth <= SPEC.parameters.mouthWidth.max && m.mouthHeight >= 2 && m.mouthHeight <= 10);
   assert.ok(l.earTopLeft.y >= 225 && l.earTopLeft.y <= 240);
   assert.ok(l.earBottomLeft.y >= 320 && l.earBottomLeft.y <= 340);
   near(l.earTopRight.x - l.earTopLeft.x, m.earTopOutlineWidth, 3, "top ear roots intersect outline");
@@ -154,14 +167,18 @@ test("visible anatomy paths preserve neck-to-arm continuity and canonical proven
 });
 
 test("actual shoulder cubics share acromion tangents and form a sloped cap with an inward side", () => {
-  for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.05, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 260 }, { shoulderHeadRatio: 2.48, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 280 }]) {
+  for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.05, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 260 }]) {
     const rendered = measureRenderedGeometry(buildGeometry(parameters));
-    assert.ok(rendered.bodyHead <= 2.48);
+    assert.ok(rendered.bodyHead <= 2.60);
     near(rendered.shoulderJoinMismatch, 0, .02, "acromion C1 mismatch");
     near(rendered.shoulderJoinAngle, 0, .1, "acromion G1 angle");
     assert.ok(rendered.shoulderChordDeviation >= 3.5, JSON.stringify(rendered.shoulderChordDeviation));
     assert.ok(rendered.shoulderMaxStraightRun <= 176, JSON.stringify(rendered.shoulderMaxStraightRun));
     assert.ok(rendered.shoulderShelfLength <= 78, JSON.stringify(rendered.shoulderShelfLength));
+    assert.ok(rendered.shoulderRootSlope >= .17 && rendered.shoulderRootSlope <= .29, JSON.stringify(rendered.shoulderRootSlope));
+    assert.ok(rendered.shoulderPeakPadding >= 4 && rendered.shoulderPeakPadding <= parameters.headWidth * SPEC.constants.garmentPaddingHeadMax, JSON.stringify(rendered.shoulderPeakPadding));
+    assert.ok(rendered.shoulderTurnWidths[1] >= rendered.shoulderTurnWidths[0] + 6, JSON.stringify(rendered.shoulderTurnWidths));
+    assert.ok(rendered.shoulderDeltoidInset >= 11.5, JSON.stringify(rendered.shoulderDeltoidInset));
     assert.ok(rendered.shoulderSideDisplacement >= 28, JSON.stringify(rendered.shoulderSideXs));
     assert.ok(rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] >= 16, JSON.stringify(rendered.shoulderWindowXs));
     assert.ok(rendered.shoulderInward.every((value, index, values) => value >= 2 && (index === 0 || value > values[index - 1] + .5)), JSON.stringify(rendered.shoulderInward));
@@ -172,6 +189,7 @@ test("actual shoulder cubics share acromion tangents and form a sloped cap with 
   assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderSlab"));
   assert.ok(validateGeometry(buildGeometry({}, { shoulderStyle: "wall" })).errors.some(error => error.code === "rendered.shoulderSideInset"));
   assert.equal(validateGeometry(buildGeometry({ shoulderHeadRatio: SPEC.parameters.shoulderHeadRatio.min, shoulderDrop: SPEC.parameters.shoulderDrop.min })).status, "Needs review", "the authored min shoulder + min drop pair must remain supported");
+  assert.ok(validateGeometry(buildGeometry({ shoulderHeadRatio: SPEC.parameters.shoulderHeadRatio.max, shoulderDrop: SPEC.parameters.shoulderDrop.min })).errors.some(error => error.code === "rendered.shoulderSlope"), "the wide/flat correlated corner remains intentionally blocked");
 });
 
 test("bust control deforms the actual covered torso silhouette and default chest surface", () => {
@@ -239,7 +257,7 @@ test("rendered contours, not intended controls, satisfy the visible silhouette c
     if (validation.status === "Blocked") continue;
     const rendered = measureRenderedGeometry(geometry);
     assert.ok(rendered.hairHead >= SPEC.ratioRanges.hairHead[0] && rendered.hairHead <= SPEC.ratioRanges.hairHead[1], `${state.id}: hair/head=${rendered.hairHead}`);
-    assert.ok(rendered.bodyHead >= 2.05 && rendered.bodyHead <= 2.48, `${state.id}: body/head=${rendered.bodyHead}`);
+    assert.ok(rendered.bodyHead >= 2.05 && rendered.bodyHead <= 2.60, `${state.id}: body/head=${rendered.bodyHead}`);
     assert.ok(rendered.waistShoulder >= .68 && rendered.waistShoulder <= .86, `${state.id}: waist/shoulder=${rendered.waistShoulder}`);
   }
 });
@@ -252,7 +270,11 @@ test("evidence includes presets, every bound, all pairwise corners, and worst-va
   assert.ok(states.some(state => state.id === "combined:worst-valid"));
   assert.equal(validateGeometry(buildGeometry(states.find(state => state.id === "boundary:adult-safe").parameters)).status, "Needs review");
   assert.ok(validateGeometry(buildGeometry(states.find(state => state.id === "boundary:adult-blocked").parameters)).errors.some(error => error.code === "correlation.maturity"));
-  for (const key of Object.keys(SPEC.parameters)) for (const bound of ["min", "max"]) assert.ok(states.some(state => state.id === `bound:${key}:${bound}`));
+  for (const key of Object.keys(SPEC.parameters)) for (const bound of ["min", "max"]) {
+    const state = states.find(item => item.id === `bound:${key}:${bound}`);
+    assert.ok(state, `${key}:${bound} evidence missing`);
+    assert.equal(validateGeometry(buildGeometry(state.parameters)).status, "Needs review", `${key}:${bound} is an advertised isolated endpoint`);
+  }
   assert.equal(validateGeometry(buildGeometry(states.find(state => state.id === "combined:worst-valid").parameters)).status, "Needs review");
   assert.ok(states.some(state => validateGeometry(buildGeometry(state.parameters)).status === "Blocked"), "correlated combinations must be rejected, not silently accepted");
 });

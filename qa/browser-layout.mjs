@@ -105,7 +105,9 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
         acromionLeftX: left.x,
         acromionRightX: right.x,
         toggleRight: toggle.right,
-        overlayChecked: document.querySelector('#overlay-toggle').checked
+        overlayChecked: document.querySelector('#overlay-toggle').checked,
+        specVersion: stage.dataset.specVersion,
+        visibleSpecVersion: document.querySelector('#spec-version').textContent
       };
     })()`
   });
@@ -118,6 +120,51 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
   assert.ok(layout.acromionLeftX >= layout.rect.left && layout.acromionRightX <= layout.rect.right, JSON.stringify(layout));
   assert.ok(layout.toggleRight <= layout.innerWidth, JSON.stringify(layout));
   assert.equal(layout.overlayChecked, false, "measurement labels default off on phones");
+  assert.equal(layout.specVersion, "standard-bust-v1/spec-0.5.0");
+  assert.equal(layout.visibleSpecVersion, layout.specVersion);
+
+  const boundSweep = await cdp.call("Runtime.evaluate", {
+    returnByValue: true,
+    awaitPromise: true,
+    expression: `(async () => {
+      const select = document.querySelector('#evidence-select');
+      const results = [];
+      for (const option of [...select.options].filter(item => item.value.startsWith('bound:'))) {
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        results.push({ id: option.value, status: document.querySelector('#status').textContent, state: document.querySelector('#state-name').textContent, body: document.querySelector('path.body').getAttribute('d') });
+      }
+      return results;
+    })()`
+  });
+  assert.equal(boundSweep.result.value.length, 48);
+  for (const item of boundSweep.result.value) {
+    assert.equal(item.status, "Needs review", item.id);
+    assert.equal(item.state, item.id, item.id);
+    assert.ok(item.body.startsWith("M "), item.id);
+  }
+
+  const bustPaths = await cdp.call("Runtime.evaluate", {
+    returnByValue: true,
+    awaitPromise: true,
+    expression: `(async () => {
+      const select = document.querySelector('#evidence-select');
+      select.value = 'preset:neutral'; select.dispatchEvent(new Event('change', { bubbles:true }));
+      const input = document.querySelector('[data-parameter="bustShoulderRatio"]');
+      const results = [];
+      for (const value of [0, .08, .5, .64]) {
+        input.value = String(value); input.dispatchEvent(new Event('input', { bubbles:true }));
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        const body = document.querySelector('path.body'); const chest = document.querySelector('[data-layer="covered-torso-volume"]');
+        results.push({ value, status: document.querySelector('#status').textContent, body: body.getAttribute('d'), chest: chest.getAttribute('d'), chestBox: chest.getBBox() });
+      }
+      return results;
+    })()`
+  });
+  assert.ok(bustPaths.result.value.every(item => item.status === "Needs review"));
+  assert.equal(new Set(bustPaths.result.value.map(item => item.body)).size, 4);
+  assert.equal(new Set(bustPaths.result.value.map(item => item.chest)).size, 4);
   if (process.env.P0_CAPTURE_PATH) {
     const capture = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
     await writeFile(process.env.P0_CAPTURE_PATH, Buffer.from(capture.data, "base64"));
@@ -138,6 +185,25 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
         await delay(80);
         const variant = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
         await writeFile(join(process.env.P0_CAPTURE_VARIANTS_DIR, `bust-${String(value).replace('.', '_')}-${suffix}.png`), Buffer.from(variant.data, "base64"));
+      }
+    }
+  }
+  if (process.env.P0_CAPTURE_MATRIX_DIR) {
+    await mkdir(process.env.P0_CAPTURE_MATRIX_DIR, { recursive: true });
+    const states = [
+      'preset:neutral', 'preset:feminine', 'preset:androgynous', 'preset:masculine',
+      'bound:headWidth:min', 'bound:headWidth:max', 'bound:shoulderHeadRatio:min', 'bound:shoulderHeadRatio:max',
+      'bound:shoulderDrop:min', 'bound:shoulderDrop:max', 'bound:bustShoulderRatio:min', 'bound:bustShoulderRatio:max',
+      'boundary:adult-safe', 'combined:worst-valid'
+    ];
+    for (const state of states) {
+      await cdp.call("Runtime.evaluate", { expression: `(() => { const select = document.querySelector('#evidence-select'); select.value = '${state}'; select.dispatchEvent(new Event('change', { bubbles:true })); })()` });
+      await delay(50);
+      for (const [suffix, width, height, mobile] of [["desktop", 1440, 1000, false], ["mobile", 390, 844, true]]) {
+        await cdp.call("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile });
+        await delay(50);
+        const capture = await cdp.call("Page.captureScreenshot", { format: "png", fromSurface: true });
+        await writeFile(join(process.env.P0_CAPTURE_MATRIX_DIR, `${state.replace(/[:+]/g, '-')}-${suffix}.png`), Buffer.from(capture.data, "base64"));
       }
     }
   }

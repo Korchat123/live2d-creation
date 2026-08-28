@@ -49,7 +49,7 @@ function openSpline(points, tension = .62, verticalAt = []) {
     if (index === points.length - 1) return { x: (current.x - points[index - 1].x) * tension, y: (current.y - points[index - 1].y) * tension };
     if (verticalAt.some(point => samePoint(point, current))) {
       const deltaY = points[index + 1].y - points[index - 1].y;
-      return { x: 0, y: Math.sign(deltaY) * Math.max(60, Math.abs(deltaY) * tension * 1.55) };
+      return { x: 0, y: Math.sign(deltaY) * Math.max(30, Math.abs(deltaY) * tension * 1.15) };
     }
     return { x: (points[index + 1].x - points[index - 1].x) * tension, y: (points[index + 1].y - points[index - 1].y) * tension };
   });
@@ -210,7 +210,7 @@ function shoulderShelfLength(commands, shoulderRoot, acromion) {
   for (let index = 1; index < points.length; index += 1) {
     const dx = points[index].x - points[index - 1].x;
     const dy = points[index].y - points[index - 1].y;
-    if (Math.abs(dx) > .01 && Math.abs(dy / dx) < .16) {
+    if (Math.abs(dx) > .01 && Math.abs(dy / dx) < .08) {
       run += Math.hypot(dx, dy); longest = Math.max(longest, run);
     } else run = 0;
   }
@@ -224,12 +224,19 @@ export function measureRenderedGeometry(geometry) {
   const headWidth = paths.head.bounds.width;
   const waistHits = intersectionsAtY(paths.body.commands, 850);
   const waistWidth = waistHits.length >= 2 ? waistHits.at(-1) - waistHits[0] : bodyWidth;
-  const shoulderYs = [24, 48, 72].map(offset => geometry.landmarks.acromionLeft.y + offset);
+  // Sample after the rounded deltoid, where the arm/ribcage contour must keep
+  // curving inward instead of becoming a sleeve wall or rectangular torso.
+  const shoulderYs = [90, 150, 230].map(offset => geometry.landmarks.acromionLeft.y + offset);
   const shoulderWidths = shoulderYs.map(y => {
     const hits = intersectionsAtY(paths.body.commands, y);
     return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
   });
   const shoulderInward = shoulderWidths.map(width => n((geometry.measurements.acromionSpan - width) / 2));
+  const shoulderTurnYs = [0, 24, 48, 90].map(offset => geometry.landmarks.acromionLeft.y + offset);
+  const shoulderTurnWidths = shoulderTurnYs.map(y => {
+    const hits = intersectionsAtY(paths.body.commands, y);
+    return hits.length >= 2 ? n(hits.at(-1) - hits[0]) : NaN;
+  });
   const shoulderJoin = cubicJoinAt(paths.body.commands, geometry.landmarks.acromionLeft);
   const sideSampleYs = [20, 100, 180].map(offset => geometry.landmarks.acromionLeft.y + offset);
   const sideSampleXs = sideSampleYs.map(y => intersectionsAtY(paths.body.commands, y)[0]);
@@ -251,6 +258,10 @@ export function measureRenderedGeometry(geometry) {
     waistShoulder: n(waistWidth / bodyWidth),
     shoulderWidths: Object.freeze(shoulderWidths),
     shoulderInward: Object.freeze(shoulderInward),
+    shoulderRootSlope: n((geometry.landmarks.acromionLeft.y - geometry.landmarks.shoulderRootLeft.y) / (geometry.landmarks.shoulderRootLeft.x - geometry.landmarks.acromionLeft.x)),
+    shoulderTurnWidths: Object.freeze(shoulderTurnWidths),
+    shoulderPeakPadding: n((Math.max(...shoulderTurnWidths) - geometry.measurements.acromionSpan) / 2),
+    shoulderDeltoidInset: n((Math.max(...shoulderTurnWidths) - shoulderTurnWidths.at(-1)) / 2),
     shoulderJoinMismatch: shoulderJoin.mismatch,
     shoulderJoinAngle: shoulderJoin.angle,
     shoulderChordDeviation: shoulderChordDeviation(paths.body.commands, geometry.landmarks.acromionLeft, geometry.landmarks.upperArmLeft),

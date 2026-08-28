@@ -46,18 +46,22 @@ export function validateGeometry(geometry) {
   if (m.hairCrownOverlap < 0 || m.hairTempleOverlap < 0) add(errors, "fit.wigGap", "Measured inner-cap samples cannot leave a crown or temple gap", [m.hairCrownOverlap, m.hairTempleOverlap]);
   if (m.hairCrownOverlap < m.hairRequiredOverlap || m.hairTempleOverlap < m.hairRequiredOverlap) add(errors, "fit.hairOverlap", "Measured hair/skull overlap is below projected displacement plus safety", [m.hairCrownOverlap, m.hairTempleOverlap, m.hairRequiredOverlap]);
   if (!between(rendered.hairHead, SPEC.ratioRanges.hairHead)) add(errors, "rendered.hairHead", "The sampled visible hair contour must realize the authored hair/head ratio", rendered.hairHead);
-  if (!between(rendered.bodyHead, [2.05, 2.48])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head", rendered.bodyHead);
+  if (!between(rendered.bodyHead, [2.05, 2.60])) add(errors, "rendered.bodyHead", "The sampled bust silhouette must stay proportional to the rendered head, including bounded deltoid tissue", rendered.bodyHead);
   if (!between(rendered.waistShoulder, [.68, .86])) add(errors, "rendered.wedgeBody", "The sampled torso must taper continuously below the shoulder silhouette", rendered.waistShoulder);
   if (!Number.isFinite(rendered.shoulderJoinMismatch) || rendered.shoulderJoinMismatch > .02 || rendered.shoulderJoinAngle > .1) {
     add(errors, "rendered.shoulderJoin", "Incoming and outgoing acromion cubics must share one C1/G1 tangent", [rendered.shoulderJoinMismatch, rendered.shoulderJoinAngle]);
   }
   if (rendered.shoulderChordDeviation < 3.5) add(errors, "rendered.shoulderSlab", "The sampled acromion-to-arm contour must have visible deltoid curvature, not a long straight slab side", rendered.shoulderChordDeviation);
   if (!Number.isFinite(rendered.shoulderMaxStraightRun) || rendered.shoulderMaxStraightRun > 176) add(errors, "rendered.shoulderStraightRun", "No sampled shoulder/torso chord may remain effectively straight for more than 176 canvas units", rendered.shoulderMaxStraightRun);
-  if (!Number.isFinite(rendered.shoulderShelfLength) || rendered.shoulderShelfLength > 78) add(errors, "rendered.shoulderShelf", "The trapezius-to-acromion contour cannot contain a long nearly horizontal shelf", rendered.shoulderShelfLength);
+  if (!Number.isFinite(rendered.shoulderShelfLength) || rendered.shoulderShelfLength > 48) add(errors, "rendered.shoulderShelf", "The trapezius-to-acromion contour cannot contain a long nearly horizontal shelf", rendered.shoulderShelfLength);
+  if (!between(rendered.shoulderRootSlope, [.17, .29])) add(errors, "rendered.shoulderSlope", "The actual shoulder must descend early from the root to the acromion instead of forming a shelf or hanger", rendered.shoulderRootSlope);
+  if (rendered.shoulderTurnWidths.some(value => !Number.isFinite(value)) || rendered.shoulderTurnWidths[1] < rendered.shoulderTurnWidths[0] + 6 || rendered.shoulderDeltoidInset < 11.5 || rendered.shoulderPeakPadding < 4 || rendered.shoulderPeakPadding > m.headWidth * SPEC.constants.garmentPaddingHeadMax) {
+    add(errors, "rendered.deltoidTurn", "The actual silhouette must form one bounded rounded deltoid beyond the bony acromion and turn inward without a square cap", [rendered.shoulderTurnWidths, rendered.shoulderPeakPadding, rendered.shoulderDeltoidInset]);
+  }
   if (!Number.isFinite(rendered.shoulderSideDisplacement) || rendered.shoulderSideDisplacement < 28) add(errors, "rendered.shoulderSideInset", "The shoulder cap and side torso must move meaningfully inward below the acromion", [rendered.shoulderSideXs, rendered.shoulderSideDisplacement]);
   if (rendered.shoulderWindowXs.some(value => !Number.isFinite(value)) || rendered.shoulderWindowXs.at(-1) - rendered.shoulderWindowXs[0] < 16) add(errors, "rendered.shoulderWindowInset", "The accepted outline must move inward by at least sixteen canvas units across the evaluator's y=665..785 shoulder/side window", rendered.shoulderWindowXs);
-  if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 2 || (index > 0 && inset <= values[index - 1] + .5))) {
-    add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must move progressively inward below the acromion", rendered.shoulderInward);
+  if (rendered.shoulderInward.some((inset, index, values) => !Number.isFinite(inset) || inset < 4 || (index > 0 && inset <= values[index - 1] + 8))) {
+    add(errors, "rendered.shoulderCurvature", "Actual silhouette intersections must keep moving progressively inward after the deltoid turn", rendered.shoulderInward);
   }
   const distanceToPath = (path, landmark) => Math.min(...path.samples.map(sample => Math.hypot(sample.x - landmark.x, sample.y - landmark.y)));
   for (const name of ["craniumLeft", "templeLeft", "cheekLeft", "jawLeft", "chinShelfLeft", "chin", "chinShelfRight", "jawRight", "cheekRight", "templeRight", "craniumRight"]) {
@@ -72,13 +76,13 @@ export function validateGeometry(geometry) {
   const hairLeft = SPEC.canvas.centerX - m.hairWidth / 2; const hairRight = SPEC.canvas.centerX + m.hairWidth / 2;
   if (!(l.acromionLeft.x + 12 < hairLeft && hairRight < l.acromionRight.x - 12)) add(errors, "containment.hairShoulderSpace", "Hair envelope needs negative space inside the acromia", [hairLeft, hairRight]);
 
-  if (!between(m.eyeWidth, [54, 70]) || !between(m.eyeHeight, [25, 37])) add(errors, "face.eyeDimensions", "Eye dimensions exceed the adult anime contract", [m.eyeWidth, m.eyeHeight]);
+  if (!between(m.eyeWidth, [SPEC.parameters.eyeWidth.min, SPEC.parameters.eyeWidth.max]) || !between(m.eyeHeight, [SPEC.parameters.eyeHeight.min, SPEC.parameters.eyeHeight.max])) add(errors, "face.eyeDimensions", "Eye dimensions exceed the adult anime contract", [m.eyeWidth, m.eyeHeight]);
   if (m.irisDiameter > m.eyeWidth - 8 || m.irisVisibleHeight > m.eyeHeight - 4 || m.irisClipRx <= 0 || m.irisClipRy <= 0) add(errors, "face.irisContainment", "The clipped visible iris must remain inside the inset eye opening", [m.irisDiameter, m.irisVisibleHeight, m.irisClipRx, m.irisClipRy]);
   if (!between(m.noseWidth, [10, 26]) || !between(m.noseHeight, [8, 26])) add(errors, "face.noseEnvelope", "Nose mark envelope is out of bounds", [m.noseWidth, m.noseHeight]);
-  if (!between(m.mouthWidth, [30, 56]) || !between(m.mouthHeight, [2, 10])) add(errors, "face.mouthEnvelope", "Closed mouth envelope is out of bounds", [m.mouthWidth, m.mouthHeight]);
+  if (!between(m.mouthWidth, [SPEC.parameters.mouthWidth.min, SPEC.parameters.mouthWidth.max]) || !between(m.mouthHeight, [SPEC.parameters.mouthHeight.min, SPEC.parameters.mouthHeight.max])) add(errors, "face.mouthEnvelope", "Closed mouth envelope is out of bounds", [m.mouthWidth, m.mouthHeight]);
   const localJawWidth = m.jawWidth;
   if (m.mouthWidth / 2 + localJawWidth * .12 > localJawWidth / 2) add(errors, "face.mouthJawClearance", "Mouth corners lack local jaw clearance", m.mouthWidth);
-  const adultRisks = [r.eyeHeightFace > .115, r.mouthChin < .32, r.jawCranium < .68, r.upperNeckHead < .31, r.shoulderHead < 2.12];
+  const adultRisks = [r.eyeHeightFace > .115, r.mouthChin < .32, r.jawCranium < .68, r.upperNeckHead <= .31, r.shoulderHead < 2.12];
   if (adultRisks.filter(Boolean).length >= 3 && adultRisks[0]) add(errors, "correlation.maturity", "Combined eye occupancy, lower face, jaw, neck, and head/shoulder proportions read below the adult target", [r.eyeHeightFace, r.mouthChin, r.jawCranium, r.upperNeckHead, r.shoulderHead]);
 
   if (m.bustEnvelopeWidth > 0 && Math.abs(l.bustLeft.y - m.expectedBustApexY) > 4) add(errors, "fit.detachedBust", "Covered bust must remain in the shared torso deformation field", l.bustLeft.y - m.expectedBustApexY);
