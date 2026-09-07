@@ -7,7 +7,7 @@ Only an independent evaluator can move work to `passed`. Only a pushed merge com
 | ID | Work package | Owner | Branch | Depends on | Gate | Status | Candidate SHA | Evaluator evidence | Merge SHA |
 |---|---|---|---|---|---|---|---|---|---|
 | PLAN-001 | Clean restart and governance baseline | Root coordinator | `plan/clean-restart-governance` | - | Documentation | merged | `617a85f` | Gate 2 PASS: `review/plan-001-gate-2` at `c27721d`; prior candidate `4263c82` failed Gate 1 | `25e5240` |
-| P0-A | Character bible geometry and rejection fixtures | Recreation builder | `feat/p0-anime-geometry-spec` | PLAN-001 PASS | Gate A | candidate-pushed | Candidate `d215f8d373c59d6197ac19bf57701d18e161ff8a`; failed candidates `129aa86`, `e5441c5`, `e1fa52e`, `8a09c70`, `0492c7a`, `9fc62da`, `25f2528` | Awaiting independent Gate 8 review; Gate 7 FAIL: `review/p0-anime-geometry-gate-7` at `6bb77a1` | - |
+| P0-A | Character bible geometry and rejection fixtures | Recreation builder | `feat/p0-anime-geometry-spec` | PLAN-001 PASS | Gate A | recreating | Failed candidates `129aa86`, `e5441c5`, `e1fa52e`, `8a09c70`, `0492c7a`, `9fc62da`, `25f2528`, `d215f8d` | Gate 8 FAIL: `review/p0-anime-geometry-gate-8` at `088cbbf`; five surfaces exist, but excessive overlap, cross-owned anchors, and a fused shield silhouette remain rejected | - |
 | M0-A | Canonical bust anatomy graph | Anatomy builder | `feat/m0-anatomy-graph` | P0-A PASS | Gate B | planned | - | - | - |
 | M0-B | Parameter propagation and constraints | Parameter builder | `feat/m0-parameter-propagation` | P0-A PASS, M0-A | Gate B | planned | - | - | - |
 | M0-C | SVG scene and export parity | Renderer builder | `feat/m0-svg-renderer` | M0-A, M0-B | Gate B + provenance | planned | - | - | - |
