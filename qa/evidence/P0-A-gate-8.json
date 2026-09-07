@@ -1,0 +1,82 @@
+{
+  "gate": "P0-A/Gate-A-8",
+  "result": "FAIL",
+  "featureHead": "b717e3fe9db51e0e2c58dc2a3f83f8dda73dc693",
+  "codeCandidate": "d215f8d373c59d6197ac19bf57701d18e161ff8a",
+  "baseMain": "b18c68e833ac0d9bbd6de1639c31420f45fc3ecd",
+  "spec": "standard-bust-v1/spec-0.7.0",
+  "tests": {
+    "node": "36/36",
+    "chromium": "1/1"
+  },
+  "browserSweep": {
+    "states": 1159,
+    "needsReview": 1122,
+    "blocked": 37,
+    "isolatedEndpointsAccepted": "48/48",
+    "fixturesBlocked": "13/13",
+    "identityMismatches": 0,
+    "nonFinite": 0,
+    "minimumArmCssPx": 33.2013,
+    "minimumArmState": "pair:headWidth:min+shoulderHeadRatio:min",
+    "minimumDeltoidCssPx": 38.62,
+    "minimumDeltoidState": "pair:headWidth:min+shoulderHeadRatio:max"
+  },
+  "neutralRendered": {
+    "bodyHead": 2.37,
+    "waistShoulder": 0.87,
+    "compositeShoulderRatios": [1, 1.05, 1.01, 0.96, 0.93],
+    "shoulderProfile": [607.5, 625.95, 631.02, 633.79, 638.54, 641.17, 638.75, 627.72, 608.23, 600.01, 594.62, 590.56, 587.12, 583.97, 581.01, 578.2, 575.49, 572.88, 570.35, 567.88, 565.48],
+    "maximumStraightRun": 144,
+    "declaredAttachmentOverlaps": [12, 12, 12, 12],
+    "actualSampledOverlapExtents": {
+      "leftArmDeltoid": { "x": 60, "y": 28 },
+      "rightArmDeltoid": { "x": 60, "y": 28 },
+      "leftDeltoidTorso": { "x": 38, "y": 136 },
+      "rightDeltoidTorso": { "x": 36, "y": 134 }
+    }
+  },
+  "topology": {
+    "closedSurfaces": 5,
+    "owners": ["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"],
+    "zOrder": ["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"],
+    "physicalOverlapPresent": true,
+    "semanticProvenanceDisjoint": false,
+    "crossOwnedOrSharedAnchors": {
+      "arm.left": ["axillaLeft:torso.root"],
+      "arm.right": ["axillaRight:torso.root"],
+      "shoulder.left": ["anteriorFoldLeft:torso.root"],
+      "shoulder.right": ["anteriorFoldRight:torso.root"],
+      "torsoWithDeltoidLeft": ["shoulderMidLeft", "anteriorFoldLeft"],
+      "torsoWithDeltoidRight": ["shoulderMidRight", "anteriorFoldRight"],
+      "torsoWithArmLeft": ["axillaLeft"],
+      "torsoWithArmRight": ["axillaRight"]
+    }
+  },
+  "bust": {
+    "values": [0, 0.08, 0.5, 0.64],
+    "torsoChanged": true,
+    "chestChanged": true,
+    "armsChanged": false,
+    "deltoidsChanged": false,
+    "customIdentitySynchronized": true
+  },
+  "antiCheat": {
+    "stageSvgCount": 1,
+    "imageElements": 0,
+    "canvasElements": 0,
+    "approvedShortcut": false
+  },
+  "captureSha256": {
+    "neutralDesktop": "B9320C0CAFB0A39A725815844B944A208B0B630D23BBA1B7DB7B2A89E778F3F3",
+    "neutralMobile": "EF419EC5D9758A8DE1BBED31B77E13C8B5BFE1BD14EA267B86322FEE0B434C92",
+    "masculineDesktop": "836EE6115C4C1A3C42F8FD8820E5CC0E9F31AA53BE61A9B86B712C62A2316CB7",
+    "worstValidDesktop": "17B04C9362B0757409ABF567226A695A8EFD9C7A7CAF52BCA4E71C25B1C31FB1",
+    "zeroBustDesktop": "44A4EC7C78175C5B3DD770276EC856E1BC303BD993D33774F13DDD18D7B7138C"
+  },
+  "blockers": [
+    "the actual composite remains a broad shield or rounded container rather than readable shoulder, deltoid, upper-arm, axilla, and ribcage anatomy",
+    "deltoids read as cropped corner lobes and arms as pale vertical bands behind the torso; the axilla cues still read as decorative internal seams",
+    "surface provenance is not disjoint and actual deltoid-to-torso occlusion is much larger than the declared 12-unit attachment depth"
+  ]
+}
