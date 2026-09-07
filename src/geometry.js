@@ -123,11 +123,22 @@ export function buildGeometry(candidate = {}, mutations = {}) {
   const bustSideBulge = bustVolume * Math.min(18, headWidth * .067);
   const upperArmLeftX = centerX - acromionSpan / 2 + headWidth * (compactShoulder ? .075 : .03);
   const upperArmRightX = centerX + acromionSpan / 2 - headWidth * (compactShoulder ? .075 : .03);
-  const bustSideLeftX = centerX - torsoWidth850 / 2 + headWidth * .075 - bustSideBulge;
-  const bustSideRightX = centerX + torsoWidth850 / 2 - headWidth * .075 + bustSideBulge;
+  const bustSideLeftX = centerX - torsoWidth850 / 2 + headWidth * .033 - bustSideBulge;
+  const bustSideRightX = centerX + torsoWidth850 / 2 - headWidth * .033 + bustSideBulge;
   const upperArmTransitionLeftX = compactShoulder ? bustSideLeftX : centerX - acromionSpan / 2 + headWidth * .17;
   const upperArmTransitionRightX = compactShoulder ? bustSideRightX : centerX + acromionSpan / 2 - headWidth * .17;
   const bustSideY = compactShoulder ? bustApexY + 64 : Math.min(acromionY + 230, 810);
+  // Gate 9: the torso, deltoid and arm each receive their own attachment
+  // landmarks.  Coincident attachment copies are intentional; no surface is
+  // allowed to author another surface's boundary.
+  const radialX = normalizedRadius => centerX - normalizedRadius * headWidth;
+  const mirrorX = x => centerX * 2 - x;
+  const acromionRadius = acromionSpan / (2 * headWidth);
+  const torsoShoulderX = radialX(acromionRadius - .285);
+  const torsoShoulderLowerX = radialX(acromionRadius - .315);
+  const torsoAxillaX = radialX(acromionRadius - .352);
+  const torsoRibX = radialX(acromionRadius - .362);
+  const armCropY = Math.max(SPEC.canvas.cropY + Math.max(16, headWidth * .06), acromionY + headWidth * 1.70);
   const hairLift = headHeight * p.hairLiftHeadRatio;
   const hairWidth = mutations.hairWidthOverride ?? headWidth * p.hairWidthHeadRatio;
   const projected = c.hairProjectedDisplacement;
@@ -200,6 +211,48 @@ export function buildGeometry(candidate = {}, mutations = {}) {
     armCropOuterRight: point(centerX + torsoWidth850 / 2 + headWidth * .18, SPEC.canvas.cropY, "arm.right"),
     armCropInnerLeft: point(centerX - torsoWidth850 / 2 + headWidth * .13, SPEC.canvas.cropY, "arm.left"),
     armCropInnerRight: point(centerX + torsoWidth850 / 2 - headWidth * .13, SPEC.canvas.cropY, "arm.right"),
+    torsoUpperNeckLeft: point(centerX - upperNeckWidth / 2, upperNeckY, "torso.root"),
+    torsoUpperNeckRight: point(centerX + upperNeckWidth / 2, upperNeckY, "torso.root"),
+    torsoShoulderRootLeft: point(centerX - collarWidth / 2, shoulderRootY, "torso.root"),
+    torsoShoulderRootRight: point(centerX + collarWidth / 2, shoulderRootY, "torso.root"),
+    torsoTrapeziusLeft: point(centerX - collarWidth / 2 - trapeziusInset, shoulderRootY + p.shoulderDrop * .32, "torso.root"),
+    torsoTrapeziusRight: point(centerX + collarWidth / 2 + trapeziusInset, shoulderRootY + p.shoulderDrop * .32, "torso.root"),
+    torsoShoulderAttachUpperLeft: point(torsoShoulderX, acromionY - headWidth * .045, "torso.root"),
+    torsoShoulderAttachUpperRight: point(mirrorX(torsoShoulderX), acromionY - headWidth * .045, "torso.root"),
+    torsoShoulderAttachLowerLeft: point(torsoShoulderLowerX, acromionY + headWidth * .12, "torso.root"),
+    torsoShoulderAttachLowerRight: point(mirrorX(torsoShoulderLowerX), acromionY + headWidth * .12, "torso.root"),
+    torsoAxillaLipLeft: point(torsoAxillaX, acromionY + headWidth * .36, "torso.root"),
+    torsoAxillaLipRight: point(mirrorX(torsoAxillaX), acromionY + headWidth * .36, "torso.root"),
+    torsoAxillaLeft: point(torsoRibX, acromionY + headWidth * .58, "torso.root"),
+    torsoAxillaRight: point(mirrorX(torsoRibX), acromionY + headWidth * .58, "torso.root"),
+    deltoidTorsoAttachUpperLeft: point(radialX(acromionRadius - .310), acromionY - headWidth * .045, "shoulder.left"),
+    deltoidTorsoAttachUpperRight: point(mirrorX(radialX(acromionRadius - .310)), acromionY - headWidth * .045, "shoulder.right"),
+    deltoidTorsoAttachLowerLeft: point(radialX(acromionRadius - .340), acromionY + headWidth * .12, "shoulder.left"),
+    deltoidTorsoAttachLowerRight: point(mirrorX(radialX(acromionRadius - .340)), acromionY + headWidth * .12, "shoulder.right"),
+    deltoidShoulderLeft: point(radialX(acromionRadius - .225), acromionY - headWidth * .035, "shoulder.left"),
+    deltoidShoulderRight: point(mirrorX(radialX(acromionRadius - .225)), acromionY - headWidth * .035, "shoulder.right"),
+    deltoidInnerRiseLeft: point(radialX(acromionRadius - .285), acromionY + headWidth * .26, "shoulder.left"),
+    deltoidInnerRiseRight: point(mirrorX(radialX(acromionRadius - .285)), acromionY + headWidth * .26, "shoulder.right"),
+    deltoidArmAttachOuterLeft: point(radialX(acromionRadius + .005), acromionY + headWidth * .41, "shoulder.left"),
+    deltoidArmAttachOuterRight: point(mirrorX(radialX(acromionRadius + .005)), acromionY + headWidth * .41, "shoulder.right"),
+    deltoidArmAttachInnerLeft: point(radialX(acromionRadius - .205), acromionY + headWidth * .41, "shoulder.left"),
+    deltoidArmAttachInnerRight: point(mirrorX(radialX(acromionRadius - .205)), acromionY + headWidth * .41, "shoulder.right"),
+    armDeltoidAttachOuterLeft: point(radialX(acromionRadius + .005), acromionY + headWidth * .365, "arm.left"),
+    armDeltoidAttachOuterRight: point(mirrorX(radialX(acromionRadius + .005)), acromionY + headWidth * .365, "arm.right"),
+    armDeltoidAttachInnerLeft: point(radialX(acromionRadius - .205), acromionY + headWidth * .365, "arm.left"),
+    armDeltoidAttachInnerRight: point(mirrorX(radialX(acromionRadius - .205)), acromionY + headWidth * .365, "arm.right"),
+    armOuterShoulderLeft: point(radialX(acromionRadius + .045), acromionY + headWidth * .43, "arm.left"),
+    armOuterShoulderRight: point(mirrorX(radialX(acromionRadius + .045)), acromionY + headWidth * .43, "arm.right"),
+    armInnerShoulderLeft: point(radialX(acromionRadius - .205), acromionY + headWidth * .43, "arm.left"),
+    armInnerShoulderRight: point(mirrorX(radialX(acromionRadius - .205)), acromionY + headWidth * .43, "arm.right"),
+    armOuterMidLeft: point(radialX(acromionRadius + .065), acromionY + headWidth * .85, "arm.left"),
+    armOuterMidRight: point(mirrorX(radialX(acromionRadius + .065)), acromionY + headWidth * .85, "arm.right"),
+    armInnerMidLeft: point(radialX(acromionRadius - .145), acromionY + headWidth * .85, "arm.left"),
+    armInnerMidRight: point(mirrorX(radialX(acromionRadius - .145)), acromionY + headWidth * .85, "arm.right"),
+    independentArmCropOuterLeft: point(radialX(acromionRadius + .169), armCropY, "arm.left"),
+    independentArmCropOuterRight: point(mirrorX(radialX(acromionRadius + .169)), armCropY, "arm.right"),
+    independentArmCropInnerLeft: point(radialX(acromionRadius - .041), armCropY, "arm.left"),
+    independentArmCropInnerRight: point(mirrorX(radialX(acromionRadius - .041)), armCropY, "arm.right"),
     bustSideLeft: point(bustSideLeftX, bustSideY, "torso.root"),
     bustSideRight: point(bustSideRightX, bustSideY, "torso.root"),
     torso850Left: point(centerX - torsoWidth850 / 2, 850, "torso.root"), torso850Right: point(centerX + torsoWidth850 / 2, 850, "torso.root"),

@@ -42,8 +42,8 @@ test("renderer marks construction primitives with canonical parent provenance", 
   assert.match(app, /data-layer="upper-arm-right" data-parent="\$\{anatomy\.arms\.right\.parent\}"/);
   assert.match(app, /data-layer="deltoid-left" data-parent="\$\{anatomy\.deltoids\.left\.parent\}"/);
   assert.match(app, /data-layer="deltoid-right" data-parent="\$\{anatomy\.deltoids\.right\.parent\}"/);
-  assert.match(app, /data-layer="axilla-cue-left" data-parent="\$\{anatomy\.armSeams\.left\.parent\}"/);
-  assert.match(app, /data-layer="resolved-body-outline" data-parent="\$\{anatomy\.outline\.parent\}"/);
+  assert.doesNotMatch(app, /resolved-body-outline|anatomy\.outline/);
+  assert.doesNotMatch(app, /data-layer="axilla-cue-left"/);
   assert.match(app, /data-parent="\$\{anatomy\.chest\.parent\}" data-landmark-chain=/);
   assert.match(app, /data-parent="\$\{anatomy\.neckGuide\.parent\}" data-landmark-chain=/);
   assert.match(app, /ellipseMarkup\([^\n]+"eye\.left"\)/);
@@ -73,9 +73,8 @@ test("semantic bust surfaces render in the declared attachment order", async () 
   const arm = app.indexOf('data-layer="upper-arm-left"');
   const torso = app.indexOf('class="body" data-parent=');
   const deltoid = app.indexOf('data-layer="deltoid-left"');
-  const outline = app.indexOf('data-layer="resolved-body-outline"');
-  const axilla = app.indexOf('data-layer="axilla-cue-left"');
-  assert.ok(arm >= 0 && torso > arm && deltoid > torso && outline > deltoid && axilla > outline, { arm, torso, deltoid, outline, axilla });
+  assert.ok(arm >= 0 && torso > arm && deltoid > torso, { arm, torso, deltoid });
+  assert.doesNotMatch(app, /resolved-body-outline|data-layer="axilla-cue/);
 });
 
 test("measurement overlay keeps every point inspectable but labels a curated readable subset", async () => {

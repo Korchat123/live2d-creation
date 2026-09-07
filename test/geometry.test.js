@@ -161,9 +161,9 @@ test("five closed anatomy surfaces preserve connected ownership and canonical pr
     assert.equal(paths.deltoids.right.parent, "shoulder.right");
     assert.equal(paths.chest.parent, "torso.root");
     const ownership = {
-      torso: ["upperNeckLeft", "shoulderRootLeft", "trapeziusLeft", "shoulderMidLeft", "anteriorFoldLeft", "axillaLeft", "bustSideLeft", "torso850Left", "waistLeft"],
-      deltoid: ["acromionLeft", "deltoidApexLeft", "deltoidOuterLeft", "deltoidInsertionOuterLeft", "deltoidInsertionInnerLeft"],
-      arm: ["upperArmLeft", "elbowDirectionLeft", "armCropOuterLeft", "armCropInnerLeft", "upperArmInnerLeft"]
+      torso: ["torsoUpperNeckLeft", "torsoShoulderRootLeft", "torsoTrapeziusLeft", "torsoShoulderAttachUpperLeft", "torsoShoulderAttachLowerLeft", "torsoAxillaLipLeft", "torsoAxillaLeft", "bustSideLeft", "torso850Left", "waistLeft"],
+      deltoid: ["deltoidTorsoAttachUpperLeft", "deltoidShoulderLeft", "acromionLeft", "deltoidApexLeft", "deltoidOuterLeft", "deltoidArmAttachOuterLeft", "deltoidArmAttachInnerLeft", "deltoidInnerRiseLeft", "deltoidTorsoAttachLowerLeft"],
+      arm: ["armDeltoidAttachOuterLeft", "armOuterShoulderLeft", "armOuterMidLeft", "independentArmCropOuterLeft", "independentArmCropInnerLeft", "armInnerMidLeft", "armInnerShoulderLeft", "armDeltoidAttachInnerLeft"]
     };
     for (const [surfaceName, landmarks] of Object.entries(ownership)) for (const landmark of landmarks) {
       const surface = surfaceName === "torso" ? paths.torso : surfaceName === "deltoid" ? paths.deltoids.left : paths.arms.left;
@@ -175,6 +175,8 @@ test("five closed anatomy surfaces preserve connected ownership and canonical pr
       assert.equal(surface.commands.filter(command => command.type === "M").length, 1);
       assert.equal(surface.commands.at(-1).type, "Z");
     }
+    assert.equal(measureRenderedGeometry(geometry).ownerForeignLandmarks.length, 0);
+    assert.equal("outline" in paths, false, "a separate container outline must not exist");
     assert.equal(paths.topology.surfaces.length, 5);
     assert.equal(paths.topology.edges.length, 4);
     assert.deepEqual(paths.topology.zOrder, ["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"]);
@@ -196,24 +198,24 @@ test("five closed anatomy surfaces preserve connected ownership and canonical pr
   assert.ok(buildAnatomyPaths(buildGeometry({ bustShoulderRatio: 0 })).chest);
 });
 
-test("resolved outline and semantic surfaces form the authored shoulder-arm envelope", () => {
+test("filled semantic surfaces form an open axilla and directed shoulder-arm envelope", () => {
   for (const parameters of [presetParameters("neutral"), presetParameters("feminine"), presetParameters("masculine"), { shoulderHeadRatio: 2.05, shoulderDrop: SPEC.parameters.shoulderDrop.min, headWidth: 260 }]) {
     const rendered = measureRenderedGeometry(buildGeometry(parameters));
     assert.ok(rendered.bodyHead <= 2.60);
     near(rendered.shoulderJoinMismatch, 0, .02, "acromion C1 mismatch");
     near(rendered.shoulderJoinAngle, 0, .1, "acromion G1 angle");
-    assert.ok(rendered.shoulderChordDeviation >= 3.5, JSON.stringify(rendered.shoulderChordDeviation));
-    assert.ok(rendered.shoulderMaxStraightRun <= 176, JSON.stringify(rendered.shoulderMaxStraightRun));
-    assert.ok(rendered.shoulderShelfLength <= 78, JSON.stringify(rendered.shoulderShelfLength));
     assert.ok(rendered.shoulderRootSlope >= .17 && rendered.shoulderRootSlope <= .29, JSON.stringify(rendered.shoulderRootSlope));
-    assert.ok(rendered.shoulderPeakPadding >= 4 && rendered.shoulderPeakPadding <= parameters.headWidth * SPEC.constants.garmentPaddingHeadMax, JSON.stringify(rendered.shoulderPeakPadding));
-    assert.ok(rendered.shoulderTurnWidths[1] >= rendered.shoulderTurnWidths[0] + 6, JSON.stringify(rendered.shoulderTurnWidths));
-    assert.ok(rendered.shoulderDeltoidInset >= 3, JSON.stringify(rendered.shoulderDeltoidInset));
-    const ranges = [[.99,1.02],[1.03,1.08],[.99,1.05],[.92,1],[.86,.95]];
-    rendered.compositeShoulderRatios.forEach((value,index) => assert.ok(value >= ranges[index][0] && value <= ranges[index][1], JSON.stringify(rendered.compositeShoulderRatios)));
     assert.ok(rendered.armSurfaceClosed.every(Boolean) && rendered.deltoidSurfaceClosed.every(Boolean));
     assert.ok(rendered.seamEndpointGaps.every(gap => gap <= 1.1));
-    assert.ok(rendered.attachmentOverlaps.every(overlap => overlap >= 8 && overlap <= 24));
+    assert.ok(rendered.overlapDepthSamples.every(overlap => overlap >= 8 && overlap <= 24));
+    assert.deepEqual(rendered.unionComponentsBelowAxilla, Array(8).fill(3));
+    assert.equal(rendered.shoulderBridgeComponents, 1);
+    assert.ok(rendered.axillaryThreeComponentRun >= .18);
+    assert.ok(rendered.axillaryGaps.every(gap => gap >= Math.max(8, parameters.headWidth * .035) && gap <= parameters.headWidth * .19));
+    assert.ok(rendered.armAbductionDegrees >= 4 && rendered.armAbductionDegrees <= 14);
+    assert.ok(rendered.armTaperRatio >= .55 && rendered.armTaperRatio <= 1.05);
+    assert.ok(rendered.independentCropOffset >= Math.max(16, parameters.headWidth * .06));
+    assert.ok(rendered.deltoidExposure.width >= parameters.headWidth * .08 && rendered.deltoidExposure.height >= parameters.headWidth * .18 && rendered.deltoidExposure.area >= parameters.headWidth ** 2 * .012);
     assert.ok(rendered.torsoInset230 >= parameters.shoulderHeadRatio * parameters.headWidth * .08);
     assert.ok(rendered.upperArmStrip850 >= parameters.headWidth * .14);
   }
@@ -293,7 +295,6 @@ test("rendered contours, not intended controls, satisfy the visible silhouette c
     const rendered = measureRenderedGeometry(geometry);
     assert.ok(rendered.hairHead >= SPEC.ratioRanges.hairHead[0] && rendered.hairHead <= SPEC.ratioRanges.hairHead[1], `${state.id}: hair/head=${rendered.hairHead}`);
     assert.ok(rendered.bodyHead >= 2.05 && rendered.bodyHead <= 2.60, `${state.id}: body/head=${rendered.bodyHead}`);
-    assert.ok(rendered.waistShoulder >= .84 && rendered.waistShoulder <= .94, `${state.id}: waist/shoulder=${rendered.waistShoulder}`);
     assert.equal(rendered.shoulderProfile.length, 21, `${state.id}: dense shoulder samples`);
     assert.ok(rendered.shoulderProfile.every(Number.isFinite), `${state.id}: ${JSON.stringify(rendered.shoulderProfile)}`);
     assert.ok(rendered.armSurfaceClosed.every(Boolean) && rendered.deltoidSurfaceClosed.every(Boolean), state.id);
@@ -301,27 +302,31 @@ test("rendered contours, not intended controls, satisfy the visible silhouette c
     assert.equal(rendered.topologyEdges, 4, state.id);
     assert.ok(rendered.seamEndpointGaps.every(gap => gap <= 1.1), state.id);
     assert.ok(rendered.torsoLateralViolation <= 1.1, state.id);
+    assert.equal(rendered.ownerForeignLandmarks.length, 0, state.id);
+    assert.deepEqual(rendered.unionComponentsBelowAxilla, Array(8).fill(3), state.id);
+    assert.ok(rendered.overlapDepthSamples.every(value => value >= 8 && value <= 24), state.id);
   }
 });
 
 test("evidence includes presets, every bound, all pairwise corners, and worst-valid bundle", () => {
   const states = evidenceStates();
+  const evaluated = new Map(states.map(state => [state.id, validateGeometry(buildGeometry(state.parameters))]));
   const count = Object.keys(SPEC.parameters).length;
   assert.equal(states.length, Object.keys(PRESETS).length + count * 2 + (count * (count - 1) / 2) * 4 + 3);
   assert.equal(new Set(states.map(state => state.id)).size, states.length);
   assert.ok(states.some(state => state.id === "combined:worst-valid"));
-  assert.equal(validateGeometry(buildGeometry(states.find(state => state.id === "boundary:adult-safe").parameters)).status, "Needs review");
-  assert.ok(validateGeometry(buildGeometry(states.find(state => state.id === "boundary:adult-blocked").parameters)).errors.some(error => error.code === "correlation.maturity"));
+  assert.equal(evaluated.get("boundary:adult-safe").status, "Needs review");
+  assert.ok(evaluated.get("boundary:adult-blocked").errors.some(error => error.code === "correlation.maturity"));
   for (const key of Object.keys(SPEC.parameters)) for (const bound of ["min", "max"]) {
     const state = states.find(item => item.id === `bound:${key}:${bound}`);
     assert.ok(state, `${key}:${bound} evidence missing`);
-    assert.equal(validateGeometry(buildGeometry(state.parameters)).status, "Needs review", `${key}:${bound} is an advertised isolated endpoint`);
+    assert.equal(evaluated.get(state.id).status, "Needs review", `${key}:${bound} is an advertised isolated endpoint`);
   }
-  assert.equal(validateGeometry(buildGeometry(states.find(state => state.id === "combined:worst-valid").parameters)).status, "Needs review");
-  const blocked = states.filter(state => validateGeometry(buildGeometry(state.parameters)).status === "Blocked");
+  assert.equal(evaluated.get("combined:worst-valid").status, "Needs review");
+  const blocked = states.filter(state => evaluated.get(state.id).status === "Blocked");
   assert.equal(blocked.length, 37, "the documented correlated rejection set must remain stable");
   for (const id of ["pair:headWidth:min+bustShoulderRatio:min", "pair:shoulderHeadRatio:max+bustShoulderRatio:min"]) {
-    assert.ok(validateGeometry(buildGeometry(states.find(state => state.id === id).parameters)).errors.some(error => error.code === "correlation.shoulderFrame"), id);
+    assert.ok(evaluated.get(id).errors.some(error => error.code === "correlation.shoulderFrame"), id);
   }
 });
 

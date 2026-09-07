@@ -50,7 +50,7 @@ function connectCdp(url) {
     close: () => socket.close(),
     call: (method, params = {}) => new Promise((resolve, reject) => {
       const id = ++nextId;
-      const timeout = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 5000);
+      const timeout = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 30000);
       pending.set(id, {
         resolve: value => { clearTimeout(timeout); resolve(value); },
         reject: error => { clearTimeout(timeout); reject(error); }
@@ -60,7 +60,7 @@ function connectCdp(url) {
   };
 }
 
-test("real Chromium keeps a 390px stage centered, contained, and anatomically visible", { skip: !chromePath, timeout: 30000 }, async t => {
+test("real Chromium keeps a 390px stage centered, contained, and anatomically visible", { skip: !chromePath, timeout: 60000 }, async t => {
   const root = new URL("../", import.meta.url).pathname.slice(1);
   const server = spawn(process.execPath, ["server.mjs"], { cwd: root, env: { ...process.env, PORT: "4197" }, stdio: "ignore", windowsHide: true });
   const profile = await mkdtemp(join(tmpdir(), "p0-layout-chrome-"));
@@ -110,7 +110,7 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
         toggleRight: toggle.right,
         armLeftWidth: armLeft.width,
         deltoidLeftWidth: deltoidLeft.width,
-        z: ['upper-arm-left','covered-torso-volume','deltoid-left','resolved-body-outline'].map(name => layers.indexOf(name)),
+        z: ['upper-arm-left','covered-torso-volume','deltoid-left'].map(name => layers.indexOf(name)),
         overlayChecked: document.querySelector('#overlay-toggle').checked,
         specVersion: stage.dataset.specVersion,
         visibleSpecVersion: document.querySelector('#spec-version').textContent

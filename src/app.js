@@ -114,10 +114,8 @@ function renderSvg(geometry) {
     </g>` : "";
   stage.innerHTML = `
     <style>
-      .body { fill:#ddd6e2; stroke:none }
-      .arm-surface { fill:#d5cdd9; stroke:none }
-      .deltoid-surface { fill:#ddd6e2; stroke:none }
-      .body-outline { fill:none; stroke:#4d4656; stroke-width:4; stroke-linejoin:round; vector-effect:non-scaling-stroke }
+      .body, .arm-surface, .deltoid-surface { fill:#ddd6e2; stroke:none }
+      .surface-outline { fill:none; stroke:#4d4656; stroke-width:4; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke }
       .head { fill:#eee8ef; stroke:#4d4656; stroke-width:4; vector-effect:non-scaling-stroke }
       .construction { fill:none; stroke:#8c6fb4; stroke-width:3; stroke-dasharray:10 8; vector-effect:non-scaling-stroke }
       .hair-back { fill:#d8cbe5; fill-opacity:.76; stroke:#6e587e; stroke-width:4; vector-effect:non-scaling-stroke }
@@ -152,11 +150,9 @@ function renderSvg(geometry) {
       <path class="deltoid-surface" data-layer="deltoid-left" data-parent="${anatomy.deltoids.left.parent}" data-landmark-chain="${provenance(anatomy.deltoids.left)}" d="${anatomy.deltoids.left.d}"/>
       <path class="deltoid-surface" data-layer="deltoid-right" data-parent="${anatomy.deltoids.right.parent}" data-landmark-chain="${provenance(anatomy.deltoids.right)}" d="${anatomy.deltoids.right.d}"/>
     </g>
-    <path class="body-outline" data-layer="resolved-body-outline" data-parent="${anatomy.outline.parent}" data-landmark-chain="${provenance(anatomy.outline)}" d="${anatomy.outline.d}"/>
+    ${Object.values(anatomy.exposedOutlines).map(item => `<path class="surface-outline" data-layer="exposed-surface-outline" data-parent="${item.parent}" data-landmark-chain="${provenance(item)}" d="${item.d}"/>`).join("")}
     <path class="anatomy-line" data-parent="${anatomy.neckGuide.parent}" data-landmark-chain="${provenance(anatomy.neckGuide)}" d="${anatomy.neckGuide.d}"/>
     <path class="anatomy-line" data-parent="${anatomy.shoulderGuide.parent}" data-landmark-chain="${provenance(anatomy.shoulderGuide)}" d="${anatomy.shoulderGuide.d}"/>
-    <path class="anatomy-line axilla-cue" data-layer="axilla-cue-left" data-parent="${anatomy.armSeams.left.parent}" data-landmark-chain="${provenance(anatomy.armSeams.left)}" d="${anatomy.armSeams.left.d}"/>
-    <path class="anatomy-line axilla-cue" data-layer="axilla-cue-right" data-parent="${anatomy.armSeams.right.parent}" data-landmark-chain="${provenance(anatomy.armSeams.right)}" d="${anatomy.armSeams.right.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.left.parent}" data-landmark-chain="${provenance(anatomy.ears.left)}" d="${anatomy.ears.left.d}"/>
     <path class="ear" data-layer="ears" data-parent="${anatomy.ears.right.parent}" data-landmark-chain="${provenance(anatomy.ears.right)}" d="${anatomy.ears.right.d}"/>
     <path class="head" data-parent="${anatomy.head.parent}" data-landmark-chain="${provenance(anatomy.head)}" d="${anatomy.head.d}"/>
