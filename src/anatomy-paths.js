@@ -239,10 +239,10 @@ export function buildAnatomyPaths(geometry) {
   const topology = Object.freeze({
     surfaces: Object.freeze(["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"]),
     edges: Object.freeze([
-      Object.freeze({ from: "arm.left", to: "shoulder.left", seam: "left-insertion", overlap: 12 }),
-      Object.freeze({ from: "arm.right", to: "shoulder.right", seam: "right-insertion", overlap: 12 }),
-      Object.freeze({ from: "shoulder.left", to: "torso.root", seam: "left-axilla", overlap: 12 }),
-      Object.freeze({ from: "shoulder.right", to: "torso.root", seam: "right-axilla", overlap: 12 })
+      Object.freeze({ from: "arm.left", to: "shoulder.left", seam: "left-insertion", guides: Object.freeze([["armInsertionGuideOuterLeft", "deltoidInsertionGuideOuterLeft"], ["armInsertionGuideInnerLeft", "deltoidInsertionGuideInnerLeft"]]) }),
+      Object.freeze({ from: "arm.right", to: "shoulder.right", seam: "right-insertion", guides: Object.freeze([["armInsertionGuideOuterRight", "deltoidInsertionGuideOuterRight"], ["armInsertionGuideInnerRight", "deltoidInsertionGuideInnerRight"]]) }),
+      Object.freeze({ from: "shoulder.left", to: "torso.root", seam: "left-shoulder", guides: Object.freeze([["deltoidTorsoGuideUpperLeft", "torsoShoulderGuideUpperLeft"], ["deltoidTorsoGuideLowerLeft", "torsoShoulderGuideLowerLeft"]]) }),
+      Object.freeze({ from: "shoulder.right", to: "torso.root", seam: "right-shoulder", guides: Object.freeze([["deltoidTorsoGuideUpperRight", "torsoShoulderGuideUpperRight"], ["deltoidTorsoGuideLowerRight", "torsoShoulderGuideLowerRight"]]) })
     ]),
     zOrder: Object.freeze(["arm.left", "arm.right", "torso.root", "shoulder.left", "shoulder.right"])
   });
@@ -437,6 +437,10 @@ export function measureRenderedGeometry(geometry) {
   const armMidWidth = geometry.landmarks.armInnerMidLeft.x - geometry.landmarks.armOuterMidLeft.x;
   const deltoidExposure = exposedContribution(paths.deltoids.left, [paths.torso, paths.arms.left]);
   const ownerForeignLandmarks = filledSurfaces(paths).flatMap(surface => surface.landmarks.filter(name => geometry.landmarks[name]?.parent !== surface.parent).map(name => `${surface.parent}:${name}:${geometry.landmarks[name]?.parent}`));
+  const attachmentGuideGaps = paths.topology.edges.flatMap(edge => edge.guides.flatMap(pair => {
+    const first = geometry.landmarks[pair[0]]; const second = geometry.landmarks[pair[1]];
+    return [Math.hypot(first.x - second.x, first.y - second.y)];
+  }));
   const armOverlapDepths = sampledOverlapDepths(paths.arms.left, paths.deltoids.left, geometry.landmarks.armDeltoidAttachOuterLeft.x + 3, geometry.landmarks.armDeltoidAttachInnerLeft.x - 3, true);
   const torsoOverlapDepths = sampledOverlapDepths(paths.torso, paths.deltoids.left, geometry.landmarks.deltoidTorsoAttachUpperLeft.y + 2, geometry.landmarks.deltoidTorsoAttachLowerLeft.y - 2);
   const result = Object.freeze({
@@ -483,6 +487,7 @@ export function measureRenderedGeometry(geometry) {
     torsoInset230: n((shoulderWidths[2] - (intersectionsAtY(paths.torso.commands, geometry.landmarks.acromionLeft.y + 230).at(-1) - intersectionsAtY(paths.torso.commands, geometry.landmarks.acromionLeft.y + 230)[0])) / 2),
     upperArmStrip850: n(intersectionsAtY(paths.torso.commands, 850)[0] - surfaceIntersectionsAtY(paths, 850)[0]),
     ownerForeignLandmarks: Object.freeze(ownerForeignLandmarks),
+    attachmentGuideGaps: Object.freeze(attachmentGuideGaps.map(n)),
     overlapDepthSamples: Object.freeze([...armOverlapDepths, ...torsoOverlapDepths]),
     unionComponentsBelowAxilla: Object.freeze(gapIntervals.map(intervals => intervals.length)),
     axillaryGaps: Object.freeze(axillaryGaps.map(n)),

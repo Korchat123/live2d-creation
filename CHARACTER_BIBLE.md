@@ -1,6 +1,6 @@
 # Standard bust v1 character bible
 
-Version: `standard-bust-v1/spec-0.7.0`
+Version: `standard-bust-v1/spec-0.8.0`
 
 Status: planning candidate. P0-A is blocked until an independent Gate A report passes this exact file version and candidate commit.
 
@@ -10,9 +10,9 @@ The target is a polished, front-facing anime VTuber bust with young-adult appare
 
 The neutral construction is symmetric. Feminine, androgynous, and masculine presentation presets are bounded values on this one anatomy; gender presentation, bust, and maturity are independent dimensions.
 
-## Version 0.6 rationale and executable parity
+## Version 0.8 rationale and executable parity
 
-This version retains the reconciled 0.5 parameter ranges and raises the acromion from the rejected `y=581` region to approximately `y=553`. After independent Gate 6 evidence showed that the 0.5 contour still collapsed by about 85 units between the `+90` and `+150` samples, 0.6 versions the visible topology as an anatomical chain: trapezius, acromion, broad rounded deltoid, upper arm, arm/torso transition, and torso. An axilla seam makes arm ownership visible. Dense samples of the actual SVG now bound both first-derivative collapse and hook-like curvature; the former compact-cap geometry is retained only as a blocked fixture. All 24 control triples remain unchanged from 0.5.
+This version preserves all 24 parameter triples from 0.7 but replaces its failed visible-composition algorithm. Gate 8 proved that five nominal surfaces can still compose a shield when an authored `character.root` outline bridges them, attachment points cross owners, deltoid/torso overlap is excessive, and tint bands or axilla strokes carry the visual separation. Version 0.8 removes that outline and those strokes. It uses owner-local torso, deltoid, and abducted upper-arm surfaces; measures their real filled overlap; and requires sustained negative axillary space below a connected shoulder bridge. The anatomy must remain readable when every body surface uses the same fill.
 
 The following table is the parity source reviewed by tests. `src/spec.js`, the UI controls, evidence states, and README must expose this exact version and these exact min/max/neutral triples.
 
@@ -151,11 +151,15 @@ The topology follows the official Cubism workflow of separate Parts/ArtMeshes wi
 - Trapezius curves join the collar/shoulder roots to the acromia. The supported acromion drop is `44..60` units; the neutral target is `52`, keeping the bony landmark near `y=553` rather than the rejected low `y=581` cap.
 - The bust is five closed semantic surfaces: one `torso.root`, paired `shoulder.left/right` deltoids, and paired `arm.left/right` upper arms. The arm surfaces render behind the torso, the deltoids render over both attachments, and every attachment has `8..24` hidden canvas units of overlap. Open guide curves cannot substitute for a surface.
 - The landmark skeleton orders shoulder joint, deltoid apex, insertion, axilla, elbow direction, torso center, and hip direction. Torso ownership stops medial to the shoulder joint; no torso-owned contour may extend lateral to an acromion.
-- The resolved visible contour descends from neck outer to trapezius, acromion, deltoid outer, upper-arm outer, and crop outer. Its acromion tangent discontinuity is at most `8 degrees`; only this resolved outline receives the external stroke. Full inner surface borders are hidden.
-- Composite width / acromion span at `acromion + [0, 40, 90, 150, 230]` is respectively `[0.99..1.02, 1.03..1.08, 0.99..1.05, 0.92..1.00, 0.86..0.95]`. At `+230`, the torso is at least `0.08 * acromionSpan` narrower per side than the arm union. At `y=850`, each readable arm strip is at least `0.14 * headWidth` and at least `12 CSS px` in the `390px` browser check.
-- A visible axilla cue begins below the shoulder joint and is at most `0.40 * headWidth` long. A diagonal line from shoulder top to torso is a decorative seam and is invalid.
+- There is no separately authored whole-body or `character.root` outline. The visible contour is the exposed boundary of the five filled semantic surfaces; it may contain separate arm and torso components below the axilla and must never bridge their negative space.
+- Torso, deltoid, and arm paths use disjoint owner-local landmark IDs. Paired attachment-guide copies align within `1.5` units but remain independently owned. Provenance presence alone is insufficient: a surface containing a foreign-owned control is invalid.
+- Actual filled overlap is sampled normal to each owner-local attachment guide. Every valid interior sample is `8..24` canvas units. Declared landmark deltas cannot substitute for measured intersection depth.
+- The connected shoulder band has one filled union component. Below each axilla, the torso and paired arms form three components for a sustained run of at least `0.18 * headWidth`; each gap is at least `max(8, 0.035 * headWidth)` and at most `0.19 * headWidth`.
+- Upper-arm centerlines abduct outward by `4..14 degrees`, retain `0.55..1.05` lower/upper width, and crop independently below the visible torso crop. Axillary gaps remain open to the crop; no shared flat baseline may close them.
+- Deltoids must contribute exposed geometry outside both torso and upper arm: at least `0.08 * headWidth` wide, `0.18 * headWidth` high, and `0.012 * headWidth^2` in sampled area per side. Tint, opacity, mask, filter, internal seam, or decorative outline cannot count as exposure.
+- At `390px`, each actually visible upper arm is at least `10 CSS px` wide and `24 CSS px` high, and each exposed deltoid is at least `8 CSS px` wide and `12 CSS px` high. The same-fill, no-internal-cue view must remain recognizably human.
 - Outer torso width at `y=850` is `0.70..0.78` of garment shoulder width (neutral `0.72`). This stricter taper replaces the planning value `0.78..0.90`, whose upper half permits the independently observed slab/container silhouette.
-- These are actual-path requirements. Tests inspect each closed surface, the resolved outline, ownership graph, attachment overlap, endpoint continuity, z-order, scanline union, torso separation, and mobile rendered widths. Landmark metadata alone cannot satisfy them.
+- These are actual-fill requirements. Tests inspect each closed surface, disjoint ownership, physical attachment overlap, union component count, axillary negative space, arm direction/crop, deltoid exposure, z-order, and mobile visible pixels. Landmark metadata, raw bounding boxes, tint bands, or a decorative outline cannot satisfy them.
 - Covered bust apex offset is `0.13..0.18 * acromionSpan` from the center on each side.
 - Inner sternum clearance is at least `0.08 * acromionSpan`; the outer covered envelope remains at least `12` units inside the torso/arm boundary.
 - Zero/low bust is valid. Bust upper, outer, apex, inner, and center anchors form one closed chest-owned envelope with continuous joins; at zero it collapses to the chest center without detached lobes.

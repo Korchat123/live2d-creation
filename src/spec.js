@@ -1,5 +1,5 @@
 export const STANDARD_BUST_SPEC = Object.freeze({
-  version: "standard-bust-v1/spec-0.7.0",
+  version: "standard-bust-v1/spec-0.8.0",
   canvas: Object.freeze({ width: 1000, height: 1000, centerX: 500, cropY: 970, safeLeft: 120, safeRight: 880 }),
   parameters: Object.freeze({
     headWidth: { label: "Cranium width", min: 260, max: 280, step: 1, value: 270 },

@@ -55,6 +55,7 @@ export function validateGeometry(geometry) {
   if (rendered.topologySurfaces.length !== 5 || rendered.topologyEdges !== 4) add(errors, "topology.connectivity", "The five-surface bust graph must have four declared attachment edges", [rendered.topologySurfaces, rendered.topologyEdges]);
   if (rendered.overlapDepthSamples.some(value => !between(value, [8, 24]))) add(errors, "topology.hiddenOverlap", "Every sampled filled-surface overlap normal must remain 8..24 canvas units", rendered.overlapDepthSamples);
   if (rendered.ownerForeignLandmarks.length) add(errors, "topology.foreignProvenance", "Every closed surface must use only owner-local landmarks", rendered.ownerForeignLandmarks);
+  if (rendered.attachmentGuideGaps.some(value => value > 1.5)) add(errors, "topology.attachmentGuideAlignment", "Owner-local attachment guide copies must align within 1.5 canvas units", rendered.attachmentGuideGaps);
   if (rendered.seamEndpointGaps.some(value => value > 1.1)) add(errors, "topology.seamC0", "Axilla cues must land on their owning arm and torso surfaces", rendered.seamEndpointGaps);
   if (rendered.seamHeights.some(value => value < m.headWidth * .08 || value > m.headWidth * .40)) add(errors, "topology.axillaCue", "Visible axilla cues must be short and start below the glenohumeral landmark", rendered.seamHeights);
   if (rendered.torsoLateralViolation > 1.1) add(errors, "topology.torsoOwnership", "The torso surface cannot own contour lateral to the shoulder joint", rendered.torsoLateralViolation);

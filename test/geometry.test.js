@@ -13,7 +13,7 @@ const near = (actual, expected, tolerance, message) => assert.ok(Math.abs(actual
 
 test("neutral geometry matches the corrected character-bible landmarks", () => {
   const geometry = buildGeometry(presetParameters("neutral"));
-  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.7.0");
+  assert.equal(geometry.specVersion, "standard-bust-v1/spec-0.8.0");
   assert.deepEqual(validateGeometry(geometry), { status: "Needs review", errors: [] });
   near(geometry.measurements.headWidth, 270, 0.01, "head width");
   near(geometry.measurements.headHeight, 333, 1, "head height");
@@ -58,7 +58,7 @@ test("all presentation presets are valid bounded bundles on one anatomy", () => 
   }
 });
 
-test("presentation targets and shoulder envelopes match spec 0.7", () => {
+test("presentation targets and shoulder envelopes match spec 0.8", () => {
   const expected = {
     feminine: [2.14, 0.69, 0.31, 0.57], androgynous: [2.25, 0.72, 0.34, 0.50], masculine: [2.40, 0.75, 0.38, 0.44]
   };
@@ -176,6 +176,7 @@ test("five closed anatomy surfaces preserve connected ownership and canonical pr
       assert.equal(surface.commands.at(-1).type, "Z");
     }
     assert.equal(measureRenderedGeometry(geometry).ownerForeignLandmarks.length, 0);
+    assert.ok(measureRenderedGeometry(geometry).attachmentGuideGaps.every(gap => gap <= 1.5));
     assert.equal("outline" in paths, false, "a separate container outline must not exist");
     assert.equal(paths.topology.surfaces.length, 5);
     assert.equal(paths.topology.edges.length, 4);

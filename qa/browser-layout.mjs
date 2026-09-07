@@ -128,7 +128,7 @@ test("real Chromium keeps a 390px stage centered, contained, and anatomically vi
   assert.ok(layout.armLeftWidth >= 12 && layout.deltoidLeftWidth >= 12, JSON.stringify(layout));
   assert.ok(layout.z.every((value, index) => index === 0 || value > layout.z[index - 1]), JSON.stringify(layout));
   assert.equal(layout.overlayChecked, false, "measurement labels default off on phones");
-  assert.equal(layout.specVersion, "standard-bust-v1/spec-0.7.0");
+  assert.equal(layout.specVersion, "standard-bust-v1/spec-0.8.0");
   assert.equal(layout.visibleSpecVersion, layout.specVersion);
 
   const boundSweep = await cdp.call("Runtime.evaluate", {
